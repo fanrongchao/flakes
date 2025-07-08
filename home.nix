@@ -3,7 +3,10 @@
 
 {
   # 启用 home-manager
-  home.stateVersion = "24.05";
+  home.stateVersion = "25.05";
+
+  # 配置备份文件扩展名，避免覆盖现有文件
+  home-manager.backupFileExtension = "backup";
 
   # 安装一些常用的包
   home.packages = with pkgs; [
@@ -27,7 +30,8 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    enableAutosuggestions = true;
+    # 修复已弃用的选项
+    autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     
     # 自定义别名
