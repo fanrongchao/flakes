@@ -23,7 +23,6 @@
     git
     pkgs.distrobox
     vcluster
-    nodejs_20
   ];
   # enable for cursor remote server, patch nodejs
   programs.nix-ld = {

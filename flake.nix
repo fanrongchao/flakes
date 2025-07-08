@@ -30,6 +30,8 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          # 自动备份被 home-manager 管理的已存在文件
+          home-manager.backupFileExtension = "bak";
           home-manager.users.nixos = import ./home.nix;
         }
       ];

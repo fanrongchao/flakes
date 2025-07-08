@@ -5,9 +5,6 @@
   # 启用 home-manager
   home.stateVersion = "25.05";
 
-  # 配置备份文件扩展名，避免覆盖现有文件
-  home-manager.backupFileExtension = "backup";
-
   # 安装一些常用的包
   home.packages = with pkgs; [
     # home-manager 本身
@@ -24,6 +21,7 @@
     ripgrep
     fd
     bat
+    nodejs_20
   ];
 
   # 配置 shell (zsh)
@@ -42,6 +40,19 @@
       ".." = "cd ..";
       "..." = "cd ../..";
     };
+
+    # 历史记录配置
+    history = {
+      expireDuplicatesFirst = false;
+      extended = false;
+      ignoreDups = false;
+      ignoreSpace = true;
+      share = true;
+    };
+
+    # zsh.initContent 中的命令式配置是不推荐的，我们将移除它
+    # 并用 home-manager 的声明式选项替代
+    initContent = "";
   };
 
   # 配置 git
@@ -50,4 +61,26 @@
     userName = "fanrongchao";
     userEmail = "f@xfa.cn";
   };
+
+  # 使用 home.file 来声明式地管理 .npmrc 文件
+  home.file.".npmrc".text = ''
+    prefix = ''${HOME}/.npm-global
+    cache = ''${HOME}/.npm/.cache
+    registry = https://registry.npmmirror.com
+  '';
+
+  # 环境变量
+  home.sessionVariables = {
+    EDITOR = "vi";
+    VISUAL = "vi";
+  };
+
+  # 通过 sessionPath 将 npm 全局目录添加到 PATH
+  # 这是比修改 sessionVariables.PATH 或使用 extraProfileCommands 更可靠的方法
+  home.sessionPath = [
+    "$HOME/.npm-global/bin"
+  ];
+
+  # home.extraProfileCommands 和 sessionVariables.PATH 已被 sessionPath 替代
+  # 我们可以移除它们
 } 
