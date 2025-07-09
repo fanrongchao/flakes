@@ -1,5 +1,5 @@
 # /etc/nixos/home.nix
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   # 启用 home-manager
@@ -22,6 +22,7 @@
     fd
     bat
     nodejs_20
+    lazygit
   ];
 
   # 配置 shell (zsh)
@@ -67,6 +68,13 @@
     prefix = ''${HOME}/.npm-global
     cache = ''${HOME}/.npm/.cache
     registry = https://registry.npmmirror.com
+  '';
+
+  # 使用 home.activation 来安装全局 npm 包
+  home.activation.installNpmPackages = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if [ -x "$(command -v npm)" ]; then
+      $DRY_RUN_CMD npm install -g https://gaccode.com/claudecode/install --registry=https://registry.npmmirror.com
+    fi
   '';
 
   # 环境变量
