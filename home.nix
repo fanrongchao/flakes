@@ -2,6 +2,8 @@
 { config, pkgs, lib, ... }:
 
 {
+  home.username = "nixos"; # ← 你的用户名
+  home.homeDirectory = "/home/nixos"; # ← 你的家目录
   # 启用 home-manager
   home.stateVersion = "25.05";
 
@@ -73,7 +75,11 @@
   # 使用 home.activation 来安装全局 npm 包
   home.activation.installNpmPackages = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if [ -x "$(command -v npm)" ]; then
-      $DRY_RUN_CMD npm install -g https://gaccode.com/claudecode/install --registry=https://registry.npmmirror.com
+      $DRY_RUN_CMD npm install -g @google/gemini-cli
+      # Claude Code
+      $DRY_RUN_CMD npm install -g @anthropic-ai/claude-code
+      # codex-cli
+      $DRY_RUN_CMD npm install -g codex-cli
     fi
   '';
 
@@ -81,6 +87,7 @@
   home.sessionVariables = {
     EDITOR = "vi";
     VISUAL = "vi";
+    GOOGLE_CLOUD_PROJECT = "gemini0cli";
   };
 
   # 通过 sessionPath 将 npm 全局目录添加到 PATH

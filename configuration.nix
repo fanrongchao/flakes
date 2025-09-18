@@ -16,7 +16,16 @@
   wsl.defaultUser = "nixos";
   
   #enable flake
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];  
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  
+  # 配置国内镜像源
+  nix.settings.substituters = [
+    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+    "https://cache.nixos.org"
+  ];
+  nix.settings.trusted-public-keys = [
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+  ];  
   environment.systemPackages = with pkgs; [
     vim
     wget
