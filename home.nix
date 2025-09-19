@@ -25,6 +25,8 @@
     bat
     nodejs_20
     lazygit
+    # uv
+    uv
   ];
 
   # 配置 shell (zsh)
