@@ -27,16 +27,17 @@
     lazygit
     # uv
     uv
+    # go
+    go
   ];
 
   # 配置 shell (zsh)
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    # 修复已弃用的选项
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
-    
+
     # 自定义别名
     shellAliases = {
       ll = "ls -la";
@@ -48,16 +49,14 @@
 
     # 历史记录配置
     history = {
+      size = 10000;
+      save = 10000;
       expireDuplicatesFirst = false;
       extended = false;
       ignoreDups = false;
       ignoreSpace = true;
       share = true;
     };
-
-    # zsh.initContent 中的命令式配置是不推荐的，我们将移除它
-    # 并用 home-manager 的声明式选项替代
-    initContent = "";
   };
 
   # 配置 git
@@ -73,15 +72,12 @@
     cache = ''${HOME}/.npm/.cache
     registry = https://registry.npmmirror.com
   '';
-
-  # 使用 home.activation 来安装全局 npm 包
+  # NPM 全局包通过 home.activation 安装
   home.activation.installNpmPackages = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if [ -x "$(command -v npm)" ]; then
-      $DRY_RUN_CMD npm install -g @google/gemini-cli
-      # Claude Code
-      $DRY_RUN_CMD npm install -g @anthropic-ai/claude-code
-      # codex-cli
-      $DRY_RUN_CMD npm install -g codex-cli
+      echo "Installing global npm packages..."
+      npm config set prefix ~/.npm-global
+      npm install -g @google/gemini-cli @anthropic-ai/claude-code codex-cli opencode-ai || true
     fi
   '';
 
@@ -98,6 +94,6 @@
     "$HOME/.npm-global/bin"
   ];
 
-  # home.extraProfileCommands 和 sessionVariables.PATH 已被 sessionPath 替代
-  # 我们可以移除它们
+  # 启用 home-manager 来管理自身
+  programs.home-manager.enable = true;
 } 

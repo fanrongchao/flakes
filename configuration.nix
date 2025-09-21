@@ -18,14 +18,18 @@
   #enable flake
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   
-  # 配置国内镜像源
-  nix.settings.substituters = [
-    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+  # 配置镜像源（只使用官方源）
+  nix.settings.substituters = lib.mkForce [
     "https://cache.nixos.org"
   ];
   nix.settings.trusted-public-keys = [
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-  ];  
+  ];
+  # 添加信任用户，解决警告
+  nix.settings.trusted-users = [ "root" "nixos" ];
+  # 增加超时时间
+  nix.settings.connect-timeout = 300;
+  nix.settings.download-attempts = 5;  
   environment.systemPackages = with pkgs; [
     vim
     wget
