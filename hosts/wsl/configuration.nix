@@ -36,9 +36,19 @@
     package = pkgs.nix-ld-rs;
   };
   programs.zsh.enable = true;
-  users.users.nixos = {
-    shell = pkgs.zsh;
+  users.users = {
+    nixos = {
+      shell = pkgs.zsh;
+    };
+
+    fanrongchao = {
+      isNormalUser = true;
+      description = "Rongchao Fan";
+      extraGroups = ["wheel" "networkmanager"];
+      shell = pkgs.zsh;
+    };
   };
+
   users.defaultUserShell = pkgs.zsh;
   #enable container and use podman
   virtualisation.podman.enable = true;
