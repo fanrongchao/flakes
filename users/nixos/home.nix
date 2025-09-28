@@ -107,7 +107,7 @@
       ]))
     ];
   };
-  xdg.configFile."nvim".source = ./nvim;
+  xdg.configFile."nvim".source = ./../../nvim;
 
   # 使用 home.file 来声明式地管理 .npmrc 文件
   home.file.".npmrc".text = ''
