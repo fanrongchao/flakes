@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "dotfiles": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1759288056,
+        "narHash": "sha256-BtfGJ/Zu14P+uXTNxIVMutxdtqqStWxvQVu/HHPRTNM=",
+        "owner": "fanrongchao",
+        "repo": "dotfiles",
+        "rev": "733edc00d021207da2d39299a60ba7973181f761",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fanrongchao",
+        "repo": "dotfiles",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -89,6 +105,7 @@
     },
     "root": {
       "inputs": {
+        "dotfiles": "dotfiles",
         "home-manager": "home-manager",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs_2"

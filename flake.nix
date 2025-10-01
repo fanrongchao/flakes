@@ -23,9 +23,10 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    dotfiles = { url = "github:fanrongchao/dotfiles"; flake = false; };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, dotfiles,... }@inputs: {
     # 定义一个 NixOS 系统配置
     # 请将 'my-hostname' 替换为您系统的真实主机名
     # 您可以通过运行 `hostname` 命令来查看
@@ -43,6 +44,9 @@
           home-manager.useUserPackages = true;
           # 自动备份被 home-manager 管理的已存在文件
           home-manager.backupFileExtension = "bak";
+          home-manager.extraSpecialArgs = {
+              inherit dotfiles;
+          };
           home-manager.users.nixos = import ./users/nixos/home.nix;
           home-manager.users.fanrongchao = import ./users/fanrongchao/home.nix;
         }
