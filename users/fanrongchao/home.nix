@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, dotfiles, ... }:
 
 {
   home.username = "fanrongchao"; # ← 你的用户名
