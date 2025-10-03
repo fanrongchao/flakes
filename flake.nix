@@ -37,8 +37,7 @@
       modules = [
         # 导入我们现有的 configuration.nix
         # 您之前的所有系统设置都将从这里加载
-        ./hosts/wsl/configuration.nix
-        # enable sops-nix
+        ./hosts/wsl        # enable sops-nix
         sops-nix.nixosModules.sops
 
         inputs.nixos-wsl.nixosModules.default
