@@ -24,9 +24,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dotfiles = { url = "github:fanrongchao/dotfiles"; flake = false; };
+    # add sops
+    sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = { self, nixpkgs, home-manager, dotfiles,... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, dotfiles, sops-nix, ... }@inputs: {
     # 定义一个 NixOS 系统配置
     # 请将 'my-hostname' 替换为您系统的真实主机名
     # 您可以通过运行 `hostname` 命令来查看
@@ -36,6 +38,9 @@
         # 导入我们现有的 configuration.nix
         # 您之前的所有系统设置都将从这里加载
         ./hosts/wsl/configuration.nix
+        # enable sops-nix
+        sops.nix.nixosModules.sops
+
         inputs.nixos-wsl.nixosModules.default
         # 启用 home-manager
         home-manager.nixosModules.home-manager
