@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./configuration.nix
-    ./services.nix
+    ./../../modules/sing-box.nix
   ];
+
 }
