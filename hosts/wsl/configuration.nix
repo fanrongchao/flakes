@@ -29,6 +29,8 @@
     git
     pkgs.distrobox
     vcluster
+    age
+    sops
   ];
   # enable for cursor remote server, patch nodejs
   programs.nix-ld = {

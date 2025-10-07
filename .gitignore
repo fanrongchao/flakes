@@ -4,6 +4,7 @@ result-*
 
 # Nix store paths
 /nix/store/
+secrets/*.json
 
 # Temporary files
 *.tmp
