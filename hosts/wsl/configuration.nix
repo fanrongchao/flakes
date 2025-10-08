@@ -31,6 +31,7 @@
     vcluster
     age
     sops
+    jq
   ];
   # enable for cursor remote server, patch nodejs
   programs.nix-ld = {

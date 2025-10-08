@@ -37,9 +37,9 @@
       modules = [
         # 导入我们现有的 configuration.nix
         # 您之前的所有系统设置都将从这里加载
-        ./hosts/wsl        # enable sops-nix
         sops-nix.nixosModules.sops
 
+        ./hosts/wsl        # enable sops-nix
         inputs.nixos-wsl.nixosModules.default
         # 启用 home-manager
         home-manager.nixosModules.home-manager
