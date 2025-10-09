@@ -1,3 +1,4 @@
 creation_rules:
-  - path_regex: secrets/.*\.sops$
-    age: ["age1sz3x6wf9vw0y3xgsna78mjxt67r5mmyg9d0h5kakrmgu90k9xu8sn6skvq"]
+  - path_regex: '^secrets/.*'
+    age:
+      "age1sz3x6wf9vw0y3xgsna78mjxt67r5mmyg9d0h5kakrmgu90k9xu8sn6skvq"

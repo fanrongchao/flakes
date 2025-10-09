@@ -1,11 +1,19 @@
 {config, pkgs, ...}:
 
 {
-  #TODO enable sing-box
+  # TODO add sops 
+
+
   services.sing-box = {
     enable = true;
-#    enableTun = true;
-#    configFile = "./../../secrets/sing-box.json";
+#   enable Tun
+    serviceConfig = {
+      AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+      CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+      DeviceAllow = [ "/dev/net/tun rw" ];
+    };
+    # TODO encrypt
+    _secret = "../../secrets/sing-box.json";
   };
 
 }
