@@ -8,9 +8,9 @@
     enable = true;
 #   enable Tun
     # TODO encrypt
-    settings = {
-      _secret = "../../secrets/sing-box.json";
-    };
+    #settings = {
+    #  _secret = "../../secrets/sing-box.json";
+    #};
   };
   systemd.services.sing-box.serviceConfig = {
     AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
