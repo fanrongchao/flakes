@@ -35,13 +35,9 @@
     nixosConfigurations.wsl = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux"; # 或者您的系统架构，例如 "aarch64-linux"
       modules = [
-        # 导入我们现有的 configuration.nix
-        # 您之前的所有系统设置都将从这里加载
         sops-nix.nixosModules.sops
-
         ./hosts/wsl        # enable sops-nix
         inputs.nixos-wsl.nixosModules.default
-        # 启用 home-manager
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
