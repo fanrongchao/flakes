@@ -18,7 +18,7 @@
     };
   };
   systemd.services.sing-box.serviceConfig = {
-    Environment = [ "ENABLE_DEPRECATED_TUN_ADDRESS_X=true" ];
+    Environment = [ "ENABLE_DEPRECATED_TUN_ADDRESS_X=true" "ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true"];
     AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
     CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
     DeviceAllow = [ "/dev/net/tun rw" ];
