@@ -32,6 +32,7 @@
     age
     sops
     jq
+    bind
   ];
   # enable for cursor remote server, patch nodejs
   programs.nix-ld = {
