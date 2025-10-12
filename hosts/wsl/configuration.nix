@@ -33,6 +33,7 @@
     sops
     jq
     bind
+    gcc
   ];
   # enable for cursor remote server, patch nodejs
   programs.nix-ld = {
