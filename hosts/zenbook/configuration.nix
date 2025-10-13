@@ -35,9 +35,9 @@
   #   keyMap = "us";
   #   useXkbConfig = true; # use xkb.options in tty.
   # };
-  #fonts
   i18n.inputMethod = {
-    enabled = "fcitx5";
+    type = "fcitx5";
+    enable = true;
     fcitx5.addons = with pkgs;[
       fcitx5-rime
     ];
@@ -55,8 +55,8 @@
 
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  services.displayManager.gdm.enable = true;
+  services.desktopManager.gnome.enable = true;
   
   # Enable clash to use tun
   
@@ -71,7 +71,7 @@
   # Enable sound.
   #sound.enable = true;
   #sound.mediaKeys.enable = true;
-  hardware.pulseaudio = {
+  services.pulseaudio = {
     enable = false;
   # support32Bit = true;
   # package = pkgs.pulseaudioFull;
@@ -211,6 +211,6 @@ virtualisation = {
   # and migrated your data accordingly.
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "24.05"; # Did you read the comment?
+  system.stateVersion = "25.05"; # Did you read the comment?
   nixpkgs.config.allowUnfree = true;
 }
