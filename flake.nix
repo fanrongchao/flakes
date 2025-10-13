@@ -36,7 +36,7 @@
       system = "x86_64-linux"; # 或者您的系统架构，例如 "aarch64-linux"
       modules = [
         sops-nix.nixosModules.sops
-        ./hosts/wsl        # enable sops-nix
+        ./hosts/wsl
         inputs.nixos-wsl.nixosModules.default
         home-manager.nixosModules.home-manager
         {
@@ -50,6 +50,14 @@
           home-manager.users.nixos = import ./users/nixos/home.nix;
           home-manager.users.fanrongchao = import ./users/fanrongchao/home.nix;
         }
+      ];
+    };
+    
+    nixosConfigurations.zenbook = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux"; # 或者您的系统架构，例如 "aarch64-linux"
+      modules = [
+        sops-nix.nixosModules.sops
+        ./hosts/zenbook              
       ];
     };
   };
