@@ -97,6 +97,7 @@
     extraGroups = [ "wheel" "networkmanager" "audio"]; # Enable ‘sudo’ for the user.
     packages = with pkgs; [
       git
+      nodejs_20
       neovim
       ripgrep
       firefox
