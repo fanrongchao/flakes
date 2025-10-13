@@ -71,11 +71,11 @@
   # Enable sound.
   #sound.enable = true;
   #sound.mediaKeys.enable = true;
-  services.pulseaudio = {
-    enable = false;
+  #services.pulseaudio = {
+  #  enable = false;
   # support32Bit = true;
   # package = pkgs.pulseaudioFull;
-  };
+  #};
   # OR
   security.rtkit.enable = true; 
   services.pipewire = {
@@ -109,19 +109,12 @@
       lazygit
       nodejs
       cmatrix
-      zotero
+      jq
+      gcc
+      age
+      sops
     ];
   };
-  #programs.clash-verge.enable = false;
-  #users.extraUsers.root = {
-  #   isNormalUser = true;
-  #   extraGroups = [ "wheel" "audio" ]; # Enable ‘sudo’ for the user.
-     #packages = with pkgs; [
-     #  firefox
-     #  tree
-     #];
-  #};
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -139,12 +132,6 @@
      docker-compose
   ];
    
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
   programs.hyprland.enable = true; 
 
   #zsh
