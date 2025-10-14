@@ -3,6 +3,6 @@
 {
   imports = [
     ./configuration.nix
-    #./services.nix
+    ./services.nix
   ];
 }

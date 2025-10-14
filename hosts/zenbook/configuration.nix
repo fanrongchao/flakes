@@ -131,6 +131,8 @@
      dive
      podman-tui
      docker-compose
+     bind
+     mihomo
   ];
    
   programs.hyprland.enable = true; 
@@ -161,6 +163,9 @@ virtualisation = {
     dockerCompat = true;
     defaultNetwork.settings.dns.enable = true;
   };
+};
+boot.kernel.sysctl = {
+  "net.ipv4.ip_forward" = 1;
 };
 
 
