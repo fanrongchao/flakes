@@ -3,5 +3,7 @@
 {
   imports = [
     ./configuration.nix
+    ./hardware-configuration.nix
+    ./services.nix
   ];
 }

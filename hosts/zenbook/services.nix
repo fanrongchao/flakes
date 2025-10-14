@@ -3,32 +3,44 @@
 {
   # TODO add sops 
   sops.age.keyFile = "/var/lib/sops/age/keys.txt";
-  sops.secrets."sing-box.json" = {
-    sopsFile = ../../secrets/sing-box.json.sops;
+  sops.secrets."clash.yaml" = {
+    sopsFile = ../../secrets/clash.yaml.sops;
     format = "binary";
     owner = "root"; group = "root"; mode = "0400";
-    path = "/run/secrets/sing-box.json";
+    path = "/run/secrets/clash.yaml";
   };
 
 
-  services.sing-box = {
+  services.mihomo = {
     enable = true;
-    settings = {
-      _secret = config.sops.secrets."sing-box.json".path;
-    };
+    configFile = config.sops.secrets."clash.yaml".path;
+    tunMode = true;
   };
-  systemd.services.sing-box.serviceConfig = {
-    Environment = [ "ENABLE_DEPRECATED_TUN_ADDRESS_X=true" "ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true"];
-    AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
-    CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
-    DeviceAllow = [ "/dev/net/tun rw" ];
-    after = [ "sops-nix.service" "sops-install-secrets.service" ];
-    wants = [ "sops-nix.service" "sops-install-secrets.service" ];
-    ExecStart = lib.mkForce [ 
-      "" 
-      "${pkgs.sing-box}/bin/sing-box run -c /run/secrets/sing-box.json -D /var/lib/sing-box"
-    ];
+  
+  systemd.services.mihomo.serviceConfig = {
+    # 需要更宽的能力：用 mkForce 覆盖掉模块默认值
+    AmbientCapabilities    = lib.mkForce "CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE";
+    CapabilityBoundingSet  = lib.mkForce "CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE";
 
+    # 放开地址族，包含 AF_NETLINK（路由变更监控）与 AF_UNIX
+    RestrictAddressFamilies = lib.mkForce "AF_UNIX AF_INET AF_INET6 AF_NETLINK";
+
+    # 放行 /dev/net/tun，且显式允许它（DeviceAllow 是列表）
+    PrivateDevices = lib.mkForce false;
+    DeviceAllow    = lib.mkForce [ "/dev/net/tun rw" ];
+
+    # 允许修改网络相关内核开关（更保险让路由可写）
+    ProtectKernelTunables = lib.mkForce false;
+
+    # 某些打包带的系统调用过滤太严，清空（允许 netlink/route 相关调用）
+    SystemCallFilter = lib.mkForce "";
+
+    # 可选
+    LimitNOFILE = lib.mkForce "infinity";
   };
+
+  #（可选）如果 mihomo 模块还限制了 PrivateUsers/ProtectSystem 等，
+  # 也可以用 mkForce 显式设置：
+  # systemd.services.mihomo.serviceConfig.PrivateUsers = lib.mkForce false;
 
 }
