@@ -166,6 +166,20 @@ boot.kernel.sysctl = {
   "net.bridge.bridge-nf-call-ip6tables" = 1;
   "net.ipv4.ip_forward" = 1;
 };
+#k3s
+services.k3s = {
+    enable = true;
+    role = "server";  # 单机可设为 server
+    extraFlags = [
+      "--write-kubeconfig-mode 644"
+      "--disable traefik"   # 可选：禁用自带 Ingress
+      "--disable servicelb" # 可选：禁用自带负载均衡
+    ];
+  };
+
+  # 开启 cgroups 支持
+boot.kernelParams = [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" "systemd.unified_cgroup_hierarchy=1" ];
+#k3s
 
 
 
