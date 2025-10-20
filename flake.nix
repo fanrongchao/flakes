@@ -1,17 +1,5 @@
 # /etc/nixos/flake.nix
 {
-  description = "NixOS configuration for my laptop wsl";
-
-  nixConfig = {
-    substituters = [
-      #"https://mirror.sjtu.edu.cn/nix-channels/store"
-      #"https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
-      "https://cache.nixos.org"
-    ];
-    trusted-public-keys = [
-      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-    ];
-  };
 
   inputs = {
     # 将 NixOS 软件包集固定到一个特定的发布分支
@@ -58,6 +46,14 @@
       modules = [
         sops-nix.nixosModules.sops
         ./hosts/zenbook              
+      ];
+    };
+
+    nixosConfigurations.razer = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux"; # 或者您的系统架构，例如 "aarch64-linux"
+      modules = [
+        sops-nix.nixosModules.sops
+        ./hosts/razer              
       ];
     };
   };
