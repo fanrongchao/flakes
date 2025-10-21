@@ -11,23 +11,21 @@
   boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "vmd" "nvme" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
-  boot.kernelParams = [ "i915.force_probe=7d55" "snd-intel-dspcfg.dsp_driver=1"]; #asus zenbook display and sound
   boot.extraModulePackages = [ ];
-  
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/6c4eb7e2-8971-4dfd-8454-82967316e7ea";
+    { device = "/dev/disk/by-uuid/759f3198-54fe-46a1-9bd4-261b9d277eaa";
       fsType = "ext4";
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/1CC9-AFAF";
+    { device = "/dev/disk/by-uuid/411A-4AFD";
       fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
+      options = [ "fmask=0077" "dmask=0077" ];
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/5b4e361d-4cde-47bf-8932-8c370810202b"; }
+    [ { device = "/dev/disk/by-uuid/5294cf27-c1d7-46a8-a223-bff443681e6d"; }
     ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -36,7 +34,6 @@
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
-  hardware.enableAllFirmware = true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

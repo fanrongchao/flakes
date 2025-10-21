@@ -1,222 +1,139 @@
 # Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# your system.  Help is available in the configuration.nix(5) man page
+# and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ lib, pkgs, ... }:
+{ config, pkgs, ... }:
+
 {
-
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  #nix.settings.substituters = lib.mkForce [ "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store" ];
-  nix.settings.experimental-features = ["nix-command" "flakes"];
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+    ];
+  nix.settings.experimental-features = ["nix-command" "flakes"];  
   
 
-  networking.hostName = "asus-zenbook"; # Define your hostname.
-  # Pick only one of the below networking options.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+  # Bootloader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
-  # Set your time zone.
-  time.timeZone = "Asia/Shanghai";
+  networking.hostName = "nixos"; # Define your hostname.
+  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
+  # Enable networking
+  networking.networkmanager.enable = true;
+
+  # Set your time zone.
+  time.timeZone = "Asia/Shanghai";
+
   # Select internationalisation properties.
-  # i18n.defaultLocale = "en_US.UTF-8";
-  # console = {
-  #   font = "Lat2-Terminus16";
-  #   keyMap = "us";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  # };
-  i18n.inputMethod = {
-    type = "fcitx5";
-    enable = true;
-    fcitx5.addons = with pkgs;[
-      fcitx5-rime
-    ];
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "zh_CN.UTF-8";
+    LC_IDENTIFICATION = "zh_CN.UTF-8";
+    LC_MEASUREMENT = "zh_CN.UTF-8";
+    LC_MONETARY = "zh_CN.UTF-8";
+    LC_NAME = "zh_CN.UTF-8";
+    LC_NUMERIC = "zh_CN.UTF-8";
+    LC_PAPER = "zh_CN.UTF-8";
+    LC_TELEPHONE = "zh_CN.UTF-8";
+    LC_TIME = "zh_CN.UTF-8";
   };
-  fonts.packages = with pkgs;[
-   nerd-fonts.code-new-roman
-   noto-fonts
-   noto-fonts-cjk-sans
-   wqy_microhei
-   wqy_zenhei
-  ];
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
-  
-
 
   # Enable the GNOME Desktop Environment.
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
-  
-  # Enable clash to use tun
-  
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
 
   # Configure keymap in X11
-  #services.xserver.xkb.layout = "us";
-  #services.xserver.xkb.options = "ctrl:swapcaps";
+  services.xserver.xkb = {
+    layout = "us";
+    variant = "";
+  };
 
   # Enable CUPS to print documents.
-  # services.printing.enable = true;
+  services.printing.enable = true;
 
-  # Enable sound.
-  #sound.enable = true;
-  #sound.mediaKeys.enable = true;
-  #services.pulseaudio = {
-  #  enable = false;
-  # support32Bit = true;
-  # package = pkgs.pulseaudioFull;
-  #};
-  # OR
-  security.rtkit.enable = true; 
+  # Enable sound with pipewire.
+  services.pulseaudio.enable = false;
+  security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-  };
+    # If you want to use JACK applications, uncomment this
+    #jack.enable = true;
 
-  hardware.graphics.enable = true;
+    # use the example session manager (no others are packaged yet so this is enabled by default,
+    # no need to redefine it in your config for now)
+    #media-session.enable = true;
+  };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
+  # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.xfa = {
+  users.users.frc = {
     isNormalUser = true;
-    home = "/home/xfa";
-    extraGroups = [ "wheel" "networkmanager" "audio"]; # Enable ‘sudo’ for the user.
+    description = "frc";
+    extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      git
-      nodejs_20
-      neovim
-      ripgrep
-      firefox
-      kitty
-      gcc
-      feishu
-      netease-cloud-music-gtk
-      rustc
-      cargo
-      lazygit
-      nodejs
-      cmatrix
-      jq
-      gcc
-      age
-      sops
+    #  thunderbird
     ];
   };
+
+  # Install firefox.
+  programs.firefox.enable = true;
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+  
+  # Install clash-verge
+  programs.clash-verge.enable = true;
+  # Install git
+  programs.git = {
+    enable = true;
+  };
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-     neovim
-     wget
-     pkgs.clash-meta
-     pkgs.clash-verge-rev
-     pkgs.dbip-country-lite
-     libgcc
-     waybar
-     wofi
-     dive
-     podman-tui
-     docker-compose
-     bind
-     mihomo
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+  #  wget
   ];
-   
-  programs.hyprland.enable = true; 
 
-  #zsh
-  programs = {
-    zsh = {
-      enable = true;
-      autosuggestions.enable = true;
-      zsh-autoenv.enable = true;
-      syntaxHighlighting.enable = true;
-      ohMyZsh = {
-         enable = true;
-         theme = "robbyrussell";
-         plugins = [
-           "git"
-           "npm"
-           "history"
-           "rust"
-         ];
-      };
-    };
-  };
-virtualisation.containers.enable = true;
-virtualisation = {
-  podman = {
-    enable = true;
-    dockerCompat = true;
-    defaultNetwork.settings.dns.enable = true;
-  };
-};
-boot.kernelModules = [ "overlay" "br_netfilter" ];
-boot.kernel.sysctl = {
-  "net.bridge.bridge-nf-call-iptables" = 1;
-  "net.bridge.bridge-nf-call-ip6tables" = 1;
-  "net.ipv4.ip_forward" = 1;
-};
-#k3s
-services.k3s = {
-    enable = true;
-    role = "server";  # 单机可设为 server
-    extraFlags = [
-      "--write-kubeconfig-mode 644"
-      "--disable traefik"   # 可选：禁用自带 Ingress
-      "--disable servicelb" # 可选：禁用自带负载均衡
-    ];
-  };
-
-  # 开启 cgroups 支持
-boot.kernelParams = [ "cgroup_enable=cpuset" "cgroup_enable=memory" "cgroup_memory=1" "systemd.unified_cgroup_hierarchy=1" ];
-#k3s
-
-
-
+  # Some programs need SUID wrappers, can be configured further or are
+  # started in user sessions.
+  # programs.mtr.enable = true;
+  # programs.gnupg.agent = {
+  #   enable = true;
+  #   enableSSHSupport = true;
+  # };
 
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  # services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
-  networking.firewall.enable = false;
+  # networking.firewall.enable = false;
 
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
+  # This value determines the NixOS release from which the default
+  # settings for stateful data, like file locations and database versions
+  # on your system were taken. It‘s perfectly fine and recommended to leave
+  # this value at the release version of the first install of this system.
+  # Before changing this value read the documentation for this option
+  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.05"; # Did you read the comment?
-  nixpkgs.config.allowUnfree = true;
+
 }
