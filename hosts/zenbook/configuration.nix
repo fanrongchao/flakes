@@ -96,7 +96,12 @@
   nixpkgs.config.allowUnfree = true;
   
   # Install clash-verge
-  programs.clash-verge.enable = true;
+  programs.clash-verge = {
+    enable = true;
+    tunMode = true;
+    serviceMode = true;
+    autoStart =  true;
+  };
   # Install git
   programs.git = {
     enable = true;
