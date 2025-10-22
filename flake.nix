@@ -44,8 +44,16 @@
     nixosConfigurations.zenbook = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux"; # 或者您的系统架构，例如 "aarch64-linux"
       modules = [
-        sops-nix.nixosModules.sops
-        ./hosts/zenbook              
+	sops-nix.nixosModules.sops
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = {
+              inherit dotfiles;
+          };
+          home-manager.users.frc = import ./users/frc/home.nix;
+        } ./hosts/zenbook              
       ];
     };
 
@@ -62,6 +70,14 @@
       extraSpecialArgs = { inherit dotfiles; };
       modules = [
         ./users/nixos/home.nix
+      ];
+    };
+
+    homeConfigurations.frc = home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs { system = "x86_64-linux"; };
+      extraSpecialArgs = { inherit dotfiles; };
+      modules = [
+        ./users/frc/home.nix
       ];
     };
   };
