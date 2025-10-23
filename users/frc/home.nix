@@ -1,4 +1,4 @@
-{ config, pkgs, lib, dotfiles, ... }:
+{ config, pkgs, lib, ... }:
 {
   nixpkgs.config.allowUnfree = true; 
   home.username = "frc";

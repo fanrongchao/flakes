@@ -49,9 +49,6 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {
-              inherit dotfiles;
-          };
           home-manager.users.frc = import ./users/frc/home.nix;
         } 
         ./hosts/zenbook              
@@ -66,9 +63,6 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {
-              inherit dotfiles;
-          };
           home-manager.users.frc = import ./users/frc/home.nix;
         } 
         ./hosts/razer              
@@ -77,7 +71,6 @@
 
     homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs { system = "x86_64-linux"; };
-      extraSpecialArgs = { inherit dotfiles; };
       modules = [
         ./users/nixos/home.nix
       ];
@@ -85,7 +78,6 @@
 
     homeConfigurations.frc = home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs { system = "x86_64-linux"; };
-      extraSpecialArgs = { inherit dotfiles; };
       modules = [
         ./users/frc/home.nix
       ];
