@@ -3,10 +3,12 @@
   nixpkgs.config.allowUnfree = true; 
   home.username = "frc";
   home.homeDirectory = "/home/frc";
-  home.stateVersion = "25.05";
+  home.stateVersion = "25.11";
   home.packages = with pkgs; [ 
     home-manager
     htop
+    btop
+    lazygit
     #google-chrome
   ]; 
   programs.neovim = {
