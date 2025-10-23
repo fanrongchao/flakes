@@ -10,6 +10,7 @@
     btop
     lazygit
     tree
+    fzf
 
     #AstroNvim or LazyVim
     gcc
@@ -31,6 +32,12 @@
     enable = true;
     vimAlias = true;
     defaultEditor = true;
+    extraPackages = with pkgs; [
+    # LSP servers
+    lua-language-server
+    # CLI dependencies
+    ripgrep fd fzf git
+    ];
   };
 
   programs.zsh = {
