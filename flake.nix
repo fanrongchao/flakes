@@ -53,14 +53,24 @@
               inherit dotfiles;
           };
           home-manager.users.frc = import ./users/frc/home.nix;
-        } ./hosts/zenbook              
+        } 
+        ./hosts/zenbook              
       ];
     };
 
     nixosConfigurations.razer = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux"; # 或者您的系统架构，例如 "aarch64-linux"
+      system = "x86_64-linux";
       modules = [
         sops-nix.nixosModules.sops
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = {
+              inherit dotfiles;
+          };
+          home-manager.users.frc = import ./users/frc/home.nix;
+        } 
         ./hosts/razer              
       ];
     };
