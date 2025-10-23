@@ -20,6 +20,7 @@
     fd
     nodejs
     python3
+
   ]; 
 
   #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
@@ -69,4 +70,21 @@
       share = true;
     };
   };
+
+  home.sessionVariables = {
+    NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
+    NPM_CONFIG_CACHE = "${config.xdg.cacheHome}/npm";
+  };
+
+  # 把全局 bin 加进 PATH（让 npm -g 的命令能直接用）
+  home.sessionPath = [ "${config.xdg.dataHome}/npm/bin" ];
+
+
+
+
+
+
+
+
+
 }
