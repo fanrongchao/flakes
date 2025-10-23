@@ -9,11 +9,28 @@
     htop
     btop
     lazygit
-    #google-chrome
+    tree
+
+    #AstroNvim or LazyVim
+    gcc
+    gnumake
+    pkg-config
+    ripgrep
+    fd
+    nodejs
+    python3
   ]; 
+
+  #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
+  xdg.configFile."nvim".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/astronvim";
+
+
+
   programs.neovim = {
     enable = true;
     vimAlias = true;
+    defaultEditor = true;
   };
 
   programs.zsh = {
@@ -24,7 +41,7 @@
     oh-my-zsh = {
       enable = true;
       theme = "robbyrussell";
-      plugins = [ "git" ];
+      plugins = [ "git" "fzf"];
     };
 
     shellAliases = {
@@ -45,5 +62,4 @@
       share = true;
     };
   };
-
 }

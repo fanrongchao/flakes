@@ -95,6 +95,14 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+  
+  # Install clash-verge
+  programs.clash-verge = {
+    enable = true;
+    tunMode = true;
+    serviceMode = true;
+    autoStart =  true;
+  };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
