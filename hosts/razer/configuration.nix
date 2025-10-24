@@ -101,7 +101,7 @@
     enable = true;
     tunMode = true;
     serviceMode = true;
-    autoStart =  true;
+    autoStart = false;
   };
 
   # List packages installed in system profile. To search, run:
