@@ -21,12 +21,33 @@
     nodejs
     python3
 
+    #fonts
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
+
   ]; 
 
   #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/astronvim";
 
+  #Chinese Inputs
+  i18n.inputMethod = {
+    enable = true;
+    type = "fcitx5";
+    fcitx5 = {
+      waylandFrontend = true;   # turn off if you are on X11
+        addons = with pkgs; [
+        fcitx5-rime
+          rime-data                # very important: gives luna_pinyin & others
+          fcitx5-gtk               # makes input work inside apps
+          fcitx5-chinese-addons    # extra tables & UI
+        ];
+    };
+  };
 
 
   programs.neovim = {
@@ -71,12 +92,50 @@
     };
   };
 
+  programs.kitty = {
+  enable = true;
+
+  font = {
+    name = "Adwaita Mono";
+    size = 11;
+  };
+
+  settings = {
+    enable_audio_bell     = "yes";
+    remember_window_size  = "yes";
+    window_padding_width  = 6;
+    cursor_shape          = "beam";
+    scrollback_lines      = 5000;
+    confirm_os_window_close = 0;
+  };
+
+  shellIntegration = {
+    enableZshIntegration = true;
+  };
+
+  # Extra raw lines if you like:
+  extraConfig = ''
+    enable_wayland yes
+    background_opacity 0.94
+    cursor_beam_thickness 1.5
+    disable_ligatures never
+    line_height 1.14
+  '';
+};
+xdg.desktopEntries.kitty = {
+  name = "Kitty";
+  comment = "Fast, GPU-accelerated terminal";
+  exec = "kitty";
+  icon = "kitty";
+  terminal = false;
+  categories = [ "System" "TerminalEmulator" ];
+  startupNotify = true;
+};
+
   home.sessionVariables = {
     NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
     NPM_CONFIG_CACHE = "${config.xdg.cacheHome}/npm";
   };
-
-  # 把全局 bin 加进 PATH（让 npm -g 的命令能直接用）
   home.sessionPath = [ "${config.xdg.dataHome}/npm/bin" ];
 
 
