@@ -12,7 +12,7 @@
     tree
     fzf
 
-    #AstroNvim or LazyVim
+#AstroNvim or LazyVim
     gcc
     gnumake
     pkg-config
@@ -21,26 +21,32 @@
     nodejs
     python3
 
-    #fonts
+#fonts
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-emoji
-    #nerd
+#nerd
     nerd-fonts.jetbrains-mono
     nerd-fonts.fira-code
     nerd-fonts.fira-mono
     nerd-fonts.adwaita-mono
     nerd-fonts.code-new-roman
     nerd-fonts.ubuntu-mono
-  ]; 
+    nerd-fonts.meslo-lg
+    nerd-fonts.caskaydia-cove
+
+#lsp
+    nixd
+    lua-language-server 
+    ]; 
   fonts.fontconfig.enable = true;
 
 
-  #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
+#dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/astronvim";
 
-  #Chinese Inputs
+#Chinese Inputs
   i18n.inputMethod = {
     enable = true;
     type = "fcitx5";
@@ -61,10 +67,11 @@
     vimAlias = true;
     defaultEditor = true;
     extraPackages = with pkgs; [
-    # LSP servers
-    lua-language-server
-    # CLI dependencies
-    ripgrep fd fzf git
+      lua-language-server
+        nixd
+        rust-analyzer
+# CLI dependencies
+        ripgrep fd fzf git
     ];
   };
 
@@ -99,44 +106,52 @@
   };
 
   programs.kitty = {
-  enable = true;
+    enable = true;
 
-  font = {
-    name = "UbuntuMono Nerd Font";
-    size = 12;
+    font = {
+      name = "CaskaydiaCove Nerd Font";
+      size = 12;
+    };
+
+    settings = {
+      enable_audio_bell     = "yes";
+      remember_window_size  = "yes";
+      window_padding_width  = 6;
+      cursor_shape          = "beam";
+      scrollback_lines      = 5000;
+      confirm_os_window_close = 0;
+    };
+
+    shellIntegration = {
+      enableZshIntegration = true;
+    };
+
+# Extra raw lines if you like:
+    extraConfig = ''
+      enable_wayland yes
+      background_opacity 0.94
+      cursor_beam_thickness 1.5
+      disable_ligatures never
+      line_height 1.5
+      '';
   };
 
-  settings = {
-    enable_audio_bell     = "yes";
-    remember_window_size  = "yes";
-    window_padding_width  = 6;
-    cursor_shape          = "beam";
-    scrollback_lines      = 5000;
-    confirm_os_window_close = 0;
+#key mapping
+  dconf.settings = {
+    "org/gnome/desktop/input-sources" = {
+      xkb-options = [ "ctrl:nocaps" ];
+    };
   };
 
-  shellIntegration = {
-    enableZshIntegration = true;
+  xdg.desktopEntries.kitty = {
+    name = "Kitty";
+    comment = "Fast, GPU-accelerated terminal";
+    exec = "kitty";
+    icon = "kitty";
+    terminal = false;
+    categories = [ "System" "TerminalEmulator" ];
+    startupNotify = true;
   };
-
-  # Extra raw lines if you like:
-  extraConfig = ''
-    enable_wayland yes
-    background_opacity 0.94
-    cursor_beam_thickness 1.5
-    disable_ligatures never
-    line_height 1.5
-  '';
-};
-xdg.desktopEntries.kitty = {
-  name = "Kitty";
-  comment = "Fast, GPU-accelerated terminal";
-  exec = "kitty";
-  icon = "kitty";
-  terminal = false;
-  categories = [ "System" "TerminalEmulator" ];
-  startupNotify = true;
-};
 
   home.sessionVariables = {
     NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
