@@ -22,13 +22,19 @@
     python3
 
     #fonts
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.fira-code
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-emoji
-
+    #nerd
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+    nerd-fonts.fira-mono
+    nerd-fonts.adwaita-mono
+    nerd-fonts.code-new-roman
+    nerd-fonts.ubuntu-mono
   ]; 
+  fonts.fontconfig.enable = true;
+
 
   #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
   xdg.configFile."nvim".source =
@@ -96,8 +102,8 @@
   enable = true;
 
   font = {
-    name = "Adwaita Mono";
-    size = 11;
+    name = "UbuntuMono Nerd Font";
+    size = 12;
   };
 
   settings = {
@@ -119,7 +125,7 @@
     background_opacity 0.94
     cursor_beam_thickness 1.5
     disable_ligatures never
-    line_height 1.14
+    line_height 1.5
   '';
 };
 xdg.desktopEntries.kitty = {
@@ -137,13 +143,4 @@ xdg.desktopEntries.kitty = {
     NPM_CONFIG_CACHE = "${config.xdg.cacheHome}/npm";
   };
   home.sessionPath = [ "${config.xdg.dataHome}/npm/bin" ];
-
-
-
-
-
-
-
-
-
 }
