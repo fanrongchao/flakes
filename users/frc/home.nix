@@ -35,10 +35,10 @@
     nerd-fonts.meslo-lg
     nerd-fonts.caskaydia-cove
 
-#lsp
+#lsp servers
     nixd
     lua-language-server 
-    ]; 
+  ]; 
   fonts.fontconfig.enable = true;
 
 
@@ -67,7 +67,7 @@
     vimAlias = true;
     defaultEditor = true;
     extraPackages = with pkgs; [
-      lua-language-server
+        lua-language-server
         nixd
         rust-analyzer
 # CLI dependencies
