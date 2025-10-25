@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 {
   nixpkgs.config.allowUnfree = true; 
   home.username = "frc";
@@ -116,7 +116,7 @@
     settings = {
       enable_audio_bell     = "yes";
       remember_window_size  = "yes";
-      window_padding_width  = 6;
+      window_padding_width  = 0;
       cursor_shape          = "beam";
       scrollback_lines      = 5000;
       confirm_os_window_close = 0;
