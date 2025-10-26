@@ -5,6 +5,10 @@
   home.homeDirectory = "/home/frc";
   home.stateVersion = "25.11";
   home.packages = with pkgs; [ 
+    #test overlay
+    myHello
+    myCowsay
+
     home-manager
     htop
     btop
