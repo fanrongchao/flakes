@@ -22,9 +22,8 @@
       inherit (nixpkgs) lib;
     in {
       #overlay packages
-      package.${system} = {
+      packages.${system} = {
         codex = pkgs.codex;
-        hello = pkgs.myHello;
       };
 
       #NixOS system configurations

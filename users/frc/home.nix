@@ -5,8 +5,7 @@
   home.homeDirectory = "/home/frc";
   home.stateVersion = "25.11";
   home.packages = with pkgs; [ 
-    #test overlay
-    myHello
+    codex
 
     home-manager
     htop
@@ -14,6 +13,7 @@
     lazygit
     tree
     fzf
+    jq
 
 #AstroNvim or LazyVim
     gcc
