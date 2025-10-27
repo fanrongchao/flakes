@@ -7,7 +7,6 @@
   home.packages = with pkgs; [ 
     #test overlay
     myHello
-    myCowsay
 
     home-manager
     htop

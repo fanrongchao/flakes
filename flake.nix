@@ -21,6 +21,13 @@
       };
       inherit (nixpkgs) lib;
     in {
+      #overlay packages
+      package.${system} = {
+        codex = pkgs.codex;
+        hello = pkgs.myHello;
+      };
+
+      #NixOS system configurations
       nixosConfigurations.wsl = lib.nixosSystem {
         inherit system;
         modules = [
@@ -72,6 +79,8 @@
           ./hosts/razer              
         ];
       };
+
+      #home-manager configuraions
 
       homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
