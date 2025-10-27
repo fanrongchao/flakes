@@ -157,8 +157,16 @@
   };
 
   home.sessionVariables = {
-    NPM_CONFIG_PREFIX = "${config.xdg.dataHome}/npm";
-    NPM_CONFIG_CACHE = "${config.xdg.cacheHome}/npm";
+    HTTP_PROXY  = "http://127.0.0.1:7897";
+    HTTPS_PROXY = "http://127.0.0.1:7897";
+    ALL_PROXY   = "socks5://127.0.0.1:7897";
+    NO_PROXY    = "localhost,127.0.0.1";
   };
-  home.sessionPath = [ "${config.xdg.dataHome}/npm/bin" ];
+  systemd.user.sessionVariables = {
+    HTTP_PROXY  = "http://127.0.0.1:7897";
+    HTTPS_PROXY = "http://127.0.0.1:7897";
+    ALL_PROXY   = "socks5://127.0.0.1:7897";
+    NO_PROXY    = "localhost,127.0.0.1,::1";
+  };
 }
+
