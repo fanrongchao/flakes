@@ -4,10 +4,12 @@
   home.username = "frc";
   home.homeDirectory = "/home/frc";
   home.stateVersion = "25.11";
-  home.packages = with pkgs; [ 
+  home.packages = with pkgs; [
     #ai code cli
     codex
     claude-code
+    gemini-cli
+    opencode
 
     home-manager
     htop
