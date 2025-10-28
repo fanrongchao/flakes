@@ -19,6 +19,7 @@
     tree
     fzf
     jq
+    bat
 
 #AstroNvim or LazyVim
     gcc
