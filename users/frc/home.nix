@@ -10,6 +10,7 @@
     claude-code
     gemini-cli
     opencode
+    cursor-cli
 
     home-manager
     htop
