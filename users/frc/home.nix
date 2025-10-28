@@ -5,7 +5,9 @@
   home.homeDirectory = "/home/frc";
   home.stateVersion = "25.11";
   home.packages = with pkgs; [ 
+    #ai code cli
     codex
+    claude-code
 
     home-manager
     htop
