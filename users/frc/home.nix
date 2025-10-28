@@ -12,7 +12,10 @@
     opencode
     cursor-cli
 
+    #home-manager self
     home-manager
+
+    #ops tool
     htop
     btop
     lazygit
@@ -20,8 +23,12 @@
     fzf
     jq
     bat
+    procs
+    bottom
+    duf
+    dust
 
-#AstroNvim or LazyVim
+    #AstroNvim or LazyVim
     gcc
     gnumake
     pkg-config
@@ -30,11 +37,16 @@
     nodejs
     python3
 
-#fonts
+    #lsp servers
+    nixd
+    lua-language-server 
+
+    #fonts
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-emoji
-#nerd
+
+    #nerd
     nerd-fonts.jetbrains-mono
     nerd-fonts.fira-code
     nerd-fonts.fira-mono
@@ -43,19 +55,15 @@
     nerd-fonts.ubuntu-mono
     nerd-fonts.meslo-lg
     nerd-fonts.caskaydia-cove
-
-#lsp servers
-    nixd
-    lua-language-server 
   ]; 
   fonts.fontconfig.enable = true;
 
 
-#dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
+  #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/astronvim";
 
-#Chinese Inputs
+  #Chinese Inputs
   i18n.inputMethod = {
     enable = true;
     type = "fcitx5";
@@ -79,7 +87,7 @@
         lua-language-server
         nixd
         rust-analyzer
-# CLI dependencies
+      # CLI dependencies
         ripgrep fd fzf git
     ];
   };
@@ -135,7 +143,7 @@
       enableZshIntegration = true;
     };
 
-# Extra raw lines if you like:
+    # Extra raw lines if you like:
     extraConfig = ''
       enable_wayland yes
       background_opacity 0.94
@@ -145,7 +153,7 @@
       '';
   };
 
-#key mapping
+  #key mapping
   dconf.settings = {
     "org/gnome/desktop/input-sources" = {
       xkb-options = [ "ctrl:nocaps" ];
@@ -175,4 +183,3 @@
     NO_PROXY    = "localhost,127.0.0.1,::1";
   };
 }
-
