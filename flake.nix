@@ -69,6 +69,12 @@
         modules = [
           {nixpkgs.overlays = [(import ./overlays)];}
 	  sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.xfa = import ./users/xfa/home.nix;
+          } 
           ./hosts/ai-server             
         ];
       };
