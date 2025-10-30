@@ -1,6 +1,5 @@
 { config, pkgs, ... }:
 {
-  nixpkgs.config.allowUnfree = true; 
   home.username = "xfa";
   home.homeDirectory = "/home/xfa";
   home.stateVersion = "25.05";

@@ -67,7 +67,12 @@
       nixosConfigurations.ai-server= lib.nixosSystem {
         inherit system;
         modules = [
-          {nixpkgs.overlays = [(import ./overlays)];}
+          {
+            nixpkgs = {
+              overlays = [(import ./overlays)];
+              config.allowUnfree = true; 
+            };
+          }
 	  sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           {

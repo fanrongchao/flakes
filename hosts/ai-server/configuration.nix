@@ -73,8 +73,10 @@
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [];
     hashedPassword = "$6$toGeXv0PFQQfHdcs$aOVEx8Rvet6KyvWA14hHHXklaPRW/arErA83a6MtKZKfEH4xE1RvzxYPgQYAzJTUNmcdtZfzmJZUW1Fjy4Rz7.";
+    shell = pkgs.zsh;
   };
-
+  programs.zsh.enable = true;
+  
   # Enable automatic login for the user.
   services.getty.autologinUser = "xfa";
 
@@ -86,6 +88,7 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     git
+    kitty.terminfo
   #  wget
   ];
 
