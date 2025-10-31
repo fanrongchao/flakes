@@ -70,6 +70,7 @@
   sops.age.keyFile = "/root/.config/sops/age/keys.txt";
   sops.secrets.authorized_keys = {
     sopsFile = ../../secrets/authorized_keys.yaml;
+    neededForUsers = true;
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
