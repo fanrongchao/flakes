@@ -66,6 +66,12 @@
     variant = "";
   };
 
+  #sops
+  sops.age.keyFile = "/root/.config/sops/age/keys.txt";
+  sops.secrets.authorized_keys = {
+    sopsFile = ../../secrets/authorized_keys.yaml;
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.xfa = {
     isNormalUser = true;
@@ -74,6 +80,9 @@
     packages = with pkgs; [];
     hashedPassword = "$6$toGeXv0PFQQfHdcs$aOVEx8Rvet6KyvWA14hHHXklaPRW/arErA83a6MtKZKfEH4xE1RvzxYPgQYAzJTUNmcdtZfzmJZUW1Fjy4Rz7.";
     shell = pkgs.zsh;
+    openssh.authorizedKeys.keyFiles = [
+      config.sops.secrets.authorized_keys.path
+    ];
   };
   programs.zsh.enable = true;
   
