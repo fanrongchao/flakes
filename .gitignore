@@ -30,4 +30,4 @@ Thumbs.db
 *.log
 
 #age-keys
-age-keys/*
+age-keys/*.txt
