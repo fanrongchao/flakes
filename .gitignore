@@ -28,3 +28,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+#age-keys
+age-keys/*
