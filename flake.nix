@@ -98,6 +98,21 @@
         ];
       };
 
+      nixosConfigurations.rog-laptop = lib.nixosSystem {
+        inherit system;
+        modules = [
+          {nixpkgs.overlays = [(import ./overlays)];}
+          sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.frc = import ./users/frc/home.nix;
+          } 
+          ./hosts/rog-laptop              
+        ];
+      };
+
       #home-manager configuraions
 
       homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
