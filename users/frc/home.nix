@@ -57,6 +57,8 @@
     nerd-fonts.ubuntu-mono
     nerd-fonts.meslo-lg
     nerd-fonts.caskaydia-cove
+    #chrome
+    google-chrome
   ]; 
   fonts.fontconfig.enable = true;
 

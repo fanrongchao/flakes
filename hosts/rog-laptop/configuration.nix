@@ -83,6 +83,8 @@
     isNormalUser = true;
     description = "Rongchao Fan";
     extraGroups = [ "networkmanager" "wheel" ];
+    shell = pkgs.zsh;
+    ignoreShellProgramCheck = true;
     packages = with pkgs; [
     #  thunderbird
     ];
@@ -119,7 +121,6 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-    google-chrome
   #  wget
   ];
 
