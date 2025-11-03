@@ -67,11 +67,11 @@
   };
 
   #sops
-  sops.age.keyFile = "/root/.config/sops/age/keys.txt";
-  sops.secrets.authorized_keys = {
-    sopsFile = ../../secrets/authorized_keys.yaml;
-    neededForUsers = true;
-  };
+  #sops.age.keyFile = "/root/.config/sops/age/keys.txt";
+  #sops.secrets.authorized_keys = {
+  #  sopsFile = ../../secrets/authorized_keys.yaml;
+  #  neededForUsers = true;
+  #};
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.xfa = {
@@ -81,8 +81,9 @@
     packages = with pkgs; [];
     hashedPassword = "$6$toGeXv0PFQQfHdcs$aOVEx8Rvet6KyvWA14hHHXklaPRW/arErA83a6MtKZKfEH4xE1RvzxYPgQYAzJTUNmcdtZfzmJZUW1Fjy4Rz7.";
     shell = pkgs.zsh;
-    openssh.authorizedKeys.keyFiles = [
-      config.sops.secrets.authorized_keys.path
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKf2wHEXcRzC89DQP168jR190qJYvnLGL5KDPc9i18Kr frc@rog-laptop-nixos"	
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKYn2d7QD2XXmprwG37RDGanwFBRU8Qu1hRDcx1W5uTa fanrongchao@gmail.com"
     ];
   };
   programs.zsh.enable = true;
@@ -113,7 +114,13 @@
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings = {
+      PermitRootLogin = "no";
+      PasswordAuthentication = false;
+    };
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
