@@ -169,17 +169,4 @@
     categories = [ "System" "TerminalEmulator" ];
     startupNotify = true;
   };
-
-  #home.sessionVariables = {
-  #  HTTP_PROXY  = "http://127.0.0.1:7897";
-  #  HTTPS_PROXY = "http://127.0.0.1:7897";
-  #  ALL_PROXY   = "socks5://127.0.0.1:7897";
-  #  NO_PROXY    = "localhost,127.0.0.1";
-  #};
-  #systemd.user.sessionVariables = {
-  #  HTTP_PROXY  = "http://127.0.0.1:7897";
-  #  HTTPS_PROXY = "http://127.0.0.1:7897";
-  #  ALL_PROXY   = "socks5://127.0.0.1:7897";
-  #  NO_PROXY    = "localhost,127.0.0.1,::1";
-  #};
 }
