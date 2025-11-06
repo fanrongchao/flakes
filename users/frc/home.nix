@@ -1,6 +1,5 @@
 { config, pkgs, ... }:
 {
-  nixpkgs.config.allowUnfree = true; 
   home.username = "frc";
   home.homeDirectory = "/home/frc";
   home.stateVersion = "25.11";
