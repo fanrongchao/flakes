@@ -41,6 +41,9 @@
     nixd
     lua-language-server 
 
+    #github clli
+    gh
+
     #fonts
     noto-fonts
     noto-fonts-cjk-sans
