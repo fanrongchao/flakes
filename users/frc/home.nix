@@ -27,6 +27,9 @@
     duf
     dust
 
+    #tmux
+    tmux
+
     #AstroNvim or LazyVim
     gcc
     gnumake
@@ -66,6 +69,9 @@
   #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
   xdg.configFile."nvim".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/astronvim";
+  #tmux conf
+  xdg.configFile."tmux/tmux.conf".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/tmux/tmux.conf";
 
   #Chinese Inputs
   i18n.inputMethod = {
