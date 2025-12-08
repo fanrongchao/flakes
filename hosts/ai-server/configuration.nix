@@ -84,6 +84,7 @@
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKf2wHEXcRzC89DQP168jR190qJYvnLGL5KDPc9i18Kr frc@rog-laptop-nixos"	
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKYn2d7QD2XXmprwG37RDGanwFBRU8Qu1hRDcx1W5uTa fanrongchao@gmail.com"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM9OCVuX2JqNJ7JDQNGIcrgOwPe4zMd1qQZHmUzw35g1 f@xfa.cn"
     ];
   };
   programs.zsh.enable = true;
