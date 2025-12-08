@@ -38,10 +38,14 @@
     fd
     nodejs
     python3
+    unzip
 
     #lsp servers
     nixd
     lua-language-server 
+    #lua formater
+    stylua
+    selene
 
     #github clli
     gh
