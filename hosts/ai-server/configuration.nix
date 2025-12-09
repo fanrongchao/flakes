@@ -35,6 +35,7 @@
     interface = "ens5f0np0";
   };
   networking.nameservers = ["8.8.8.8" "1.1.1.1"];
+  services.resolved.enable = false;
   # --finish adding
 
   # Configure network proxy if necessary
