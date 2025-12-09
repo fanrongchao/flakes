@@ -44,6 +44,11 @@
 
   # Enable networking
   networking.networkmanager.enable = false;
+  environment.etc."resolv.conf".text = ''
+    nameserver 8.8.8.8
+    nameserver 1.1.1.1
+    options edns0
+  '';
 
   # Set your time zone.
   time.timeZone = "Asia/Shanghai";
