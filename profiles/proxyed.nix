@@ -4,4 +4,5 @@
     mihomo
   #  wget
   ];
+  networking.firewall.enable = false;
 }
