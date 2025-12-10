@@ -8,8 +8,6 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      # Include profiles
-      ../../profiles/proxyed.nix
     ];
   # enable flake
   nix.settings.experimental-features = ["nix-command" "flakes"];

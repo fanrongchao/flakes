@@ -3,5 +3,7 @@
 {
   imports = [
     ./configuration.nix
+    #profiles
+    ../../profiles/network-egress-proxy.nix
   ];
 }
