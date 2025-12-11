@@ -9,6 +9,7 @@
     };
     dotfiles = { url = "github:fanrongchao/dotfiles"; flake = false; };
     sops-nix.url = "github:Mic92/sops-nix";
+    mihomo-cli.url = "github:fanrongchao/mihomocli";
   };
 
   outputs = { self, nixpkgs, home-manager, dotfiles, sops-nix, ... }@inputs: 
