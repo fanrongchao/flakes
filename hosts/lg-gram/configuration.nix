@@ -75,6 +75,8 @@
     # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
+  hardware.alsa.enablePersistence = true;
+
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
@@ -102,6 +104,7 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     git
+    alsa-utils
   #  wget
   ];
   # Install clash-verge
