@@ -12,6 +12,7 @@
 
         # ✅ 必须是 FQDN，且不能和 server_url 的域相同/包含
         base_domain = "tail.zhsjf.cn";
+        override_local_dns = false;
 
         # 可选：给客户端注入搜索域
         # search_domains = [ "tail.zhsjf.cn" ];
