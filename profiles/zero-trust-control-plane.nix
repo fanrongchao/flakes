@@ -6,5 +6,9 @@
       server_url = "https://hs.zhsjf.cn";
       listen_addr = "127.0.0.1:8080";
     };
+    dns_config = {
+      magic_dns = true;
+      base_domain = "zhsjf.cn";   # ✅ 必填：用于 MagicDNS
+    };
   };
 }
