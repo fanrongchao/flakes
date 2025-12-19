@@ -121,6 +121,9 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    pciutils
+    cudaPackages.cudatoolkit
+    mesa-demos
   #  wget
   ];
 
@@ -150,5 +153,36 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.05"; # Did you read the comment?
+  
+  #install nvidia driver
+  services.xserver.videoDrivers = [ "nvidia" ];
+  boot.blacklistedKernelModules = [ "nouveau" ];
+
+  hardware.nvidia = {
+    # 必须项
+    package = config.boot.kernelPackages.nvidiaPackages.production;
+    modesetting.enable = true;
+    nvidiaSettings = true;
+
+    # 必须关闭 open 驱动
+    open = false;
+
+    powerManagement.enable = false;
+
+    ########################################
+    # PRIME（Intel + NVIDIA 双显卡）
+    ########################################
+    prime = {
+      # offload 模式：显示走 Intel，算力走 NVIDIA
+      offload.enable = true;
+      offload.enableOffloadCmd = true;
+
+      intelBusId  = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+    };
+  };
+  hardware.graphics = {
+    enable = true;
+  };
 
 }
