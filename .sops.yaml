@@ -1,9 +1,7 @@
 creation_rules:
-  - path_regex: ^secrets/.*
-    age: >-
-      age1syktjnm7k3sq962vquwjvsm6nnu2kkuyrfgxa9sv3jf0yqtg7s6sluqu94,
-      age18u2shntrhgl0l6n6d9pdm75p5h3yh8uepevwnm44sladdvr8a4ds04q479,
-      age1c76ha3lwpsmxckch6eecwuf3mjs9nfr76mwkfanktl5g2ayjmejqu98gd0,
-      age1aunqadtaj3rvgmz4tw2dgqf9gh7w5xz8ngrglkzyuwr30ktclgps2j2ryq
-
-
+  - path_regex: ^secrets/.*\.(ya?ml|json)$
+    age:
+      # rog-laptop
+      - age1245qx04gvz5rjg2mr9kmy7n95awzfvlxjgjrdsjp5xg09vx60sasr0jr7d 
+      # ai-server
+      - age1yc8rusaa3f7jdc90pgkqgwy4exdmudxn6drzfvz266p74w2a75as3vdzz0
