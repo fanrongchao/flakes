@@ -112,7 +112,7 @@
     enable = true;
     tunMode = true;
     serviceMode = true;
-    autoStart = true;
+    autoStart = false;
   };
 
   # Some programs need SUID wrappers, can be configured further or are
