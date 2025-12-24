@@ -75,7 +75,31 @@
     # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
+  
   hardware.alsa.enablePersistence = true;
+  
+  #bluetooth
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+
+  # 2) 固件（建议明确加上）
+  hardware.enableAllFirmware = true;
+  hardware.firmware = [ pkgs.linux-firmware ];
+
+  # 3) 用更新的内核（非常关键：新平台/新网卡）
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  # 4) 常见 Intel 蓝牙问题：禁用 btusb autosuspend（可显著提高成功率）
+  boot.kernelParams = [ "btusb.enable_autosuspend=0" ];
+
+  # 5) blueman 可有可无（不冲突，但不是根因）
+  services.blueman.enable = true;
+
+  # 6) 工具（方便排查）
+
+
 
 
   # Enable touchpad support (enabled default in most desktopManager).
@@ -105,6 +129,8 @@
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     git
     alsa-utils
+    #bluetooth utils
+    bluez
   #  wget
   ];
   # Install clash-verge
