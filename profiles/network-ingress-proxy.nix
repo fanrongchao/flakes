@@ -1,5 +1,26 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
+  sops.age.keyFile = "/var/lib/sops/age/keys.txt";
+  sops.secrets."dns/ak" = {
+    sopsFile = ../secrets/aliyun.yaml;
+    owner = "caddy";
+    group = "caddy";
+  };
+  sops.secrets."dns/as" = {
+    sopsFile = ../secrets/aliyun.yaml;
+    owner = "caddy";
+    group = "caddy";
+  };
+  sops.templates."caddy-alidns.env" = {
+    owner = "caddy";
+    group = "caddy";
+    mode = "0400";
+    content = ''
+      ALICLOUD_ACCESS_KEY=${config.sops.placeholder."dns/ak"}
+      ALICLOUD_SECRET_KEY=${config.sops.placeholder."dns/as"}
+    '';
+  };
+
   services.caddy = {
     enable = true;
     package = pkgs.caddy.withPlugins {
@@ -11,7 +32,16 @@
     };
 
     virtualHosts."hs.zhsjf.cn".extraConfig = ''
+      tls {
+        dns alidns {
+          access_key_id {env.ALICLOUD_ACCESS_KEY}
+          access_key_secret {env.ALICLOUD_SECRET_KEY}
+        }
+      }
       reverse_proxy 127.0.0.1:8080
     '';
   };
+
+  systemd.services.caddy.serviceConfig.EnvironmentFile =
+    config.sops.templates."caddy-alidns.env".path;
 }
