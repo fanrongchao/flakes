@@ -80,6 +80,21 @@
         ];
       };
 
+      nixosConfigurations.pve-dev-01 = lib.nixosSystem {
+        inherit system;
+        modules = [
+          {nixpkgs.overlays = [(import ./overlays)];}
+	  sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.frc = import ./users/frc/home.nix;
+          } 
+          ./hosts/pve-dev-01             
+        ];
+      };
+
       nixosConfigurations.ai-server= lib.nixosSystem {
         inherit system;
         modules = [
