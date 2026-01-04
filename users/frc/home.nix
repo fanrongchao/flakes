@@ -66,6 +66,8 @@
     nerd-fonts.caskaydia-cove
     #chrome
     google-chrome
+    #secondary screen
+    input-leap
   ]; 
   fonts.fontconfig.enable = true;
 

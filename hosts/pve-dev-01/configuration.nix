@@ -11,6 +11,26 @@
     ];
   #enable flake
   nix.settings.experimental-features = ["nix-command" "flakes"];
+  #nix proxy
+  systemd.services.nix-daemon.environment = {
+    HTTP_PROXY  = "http://192.168.0.150:7897";
+    HTTPS_PROXY = "http://192.168.0.150:7897";
+    ALL_PROXY   = "socks5://192.168.0.150:7897";
+    NO_PROXY    = "127.0.0.1,localhost,192.168.0.0/16";
+  };
+  environment.variables = {
+    HTTP_PROXY  = "http://192.168.0.150:7897";
+    HTTPS_PROXY = "http://192.168.0.150:7897";
+    ALL_PROXY   = "socks5://192.168.0.150:7897";
+
+    http_proxy  = "http://192.168.0.150:7897";
+    https_proxy = "http://192.168.0.150:7897";
+    all_proxy   = "socks5://192.168.0.150:7897";
+
+    NO_PROXY    = "127.0.0.1,localhost,::1,192.168.0.0/16";
+    no_proxy    = "127.0.0.1,localhost,::1,192.168.0.0/16";
+  };
+
   
 
   # Bootloader.
@@ -115,6 +135,25 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+  #nvidia
+   # 1️⃣ 禁用 nouveau（必须）
+  boot.blacklistedKernelModules = [ "nouveau" ];
+
+  # 2️⃣ NVIDIA 官方驱动
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  hardware.nvidia = {
+    modesetting.enable = true;   # Wayland 必须
+    powerManagement.enable = false;
+    open = false;                # RTX 4090 必须 false
+    nvidiaSettings = true;
+  };
+
+  # 3️⃣ NVIDIA DRM（Wayland 必须）
+  boot.kernelParams = [
+    "nvidia-drm.modeset=1"
+  ];
+
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
