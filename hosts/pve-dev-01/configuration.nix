@@ -69,8 +69,8 @@
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  services.desktopManager.gnome.enable = true;
+  services.displayManager.gdm.enable = true;
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -121,7 +121,16 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     git
+    wl-clipboard
+    gnomeExtensions.gsconnect
+    gnome-extension-manager
+
   ];
+
+
+  # 发现/配对通常依赖 mDNS
+  services.avahi.enable = true;
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
