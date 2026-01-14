@@ -1,0 +1,14 @@
+diff --git a/packages/opencode/src/provider/provider.ts b/packages/opencode/src/provider/provider.ts
+index 253b0af..d2d6bdb 100644
+--- a/packages/opencode/src/provider/provider.ts
++++ b/packages/opencode/src/provider/provider.ts
+@@ -392,6 +392,9 @@ export const CUSTOM_LOADERS: Record<
+       }
+     },
+     async gitlab(input) {
++      if (!input?.id) {
++        return { autoload: false }
++      }
+       const instanceUrl = Env.get("GITLAB_INSTANCE_URL") || "https://gitlab.com"
+ 
+       const auth = await Auth.get(input.id)
