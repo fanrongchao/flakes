@@ -12,23 +12,26 @@
   #enable flake
   nix.settings.experimental-features = ["nix-command" "flakes"];
   #nix proxy
+  # 给 nix-daemon 用
   systemd.services.nix-daemon.environment = {
     HTTP_PROXY  = "http://192.168.0.150:7897";
     HTTPS_PROXY = "http://192.168.0.150:7897";
-    ALL_PROXY   = "socks5://192.168.0.150:7897";
-    NO_PROXY    = "127.0.0.1,localhost,192.168.0.0/16";
+    ALL_PROXY   = "http://192.168.0.150:7897";
+    NO_PROXY    = "127.0.0.1,localhost,::1,192.168.0.150";
   };
+
+  # 给所有用户程序用
   environment.variables = {
     HTTP_PROXY  = "http://192.168.0.150:7897";
     HTTPS_PROXY = "http://192.168.0.150:7897";
-    ALL_PROXY   = "socks5://192.168.0.150:7897";
+    ALL_PROXY   = "http://192.168.0.150:7897";
 
     http_proxy  = "http://192.168.0.150:7897";
     https_proxy = "http://192.168.0.150:7897";
-    all_proxy   = "socks5://192.168.0.150:7897";
+    all_proxy   = "http://192.168.0.150:7897";
 
-    NO_PROXY    = "127.0.0.1,localhost,::1,192.168.0.0/16";
-    no_proxy    = "127.0.0.1,localhost,::1,192.168.0.0/16";
+    NO_PROXY    = "127.0.0.1,localhost,::1,192.168.0.150";
+    no_proxy    = "127.0.0.1,localhost,::1,192.168.0.150";
   };
 
   
@@ -37,7 +40,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "pve-dev-01"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -71,15 +74,23 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.frc = {
     isNormalUser = true;
-    description = "frc";
+    description = "Rongchao Fan";
     extraGroups = [ "networkmanager" "wheel" ];
+    shell = pkgs.zsh;
+    ignoreShellProgramCheck = true;
     packages = with pkgs; [
     #  thunderbird
     ];
   };
 
+  security.sudo = {
+    enable = true;
+    wheelNeedsPassword = false;
+  };
+
   # Install firefox.
   programs.firefox.enable = true;
+  programs.zsh.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
