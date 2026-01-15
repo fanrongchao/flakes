@@ -2,7 +2,7 @@
 {
   imports = [
     ../../profiles/workstation-ui/shared/home.nix
-    ../../profiles/workstation-ui/gnome/home.nix
+    ../../profiles/workstation-ui/hypr/home.nix
   ];
 
   home.username = "frc";

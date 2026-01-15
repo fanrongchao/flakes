@@ -15,12 +15,5 @@
       ../../profiles/workstation-ui/hypr/home.nix
     ];
 
-    # Override tmux config only on zenbook.
-    xdg.configFile."tmux/tmux.conf" = lib.mkForce {
-      text = ''
-        source-file ~/dotfiles/tmux/tmux.conf
-        source-file ~/dotfiles/tmux/theme.conf
-      '';
-    };
   };
 }
