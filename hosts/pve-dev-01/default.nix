@@ -13,9 +13,7 @@
   workstation.inputLeap = {
     enable = true;
     server = "192.168.0.150";
-    extraArgs = [ "--no-tray" "--use-x11" ];
+    # Wayland-safe path: use EI backend + RemoteDesktop portal.
+    extraArgs = [ "--no-tray" "--use-ei" ];
   };
-
-  # Avoid RemoteDesktop portal prompts; use Xorg session.
-  services.xserver.displayManager.gdm.wayland = false;
 }
