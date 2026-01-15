@@ -16,7 +16,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "zenbook"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -58,6 +58,9 @@
     ];
   };
   programs.zsh.enable = true;
+
+  # Allow wheel (including frc) to use sudo without a password.
+  security.sudo.wheelNeedsPassword = false;
 
   # Install firefox.
   programs.firefox.enable = true;
