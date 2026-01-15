@@ -36,8 +36,14 @@
     QT_IM_MODULE = "fcitx";
   };
 
-  xdg.configFile."hypr".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypr";
+  xdg.configFile."hypr/hyprland.conf".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypr/hyprland.conf";
+
+  xdg.configFile."hypr/hyprlock.conf".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hyprlock/hyprlock.conf";
+
+  xdg.configFile."hypr/hypridle.conf".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypridle/hypridle.conf";
 
   xdg.configFile."waybar".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/waybar";
@@ -47,12 +53,6 @@
 
   xdg.configFile."fuzzel".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/fuzzel";
-
-  xdg.configFile."hyprlock".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hyprlock";
-
-  xdg.configFile."hypridle".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypridle";
 
   xdg.configFile."swappy".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swappy";
