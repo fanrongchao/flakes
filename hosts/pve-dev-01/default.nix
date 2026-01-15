@@ -14,6 +14,6 @@
     enable = true;
     server = "192.168.0.150";
     # Wayland-safe path: use EI backend + RemoteDesktop portal.
-    extraArgs = [ "--no-tray" "--use-ei" ];
+    extraArgs = [ "--no-tray" "--use-ei" "--no-daemon" ];
   };
 }

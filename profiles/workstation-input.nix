@@ -21,7 +21,7 @@ in
 
     extraArgs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "--no-tray" "--use-ei" ];
+      default = [ "--no-tray" "--use-ei" "--no-daemon" ];
       description = "Extra arguments passed to input-leap client.";
     };
   };
