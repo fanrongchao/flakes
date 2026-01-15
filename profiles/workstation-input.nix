@@ -30,13 +30,12 @@ in
     environment.systemPackages = [ pkgs.input-leap ];
 
     systemd.user.services.input-leap-client = {
-      Unit = {
-        Description = "Input Leap client";
-        After = [ "graphical-session.target" ];
-        PartOf = [ "graphical-session.target" ];
-      };
+      description = "Input Leap client";
+      wantedBy = [ "graphical-session.target" ];
+      after = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
 
-      Service = {
+      serviceConfig = {
         ExecStart = lib.concatStringsSep " " ([
           "${pkgs.input-leap}/bin/input-leapc"
           "--name"
@@ -46,10 +45,6 @@ in
         ]);
         Restart = "on-failure";
         RestartSec = 2;
-      };
-
-      Install = {
-        WantedBy = [ "graphical-session.target" ];
       };
     };
   };
