@@ -15,7 +15,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "rog-laptop"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -24,6 +24,9 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+
+  hardware.enableRedistributableFirmware = true;
+  services.fwupd.enable = true;
 
   # Set your time zone.
   time.timeZone = "Asia/Shanghai";
@@ -58,6 +61,9 @@
     ];
   };
 
+  # Allow wheel (including frc) to use sudo without a password.
+  security.sudo.wheelNeedsPassword = false;
+
   # Install firefox.
   programs.firefox.enable = true;
 
@@ -84,6 +90,7 @@
     pciutils
     cudaPackages.cudatoolkit
     mesa-demos
+    asusctl
   #  wget
   ];
 
@@ -99,6 +106,7 @@
 
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
+  services.asusd.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
@@ -117,6 +125,14 @@
   #install nvidia driver
   services.xserver.videoDrivers = [ "nvidia" ];
   boot.blacklistedKernelModules = [ "nouveau" ];
+
+  environment.sessionVariables = {
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    LIBVA_DRIVER_NAME = "nvidia";
+    NIXOS_OZONE_WL = "1";
+    WLR_NO_HARDWARE_CURSORS = "1";
+  };
 
   hardware.nvidia = {
     # 必须项
