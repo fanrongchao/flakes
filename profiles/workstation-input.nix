@@ -21,7 +21,7 @@ in
 
     extraArgs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ ];
+      default = [ "--no-tray" ];
       description = "Extra arguments passed to input-leap client.";
     };
   };
@@ -32,8 +32,7 @@ in
     systemd.user.services.input-leap-client = {
       Unit = {
         Description = "Input Leap client";
-        After = [ "graphical-session-pre.target" ];
-        PartOf = [ "graphical-session.target" ];
+        After = [ "default.target" ];
       };
 
       Service = {
@@ -49,7 +48,7 @@ in
       };
 
       Install = {
-        WantedBy = [ "graphical-session.target" ];
+        WantedBy = [ "default.target" ];
       };
     };
   };
