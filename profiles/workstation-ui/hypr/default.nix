@@ -18,7 +18,7 @@
       # Fallback only; autologin uses initial_session.
       default_session = {
         user = "greeter";
-        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --cmd Hyprland";
+        command = "${pkgs.tuigreet}/bin/tuigreet --cmd Hyprland";
       };
     };
   };

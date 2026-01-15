@@ -27,7 +27,7 @@
     # Utilities
     pavucontrol
     brightnessctl
-    polkit-kde-agent
+    polkit_gnome
   ];
 
   home.sessionVariables = {
