@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
@@ -10,7 +10,17 @@
   ];
 
   # Use Hypr ricing from ~/dotfiles on this host.
-  home-manager.users.frc.imports = [
-    ../../profiles/workstation-ui/hypr/home.nix
-  ];
+  home-manager.users.frc = {
+    imports = [
+      ../../profiles/workstation-ui/hypr/home.nix
+    ];
+
+    # Override tmux config only on zenbook.
+    xdg.configFile."tmux/tmux.conf" = lib.mkForce {
+      text = ''
+        source-file ~/dotfiles/tmux/tmux.conf
+        source-file ~/dotfiles/tmux/theme.conf
+      '';
+    };
+  };
 }

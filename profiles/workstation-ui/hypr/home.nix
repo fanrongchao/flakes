@@ -27,6 +27,7 @@
     # Utilities
     pavucontrol
     brightnessctl
+    swayosd
     polkit_gnome
   ];
 
@@ -54,6 +55,26 @@
   xdg.configFile."fuzzel".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/fuzzel";
 
+  xdg.configFile."swayosd" = {
+    source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swayosd";
+    force = true;
+  };
+
   xdg.configFile."swappy".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swappy";
+
+  systemd.user.services.swayosd = {
+    Unit = {
+      Description = "SwayOSD server";
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.swayosd}/bin/swayosd-server";
+      Restart = "on-failure";
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
 }

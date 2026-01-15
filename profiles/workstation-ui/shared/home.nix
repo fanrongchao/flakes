@@ -65,6 +65,7 @@
       cursor_beam_thickness 1.5
       disable_ligatures never
       line_height 1.5
+      include ~/.config/kitty/theme.conf
     '';
   };
 
