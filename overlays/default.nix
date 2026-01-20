@@ -53,5 +53,8 @@ final: prev: {
         models-dev = prev.models-dev;
       };
     in
-    mkOpencode;
+    mkOpencode.overrideAttrs (_old: {
+      version = version;
+      __intentionallyOverridingVersion = true;
+    });
 }
