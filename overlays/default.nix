@@ -5,7 +5,7 @@ final: prev: {
 
   opencode =
     let
-      version = "1.1.19";
+      version = "1.1.26";
       system = prev.stdenv.hostPlatform.system;
       src = prev.applyPatches {
         name = "opencode-${version}-src";
@@ -13,11 +13,10 @@ final: prev: {
           owner = "sst";
           repo = "opencode";
           tag = "v${version}";
-          hash = "sha256-dG8d40Q2iG738yhgu7y9ijYY3hWG7N0Fqjj1EvXMeLs=";
+          hash = "sha256-3PpnLiVB+MxnWmdKolUpQ9BQf7nzzRQhoTsL8m0eIBA=";
         };
         patches = [
           ./patches/opencode-gitlab-null-input.patch
-          ./patches/opencode-libc-define.patch
         ];
       };
       hashes = builtins.fromJSON (builtins.readFile "${src}/nix/hashes.json");
@@ -39,21 +38,20 @@ final: prev: {
       };
       nodeModulesHash =
         if system == "x86_64-linux" then
-          "sha256-ZkELIjvsWNy2Da6owVOgD1n9s8RP/Fr4X02zzbrJFzI="
+          "sha256-cSuB6jv9J5IaAxXrZ+JZo45SbxkHb18sd4ICYLoqKKY="
         else if builtins.hasAttr system hashes.nodeModules then
           hashes.nodeModules.${system}
         else
           throw "opencode: node_modules hash missing for ${system}";
-      mkNodeModules = prev.callPackage "${src}/nix/node-modules.nix" {
+      mkNodeModules = prev.callPackage "${src}/nix/node_modules.nix" {
         hash = nodeModulesHash;
         bunCpu = bunPlatform.cpu;
         bunOs = bunPlatform.os;
       };
-      mkOpencode = prev.callPackage "${src}/nix/opencode.nix" { };
+      mkOpencode = prev.callPackage "${src}/nix/opencode.nix" {
+        node_modules = mkNodeModules;
+        models-dev = prev.models-dev;
+      };
     in
-    mkOpencode {
-      inherit version src mkNodeModules;
-      scripts = "${src}/nix/scripts";
-      modelsDev = "${prev.models-dev}/dist/_api.json";
-    };
+    mkOpencode;
 }
