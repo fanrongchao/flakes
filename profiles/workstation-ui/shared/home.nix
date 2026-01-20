@@ -38,6 +38,11 @@
     };
   };
 
+  xdg.configFile."fcitx5" = {
+    source = ./fcitx5;
+    force = true;
+  };
+
   programs.kitty = {
     enable = true;
 

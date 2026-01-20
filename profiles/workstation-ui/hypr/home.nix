@@ -54,12 +54,6 @@
   xdg.configFile."fuzzel".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/fuzzel";
 
-  xdg.configFile."fcitx5" = {
-    source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/fcitx5";
-    force = true;
-  };
-
   xdg.configFile."swayosd" = {
     source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swayosd";
