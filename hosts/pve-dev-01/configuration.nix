@@ -129,10 +129,8 @@
     nvidiaSettings = true;
   };
 
-  # 3️⃣ NVIDIA DRM（Wayland 必须）
-  boot.kernelParams = [
-    "nvidia-drm.modeset=1"
-  ];
+  # 3️⃣ NVIDIA DRM (Wayland)
+  # Let the NixOS NVIDIA module manage kernel params to avoid duplicates.
 
 
   # Open ports in the firewall.

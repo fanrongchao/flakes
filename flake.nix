@@ -2,6 +2,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    hyprland.url = "github:hyprwm/Hyprland";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,6 +35,7 @@
 
       nixosConfigurations.zenbook = lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
 	  sops-nix.nixosModules.sops
@@ -49,6 +51,7 @@
 
       nixosConfigurations.lg-gram = lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
 	  sops-nix.nixosModules.sops
@@ -64,6 +67,7 @@
 
       nixosConfigurations.pve-dev-01 = lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
 	  sops-nix.nixosModules.sops
@@ -79,6 +83,7 @@
 
       nixosConfigurations.ai-server= lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
           sops-nix.nixosModules.sops
@@ -94,6 +99,7 @@
 
       nixosConfigurations.rog-laptop = lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
           sops-nix.nixosModules.sops

@@ -1,5 +1,18 @@
 { config, pkgs, ... }:
 
+let
+  waybarStart = pkgs.writeShellScript "waybar-start" ''
+    while true; do
+      for s in "$XDG_RUNTIME_DIR"/wayland-*; do
+        if [ -S "$s" ]; then
+          export WAYLAND_DISPLAY="$(basename "$s")"
+          exec ${pkgs.waybar}/bin/waybar
+        fi
+      done
+      sleep 1
+    done
+  '';
+in
 {
   imports = [
     ../shared/home.nix
@@ -74,6 +87,22 @@
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
+  systemd.user.services.waybar = {
+    Unit = {
+      Description = "Waybar status bar";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${waybarStart}";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" "default.target" ];
     };
   };
 }

@@ -45,6 +45,8 @@
     python3
     unzip
 
+    playwright-driver
+
     #lsp servers
     nixd
     lua-language-server 
@@ -66,6 +68,59 @@
   #tmux conf
   xdg.configFile."tmux/tmux.conf".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/tmux/tmux.conf";
+
+  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
+    "$schema" = "https://opencode.ai/config.json";
+    mcp = {
+      playwright = {
+        type = "local";
+        command = [ "npx" "-y" "@playwright/mcp@latest" ];
+        environment = {
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+          PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
+        };
+        enabled = true;
+        timeout = 60000;
+      };
+
+      playwright_headless = {
+        type = "local";
+        command = [ "npx" "-y" "@playwright/mcp@latest" "--headless" ];
+        environment = {
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+          PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
+        };
+        enabled = true;
+        timeout = 60000;
+      };
+
+      playwright_chrome = {
+        type = "local";
+        command = [ "npx" "-y" "@playwright/mcp@latest" "--browser" "chrome" ];
+        environment = {
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+          PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
+        };
+        enabled = true;
+        timeout = 60000;
+      };
+
+      playwright_chrome_headless = {
+        type = "local";
+        command = [ "npx" "-y" "@playwright/mcp@latest" "--browser" "chrome" "--headless" ];
+        environment = {
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+          PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
+        };
+        enabled = true;
+        timeout = 60000;
+      };
+    };
+  };
 
   programs.neovim = {
     enable = true;
