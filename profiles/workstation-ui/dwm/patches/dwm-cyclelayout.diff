@@ -1,0 +1,50 @@
+diff --git a/dwm.c b/dwm.c
+index 9fd0286..b3b0a5e 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -199,6 +199,8 @@ static void setclientstate(Client *c, long state);
+ static void setfocus(Client *c);
+ static void setfullscreen(Client *c, int fullscreen);
+ static void setlayout(const Arg *arg);
++static void cyclelayout(const Arg *arg);
++static void setlayoutzoom(const Arg *arg);
+ static void setmfact(const Arg *arg);
+ static void setup(void);
+ static void seturgent(Client *c, int urg);
+@@ -1519,7 +1521,36 @@ setlayout(const Arg *arg)
+ 	else
+ 		drawbar(selmon);
+ }
+ 
++void
++cyclelayout(const Arg *arg)
++{
++	int i, cur = 0;
++	Arg a;
++
++	if (!arg)
++		return;
++
++	for (i = 0; i < LENGTH(layouts); i++) {
++		if (selmon->lt[selmon->sellt] == &layouts[i]) {
++			cur = i;
++			break;
++		}
++	}
++
++	cur = (cur + arg->i + LENGTH(layouts)) % LENGTH(layouts);
++	a.v = &layouts[cur];
++	setlayout(&a);
++}
++
++void
++setlayoutzoom(const Arg *arg)
++{
++	Arg a = {0};
++	setlayout(arg);
++	zoom(&a);
++}
++
+ /* arg > 1.0 will set mfact absolutely */
+ void
+ setmfact(const Arg *arg)

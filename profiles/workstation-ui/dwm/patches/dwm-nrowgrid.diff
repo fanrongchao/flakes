@@ -1,0 +1,66 @@
+diff --git a/dwm.c b/dwm.c
+index 9fd0286..6c5e947 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -189,6 +189,7 @@ static void spawn(const Arg *arg);
+ static void tag(const Arg *arg);
+ static void tagmon(const Arg *arg);
+ static void tile(Monitor *m);
++static void nrowgrid(Monitor *m);
+ static void togglebar(const Arg *arg);
+ static void togglefloating(const Arg *arg);
+ static void toggletag(const Arg *arg);
+@@ -1752,5 +1753,53 @@ tile(Monitor *m)
+ }
+ 
++void
++nrowgrid(Monitor *m)
++{
++	unsigned int n, i, cols, rows, cn, rn;
++	int oh = gappoh;
++	int ov = gappov;
++	int ih = gappih;
++	int iv = gappiv;
++	int cw, ch;
++	Client *c;
++
++	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
++	if (n == 0)
++		return;
++
++	if (smartgaps && n == 1)
++		oh = ov = 0;
++
++	for (cols = 1; cols * cols < n; cols++);
++	rows = (n + cols - 1) / cols;
++	if (cols == 0)
++		cols = 1;
++	if (rows == 0)
++		rows = 1;
++
++	cw = (m->ww - 2 * ov - (int)(cols - 1) * iv) / (int)cols;
++	ch = (m->wh - 2 * oh - (int)(rows - 1) * ih) / (int)rows;
++	if (cw < 1)
++		cw = 1;
++	if (ch < 1)
++		ch = 1;
++
++	/* Column-major fill: top->bottom, then left->right.
++	 * With attach() inserting after focused client, new windows tend
++	 * to land under the current focus.
++	 */
++	for (i = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
++		cn = i / rows;
++		rn = i % rows;
++		resize(c,
++			m->wx + ov + (int)cn * (cw + iv),
++			m->wy + oh + (int)rn * (ch + ih),
++			cw - (2 * c->bw),
++			ch - (2 * c->bw),
++			0);
++	}
++}
++
+ void
+ togglebar(const Arg *arg)
+ {

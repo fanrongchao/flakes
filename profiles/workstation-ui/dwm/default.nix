@@ -3,8 +3,13 @@
 let
   dwmPatched = pkgs.dwm.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [
+      ./patches/dwm-attachaside.diff
       ./patches/dwm-focusdir-togglefullscreen.diff
+      ./patches/dwm-cyclelayout.diff
       ./patches/dwm-gaps.diff
+      ./patches/dwm-swapdir.diff
+      ./patches/dwm-nrowgrid.diff
+      ./patches/dwm-tagandview.diff
     ];
     postPatch = (old.postPatch or "") + ''
       cp ${./config.h} config.def.h
@@ -21,6 +26,10 @@ in
   ];
 
   services.xserver.enable = true;
+
+  # Prefer left Alt as the main modifier. This maps Right Alt to Level3
+  # (AltGr-like) so Mod1 is effectively Left Alt only.
+  services.xserver.xkb.options = "lv3:ralt_switch";
 
   services.xserver.windowManager.dwm = {
     enable = true;

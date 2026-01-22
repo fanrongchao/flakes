@@ -1,0 +1,33 @@
+diff --git a/dwm.c b/dwm.c
+index 9fd0286..20f0f79 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -403,5 +403,26 @@ void
+ attach(Client *c)
+ {
+-	c->next = c->mon->clients;
+-	c->mon->clients = c;
++	Client *sel;
++	Client **p;
++
++	/* Insert new client directly after the currently focused client.
++	 * Combined with a column-major grid layout, this makes "new window"
++	 * feel like it lands under the current focus (Hypr-like).
++	 */
++	sel = c->mon->sel;
++	if (!c->mon->clients || !sel) {
++		c->next = c->mon->clients;
++		c->mon->clients = c;
++		return;
++	}
++
++	for (p = &c->mon->clients; *p && *p != sel; p = &(*p)->next)
++		;
++	if (*p) {
++		c->next = sel->next;
++		sel->next = c;
++	} else {
++		c->next = c->mon->clients;
++		c->mon->clients = c;
++	}
+ }

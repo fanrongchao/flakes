@@ -1,5 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 
+/* Media keys (XF86Audio*) */
+#include <X11/XF86keysym.h>
+
 /* appearance */
 static const unsigned int borderpx  = 2;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
@@ -39,24 +42,25 @@ static const Rule rules[] = {
 };
 
 /* layout(s) */
-static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
+static const float mfact     = 0.50; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 1;    /* number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
 static const Layout layouts[] = {
   /* symbol     arrange function */
-  { "[]=" ,      tile },    /* first entry is default */
-  { "><>",      NULL },    /* no layout function means floating behavior */
-  { "[M]",      monocle },
+  { "HHH",       nrowgrid }, /* Hypr-like grid; first entry is default */
+  { "[]=",       tile },
+  { "><>",       NULL },
+  { "[M]",       monocle },
 };
 
 /* key definitions */
-#define MODKEY Mod4Mask
+#define MODKEY Mod1Mask
 #define TAGKEYS(KEY,TAG) \
   { MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
   { MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
-  { MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
+  { MODKEY|ShiftMask,             KEY,      tagandview,     {.ui = 1 << TAG} }, \
   { MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
@@ -76,6 +80,11 @@ static Key keys[] = {
   /* Ensure Ctrl+Space always toggles IM (works even in apps not integrated). */
   { ControlMask,                  XK_space,  spawn,          SHCMD("fcitx5-remote -t >/dev/null 2>&1") },
 
+  /* ROG media keys (F10/F11 usually map to these). */
+  { 0,                            XF86XK_AudioLowerVolume, spawn, SHCMD("pamixer -d 5 >/dev/null 2>&1") },
+  { 0,                            XF86XK_AudioRaiseVolume, spawn, SHCMD("pamixer -i 5 >/dev/null 2>&1") },
+  { 0,                            XF86XK_AudioMute,        spawn, SHCMD("pamixer -t >/dev/null 2>&1") },
+
   { MODKEY,                       XK_Return, spawn,          {.v = termcmd } },
   { MODKEY,                       XK_d,      spawn,          {.v = roficmd } },
 
@@ -84,13 +93,39 @@ static Key keys[] = {
   { MODKEY,                       XK_k,      focusdir,       {.i = 2 } },
   { MODKEY,                       XK_j,      focusdir,       {.i = 3 } },
 
+  /* In monocle (and other overlapping cases), directional focus is ambiguous.
+   * Use focusstack to cycle windows.
+   */
+  { MODKEY,                       XK_Tab,    focusstack,     {.i = +1 } },
+  { MODKEY|ShiftMask,             XK_Tab,    focusstack,     {.i = -1 } },
+
+  /* Quick window switcher */
+  { MODKEY|ShiftMask,             XK_d,      spawn,          SHCMD("rofi -show window") },
+
+  /* Hypr-like directional swap */
+  { MODKEY|ShiftMask,             XK_h,      swapdir,        {.i = 0 } },
+  { MODKEY|ShiftMask,             XK_l,      swapdir,        {.i = 1 } },
+  { MODKEY|ShiftMask,             XK_k,      swapdir,        {.i = 2 } },
+  { MODKEY|ShiftMask,             XK_j,      swapdir,        {.i = 3 } },
+
+  /* Master width */
+  { MODKEY|ControlMask,           XK_h,      setmfact,       {.f = -0.05 } },
+  { MODKEY|ControlMask,           XK_l,      setmfact,       {.f = +0.05 } },
+
+  /* Promote to master */
+  { MODKEY|ShiftMask,             XK_Return, zoom,           {0} },
+
   { MODKEY,                       XK_f,      togglefullscreen, {0} },
 
   { MODKEY,                       XK_b,      togglebar,      {0} },
-  { MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
-  { MODKEY,                       XK_y,      setlayout,      {.v = &layouts[1]} },
-  { MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
-  { MODKEY,                       XK_space,  setlayout,      {0} },
+  { MODKEY,                       XK_g,      setlayout,      {.v = &layouts[0]} },
+  /* Tile layout, promote focused to master (on the right). */
+  { MODKEY,                       XK_t,      setlayoutzoom,  {.v = &layouts[1]} },
+  { MODKEY,                       XK_y,      setlayout,      {.v = &layouts[2]} },
+  { MODKEY,                       XK_m,      setlayout,      {.v = &layouts[3]} },
+  /* Cycle layouts (grid -> tile -> floating -> monocle). */
+  { MODKEY,                       XK_space,  cyclelayout,    {.i = +1 } },
+  { MODKEY|ControlMask,           XK_space,  cyclelayout,    {.i = -1 } },
   { MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
 
   { MODKEY,                       XK_0,      view,           {.ui = ~0 } },

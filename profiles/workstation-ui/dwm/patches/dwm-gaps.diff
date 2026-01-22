@@ -2,7 +2,7 @@ diff --git a/dwm.c b/dwm.c
 index 9fd0286..fcf2f0a 100644
 --- a/dwm.c
 +++ b/dwm.c
-@@ -1686,36 +1686,53 @@ tagmon(const Arg *arg)
+@@ -1686,36 +1686,54 @@ tagmon(const Arg *arg)
  void
  tile(Monitor *m)
  {
@@ -45,7 +45,8 @@ index 9fd0286..fcf2f0a 100644
 -			if (my + HEIGHT(c) < m->wh)
 -				my += HEIGHT(c);
 +			h = (m->wh - 2 * oh - my - ih * (nm - i - 1)) / (nm - i);
-+			resize(c, m->wx + ov, m->wy + oh + my,
++			/* master on the right */
++			resize(c, m->wx + ov + (n > m->nmaster ? (tw - mw) + iv : 0), m->wy + oh + my,
 +				mw - (2 * c->bw), h - (2 * c->bw), 0);
 +			my += HEIGHT(c) + ih;
  		} else {
@@ -54,7 +55,7 @@ index 9fd0286..fcf2f0a 100644
 -			if (ty + HEIGHT(c) < m->wh)
 -				ty += HEIGHT(c);
 +			h = (m->wh - 2 * oh - ty - ih * (n - i - 1)) / (n - i);
-+			resize(c, m->wx + ov + mw + iv, m->wy + oh + ty,
++			resize(c, m->wx + ov, m->wy + oh + ty,
 +				tw - mw - (2 * c->bw), h - (2 * c->bw), 0);
 +			ty += HEIGHT(c) + ih;
  		}

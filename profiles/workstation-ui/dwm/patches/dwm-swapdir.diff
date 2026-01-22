@@ -1,0 +1,110 @@
+diff --git a/dwm.c b/dwm.c
+index e1d4c58..a24b58c 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -189,7 +189,8 @@ static void focus(Client *c);
+ static void focusin(XEvent *e);
+ static void focusmon(const Arg *arg);
+ static void focusstack(const Arg *arg);
+ static void focusdir(const Arg *arg);
++static void swapdir(const Arg *arg);
+ static void togglefullscreen(const Arg *arg);
+ static Atom getatomprop(Client *c, Atom prop);
+ static int getrootptr(int *x, int *y);
+@@ -1053,4 +1054,96 @@ focusdir(const Arg *arg)
+ }
+ 
++void
++swapdir(const Arg *arg)
++{
++	Client *c, *best = NULL;
++	Client **pc, **pb;
++	long bestscore = LONG_MAX;
++	int dir;
++	int cx, cy;
++
++	if (!selmon->sel)
++		return;
++
++	/* Only swap tiled clients. */
++	if (selmon->sel->isfloating)
++		return;
++
++	dir = arg->i;
++	cx = selmon->sel->x + selmon->sel->w / 2;
++	cy = selmon->sel->y + selmon->sel->h / 2;
++
++	for (c = selmon->clients; c; c = c->next) {
++		int x, y, dx, dy;
++		long score;
++		if (c == selmon->sel || !ISVISIBLE(c) || c->isfloating)
++			continue;
++		x = c->x + c->w / 2;
++		y = c->y + c->h / 2;
++		dx = x - cx;
++		dy = y - cy;
++
++		/* directions: 0 left, 1 right, 2 up, 3 down */
++		switch (dir) {
++		case 0:
++			if (dx >= 0)
++				continue;
++			score = (-dx) * 100000L + labs(dy);
++			break;
++		case 1:
++			if (dx <= 0)
++				continue;
++			score = (dx) * 100000L + labs(dy);
++			break;
++		case 2:
++			if (dy >= 0)
++				continue;
++			score = (-dy) * 100000L + labs(dx);
++			break;
++		case 3:
++			if (dy <= 0)
++				continue;
++			score = (dy) * 100000L + labs(dx);
++			break;
++		default:
++			continue;
++		}
++
++		if (score < bestscore) {
++			bestscore = score;
++			best = c;
++		}
++	}
++
++	if (!best)
++		return;
++
++	for (pc = &selmon->clients; *pc && *pc != selmon->sel; pc = &(*pc)->next);
++	for (pb = &selmon->clients; *pb && *pb != best; pb = &(*pb)->next);
++	if (!*pc || !*pb)
++		return;
++
++	if (selmon->sel->next == best) {
++		selmon->sel->next = best->next;
++		best->next = selmon->sel;
++		*pc = best;
++	} else if (best->next == selmon->sel) {
++		best->next = selmon->sel->next;
++		selmon->sel->next = best;
++		*pb = selmon->sel;
++	} else {
++		Client *cnext = selmon->sel->next;
++		Client *bnext = best->next;
++		*pc = best;
++		*pb = selmon->sel;
++		selmon->sel->next = bnext;
++		best->next = cnext;
++	}
++
++	arrange(selmon);
++	focus(selmon->sel);
++	restack(selmon);
++}
++
+ void
+ incnmaster(const Arg *arg)

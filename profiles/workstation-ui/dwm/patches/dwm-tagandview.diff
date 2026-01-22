@@ -1,0 +1,26 @@
+diff --git a/dwm.c b/dwm.c
+index 9fd0286..c3f12e6 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -238,5 +238,6 @@ static void togglefloating(const Arg *arg);
+ static void toggletag(const Arg *arg);
+ static void toggleview(const Arg *arg);
++static void tagandview(const Arg *arg);
+ static void unfocus(Client *c, int setfocus);
+ static void unmanage(Client *c, int destroyed);
+ static void unmapnotify(XEvent *e);
+@@ -1677,6 +1678,14 @@ tag(const Arg *arg)
+ 	}
+ }
+ 
++void
++tagandview(const Arg *arg)
++{
++	if (selmon->sel && arg->ui & TAGMASK)
++		selmon->sel->tags = arg->ui & TAGMASK;
++	view(arg);
++}
++
+ void
+ tagmon(const Arg *arg)
+ {
