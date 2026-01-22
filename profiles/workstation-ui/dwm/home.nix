@@ -115,6 +115,22 @@ in
     };
   };
 
+  # Activate fcitx5 (Rime) after login.
+  systemd.user.services.fcitx5-activate = {
+    Unit = {
+      Description = "Activate fcitx5 on login";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "fcitx5-daemon.service" "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'sleep 1; fcitx5-remote -o >/dev/null 2>&1 || true'";
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
   # Fcitx5 is started by Home Manager's input-method integration.
 
   systemd.user.services.picom = {

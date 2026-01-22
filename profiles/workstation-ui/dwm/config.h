@@ -73,6 +73,9 @@ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont,
 /* focusdir directions (must match the patch): 0 left, 1 right, 2 up, 3 down */
 static Key keys[] = {
   /* modifier                     key        function        argument */
+  /* Ensure Ctrl+Space always toggles IM (works even in apps not integrated). */
+  { ControlMask,                  XK_space,  spawn,          SHCMD("fcitx5-remote -t >/dev/null 2>&1") },
+
   { MODKEY,                       XK_Return, spawn,          {.v = termcmd } },
   { MODKEY,                       XK_d,      spawn,          {.v = roficmd } },
 
