@@ -1,0 +1,60 @@
+/* Rofi theme (dwm) */
+
+* {
+  bg:        #0f1115;
+  bg-alt:    #171a21;
+  fg:        #d7dce2;
+  accent:    #5fb3b3;
+  urgent:    #f07178;
+
+  text-color: @fg;
+  background-color: transparent;
+}
+
+window {
+  background-color: @bg;
+  border: 2px;
+  border-color: @accent;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+mainbox {
+  children: [ inputbar, listview ];
+  spacing: 10px;
+}
+
+inputbar {
+  background-color: @bg-alt;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+prompt { enabled: false; }
+
+entry {
+  placeholder: "Search";
+  placeholder-color: @fg;
+}
+
+listview {
+  lines: 10;
+  columns: 1;
+  spacing: 6px;
+  fixed-height: true;
+}
+
+element {
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+element selected {
+  background-color: @bg-alt;
+  text-color: @accent;
+}
+
+element-text {
+  text-color: inherit;
+}

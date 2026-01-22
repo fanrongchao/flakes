@@ -96,6 +96,7 @@ in
   };
 
   xdg.configFile."rofi/config.rasi".source = ./rofi/config.rasi;
+  xdg.configFile."rofi/theme.rasi".source = ./rofi/theme.rasi;
   xdg.configFile."picom/picom.conf".source = ./picom.conf;
   xdg.configFile."dunst/dunstrc".source = ./dunstrc;
 
