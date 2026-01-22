@@ -36,8 +36,13 @@ in
   # Ensure systemd --user services (input-leap, dwmblocks, picom, etc.) receive
   # session env (DISPLAY/XAUTHORITY) and get graphical-session.target.
   services.xserver.displayManager.sessionCommands = ''
-    systemctl --user import-environment DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
-    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+    export XMODIFIERS='@im=fcitx'
+    export GTK_IM_MODULE=fcitx
+    export QT_IM_MODULE=fcitx
+    export SDL_IM_MODULE=fcitx
+
+    systemctl --user import-environment DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XMODIFIERS GTK_IM_MODULE QT_IM_MODULE SDL_IM_MODULE
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XMODIFIERS GTK_IM_MODULE QT_IM_MODULE SDL_IM_MODULE
     systemctl --user start graphical-session.target >/dev/null 2>&1 || true
   '';
 

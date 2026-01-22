@@ -54,10 +54,54 @@ let
       sleep 1
     done
   '';
+
+  inputLeapPreLoginStart = pkgs.writeShellScript "input-leap-prelogin-start" ''
+    set -eu
+
+    display="${cfg.preLoginDisplay}"
+    xauth="/run/input-leap/.Xauthority"
+
+    # Wait for Xorg socket and copied Xauthority.
+    while true; do
+      if [ -S /tmp/.X11-unix/X0 ] && [ -r "$xauth" ]; then
+        export DISPLAY="$display"
+        export XAUTHORITY="$xauth"
+        exec ${inputLeapCmdBase} --use-x11 ${lib.escapeShellArg cfg.server}
+      fi
+      sleep 1
+    done
+  '';
 in
 {
   options.workstation.inputLeap = {
     enable = lib.mkEnableOption "input-leap client (Windows host is server)";
+
+    enablePreLogin = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Start input-leap as a system service so it works on the display manager
+        (pre-login) screen. This is designed for X11 + LightDM sessions.
+
+        When enabled, the user-level service is disabled to avoid duplicate
+        connections.
+      '';
+    };
+
+    preLoginDisplay = lib.mkOption {
+      type = lib.types.str;
+      default = ":0";
+      description = "X11 DISPLAY used for pre-login input-leap (usually :0).";
+    };
+
+    preLoginXauthority = lib.mkOption {
+      type = lib.types.str;
+      default = "/run/lightdm/root/:0";
+      description = ''
+        Xauthority cookie file used by the display manager X server.
+        For LightDM on NixOS this is usually /run/lightdm/root/:0.
+      '';
+    };
 
     server = lib.mkOption {
       type = lib.types.str;
@@ -81,7 +125,7 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.input-leap ];
 
-    systemd.user.services.input-leap-client = {
+    systemd.user.services.input-leap-client = lib.mkIf (!cfg.enablePreLogin) {
       description = "Input Leap client";
       wantedBy = [ "graphical-session.target" "default.target" ];
       after = [
@@ -97,6 +141,29 @@ in
         ExecStart = "${inputLeapStart}";
         Restart = "always";
         RestartSec = 2;
+      };
+    };
+
+    systemd.services.input-leap-client = lib.mkIf cfg.enablePreLogin {
+      description = "Input Leap client (pre-login X11)";
+      wantedBy = [ "graphical.target" ];
+      after = [ "display-manager.service" "network-online.target" ];
+      wants = [ "network-online.target" ];
+
+      serviceConfig = {
+        Type = "simple";
+        PermissionsStartOnly = true;
+
+        RuntimeDirectory = "input-leap";
+        RuntimeDirectoryMode = "0755";
+        ExecStartPre = "${pkgs.coreutils}/bin/install -m 0600 -o frc -g users ${cfg.preLoginXauthority} /run/input-leap/.Xauthority";
+        ExecStart = "${inputLeapPreLoginStart}";
+        Restart = "always";
+        RestartSec = 2;
+
+        # Run as the real desktop user so InputLeap uses the existing
+        # ~/.config/InputLeap trust store.
+        User = "frc";
       };
     };
   };
