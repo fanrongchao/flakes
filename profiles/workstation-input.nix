@@ -13,7 +13,10 @@ let
     (lib.escapeShellArg cfg.clientName)
   ] ++ (map lib.escapeShellArg extraArgsFiltered));
   inputLeapStart = pkgs.writeShellScript "input-leap-start" ''
+    set -eu
+
     while true; do
+      # 1) Wayland: wait for a WAYLAND_DISPLAY socket.
       for s in "$XDG_RUNTIME_DIR"/wayland-*; do
         if [ -S "$s" ]; then
           export WAYLAND_DISPLAY="$(basename "$s")"
@@ -40,6 +43,14 @@ let
           fi
         fi
       done
+
+      # 2) X11: start once DISPLAY is available.
+      if [ -n "''${DISPLAY-}" ] || [ -S /tmp/.X11-unix/X0 ]; then
+        export DISPLAY="''${DISPLAY-:0}"
+        export XAUTHORITY="''${XAUTHORITY-$HOME/.Xauthority}"
+        exec ${inputLeapCmdBase} --use-x11 ${lib.escapeShellArg cfg.server}
+      fi
+
       sleep 1
     done
   '';
@@ -76,11 +87,9 @@ in
       after = [
         "graphical-session.target"
         "xdg-desktop-portal.service"
-        "xdg-desktop-portal-hyprland.service"
       ];
       wants = [
         "xdg-desktop-portal.service"
-        "xdg-desktop-portal-hyprland.service"
       ];
       partOf = [ "graphical-session.target" ];
 

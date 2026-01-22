@@ -1,0 +1,99 @@
+diff --git a/dwm.c b/dwm.c
+index 9fd0286..e1d4c58 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -25,6 +25,7 @@
+ #include <locale.h>
+ #include <signal.h>
+ #include <stdarg.h>
++#include <limits.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -188,6 +189,8 @@ static void focus(Client *c);
+ static void focusin(XEvent *e);
+ static void focusmon(const Arg *arg);
+ static void focusstack(const Arg *arg);
++static void focusdir(const Arg *arg);
++static void togglefullscreen(const Arg *arg);
+ static Atom getatomprop(Client *c, Atom prop);
+ static int getrootptr(int *x, int *y);
+ static long getstate(Window w);
+@@ -844,6 +847,77 @@ focusstack(const Arg *arg)
+ 	}
+ }
+ 
++void
++togglefullscreen(const Arg *arg)
++{
++	if (!selmon->sel)
++		return;
++	setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
++}
++
++void
++focusdir(const Arg *arg)
++{
++	Client *c, *best = NULL;
++	long bestscore = LONG_MAX;
++	int dir;
++	int cx, cy;
++
++	if (!selmon->sel)
++		return;
++
++	dir = arg->i;
++	cx = selmon->sel->x + selmon->sel->w / 2;
++	cy = selmon->sel->y + selmon->sel->h / 2;
++
++	for (c = selmon->clients; c; c = c->next) {
++		int x, y, dx, dy;
++		long score;
++		if (c == selmon->sel || !ISVISIBLE(c))
++			continue;
++		x = c->x + c->w / 2;
++		y = c->y + c->h / 2;
++		dx = x - cx;
++		dy = y - cy;
++
++		/* directions: 0 left, 1 right, 2 up, 3 down */
++		switch (dir) {
++		case 0:
++			if (dx >= 0)
++				continue;
++			score = (-dx) * 100000L + labs(dy);
++			break;
++		case 1:
++			if (dx <= 0)
++				continue;
++			score = (dx) * 100000L + labs(dy);
++			break;
++		case 2:
++			if (dy >= 0)
++				continue;
++			score = (-dy) * 100000L + labs(dx);
++			break;
++		case 3:
++			if (dy <= 0)
++				continue;
++			score = (dy) * 100000L + labs(dx);
++			break;
++		default:
++			continue;
++		}
++
++		if (score < bestscore) {
++			bestscore = score;
++			best = c;
++		}
++	}
++
++	if (best) {
++		focus(best);
++		restack(selmon);
++	}
++}
++
+ void
+ incnmaster(const Arg *arg)
+ {

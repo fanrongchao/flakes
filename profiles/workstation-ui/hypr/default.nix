@@ -5,6 +5,11 @@
     ../shared
   ];
 
+  # Keep UI-specific Home Manager bits colocated with this UI profile.
+  home-manager.users.frc.imports = [
+    ./home.nix
+  ];
+
   programs.hyprland = {
     enable = true;
     package = inputs.hyprland.packages.${pkgs.system}.hyprland;

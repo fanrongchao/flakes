@@ -3,7 +3,7 @@
 {
   imports = [
     ./configuration.nix
-    ../../profiles/workstation-ui/hypr
+    ../../profiles/workstation-ui/dwm
     ../../profiles/workstation-input.nix
     ../../profiles/container-runtime
   ];
