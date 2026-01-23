@@ -66,6 +66,40 @@
   services.blueman.enable = true;
 
   # 6) 工具（方便排查）
+  # Audio: PipeWire with PulseAudio compatibility
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+  };
+  services.pulseaudio.enable = false;
+
+  # Speaker amp init for ALC298 on some LG Gram models.
+  systemd.services.alc298-speaker-fix = let
+    verbs = pkgs.fetchurl {
+      url = "https://raw.githubusercontent.com/joshuagrisham/galaxy-book2-pro-linux/main/sound/necessary-verbs.sh";
+      hash = "sha256-vH2jn8rgznzmKZA96DVaLX0wMB+Cu7uIU4cyP1fSqcc=";
+    };
+    fixScript = pkgs.writeShellScript "alc298-speaker-fix" ''
+      set -euo pipefail
+      if [ ! -e /dev/snd/hwC0D0 ]; then
+        exit 0
+      fi
+      export PATH=${pkgs.alsa-tools}/bin:$PATH
+      ${pkgs.bash}/bin/bash ${verbs}
+    '';
+  in {
+    description = "ALC298 speaker initialization (hda-verb)";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "sound.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = fixScript;
+    };
+  };
 
 
 
@@ -100,6 +134,7 @@
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     git
     alsa-utils
+    easyeffects
     #bluetooth utils
     bluez
   #  wget
