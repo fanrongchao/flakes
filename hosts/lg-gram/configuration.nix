@@ -104,7 +104,7 @@
 
 
 
-  # Touchpad: flip scroll direction (natural scrolling).
+  # Touchpad: enable natural-scrolling so content moves with fingers.
   services.libinput = {
     enable = true;
     touchpad.naturalScrolling = true;

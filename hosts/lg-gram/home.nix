@@ -75,4 +75,33 @@
       WantedBy = [ "default.target" ];
     };
   };
+
+  systemd.user.services."touchpad-natural-scroll" = let
+    script = pkgs.writeShellScript "enable-natural-scroll" ''
+      set -euo pipefail
+      if [ -z "${DISPLAY:-}" ]; then
+        export DISPLAY=:0
+      fi
+      if [ -z "${XAUTHORITY:-}" ]; then
+        export XAUTHORITY="$HOME/.Xauthority"
+      fi
+      device=$(${pkgs.xorg.xinput}/bin/xinput list --name-only | ${pkgs.gnugrep}/bin/grep -i "touchpad" | ${pkgs.coreutils}/bin/head -n1 || true)
+      if [ -n "$device" ]; then
+        ${pkgs.xorg.xinput}/bin/xinput set-prop "$device" "libinput Natural Scrolling Enabled" 1 || true
+      fi
+    '';
+  in {
+    Unit = {
+      Description = "Ensure touchpad natural scrolling is enabled";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = script;
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
 }
