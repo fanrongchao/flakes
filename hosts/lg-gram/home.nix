@@ -61,4 +61,18 @@
       WantedBy = [ "graphical-session.target" ];
     };
   };
+
+  systemd.user.services.chrome-cleanup = {
+    Unit = {
+      Description = "Remove stale Google Chrome singleton locks";
+      After = [ "graphical-session-pre.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = ''${pkgs.bash}/bin/bash -c "${pkgs.coreutils}/bin/rm -f \"$HOME/.config/google-chrome/SingletonLock\" \"$HOME/.config/google-chrome/SingletonCookie\" \"$HOME/.config/google-chrome/SingletonSocket\""'';
+    };
+    Install = {
+      WantedBy = [ "default.target" ];
+    };
+  };
 }
