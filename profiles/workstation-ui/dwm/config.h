@@ -68,6 +68,9 @@ static const Layout layouts[] = {
 
 static const char *termcmd[]  = { "kitty", NULL };
 static const char *roficmd[]  = { "rofi", "-show", "drun", NULL };
+static const char *chromecmd[] = { "google-chrome-stable", NULL };
+static const char *screencmd[] = { "flameshot", "gui", NULL };
+static const char *clipboardcmd[] = { "copyq", "toggle", NULL };
 
 /* dwm expects these symbols to exist (even if you prefer rofi). */
 static char dmenumon[2] = "0";
@@ -87,6 +90,9 @@ static Key keys[] = {
 
   { MODKEY,                       XK_Return, spawn,          {.v = termcmd } },
   { MODKEY,                       XK_d,      spawn,          {.v = roficmd } },
+  { MODKEY,                       XK_w,      spawn,          {.v = chromecmd } },
+  { MODKEY,                       XK_s,      spawn,          {.v = screencmd } },
+  { MODKEY,                       XK_c,      spawn,          {.v = clipboardcmd } },
 
   { MODKEY,                       XK_h,      focusdir,       {.i = 0 } },
   { MODKEY,                       XK_l,      focusdir,       {.i = 1 } },

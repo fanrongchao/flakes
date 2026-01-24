@@ -1,6 +1,16 @@
 { config, pkgs, lib, ... }:
 
 let
+  copyqStartScript = pkgs.writeShellScript "copyq-start" ''
+    set -euo pipefail
+    if [ -z "${DISPLAY:-}" ]; then
+      export DISPLAY=:0
+    fi
+    if [ -z "${XAUTHORITY:-}" ]; then
+      export XAUTHORITY="$HOME/.Xauthority"
+    fi
+    exec ${pkgs.copyq}/bin/copyq --start-server
+  '';
   volumeScript = pkgs.writeShellScript "dwmblock-volume" ''
     set -eu
     if ! command -v ${pkgs.pamixer}/bin/pamixer >/dev/null 2>&1; then
@@ -107,6 +117,8 @@ in
     feh
     xclip
     wl-clipboard
+    copyq
+    flameshot
     pamixer
     pavucontrol
     networkmanagerapplet
@@ -184,6 +196,22 @@ in
     Service = {
       ExecStart = "${pkgs.dunst}/bin/dunst";
       Restart = "on-failure";
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
+  systemd.user.services.copyq = {
+    Unit = {
+      Description = "CopyQ clipboard manager";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = copyqStartScript;
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
