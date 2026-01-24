@@ -11,6 +11,25 @@ let
     fi
     exec ${pkgs.copyq}/bin/copyq --start-server
   '';
+  flameshotActiveWindow = pkgs.writeShellScriptBin "flameshot-active-window" ''
+    set -euo pipefail
+    active="$(${pkgs.xdotool}/bin/xdotool getactivewindow 2>/dev/null || true)"
+    if [ -z "''${active}" ]; then
+      exec ${pkgs.flameshot}/bin/flameshot gui
+    fi
+
+    geometry="$(${pkgs.xdotool}/bin/xdotool getwindowgeometry --shell "''${active}" 2>/dev/null || true)"
+    if [ -z "''${geometry}" ]; then
+      exec ${pkgs.flameshot}/bin/flameshot gui
+    fi
+
+    eval "''${geometry}"
+    if [ -z "''${WIDTH:-}" ] || [ -z "''${HEIGHT:-}" ] || [ -z "''${X:-}" ] || [ -z "''${Y:-}" ]; then
+      exec ${pkgs.flameshot}/bin/flameshot gui
+    fi
+
+    exec ${pkgs.flameshot}/bin/flameshot gui --region "''${WIDTH}x''${HEIGHT}+''${X}+''${Y}"
+  '';
   volumeScript = pkgs.writeShellScript "dwmblock-volume" ''
     set -eu
     if ! command -v ${pkgs.pamixer}/bin/pamixer >/dev/null 2>&1; then
@@ -119,6 +138,8 @@ in
     wl-clipboard
     copyq
     flameshot
+    xdotool
+    flameshotActiveWindow
     pamixer
     pavucontrol
     networkmanagerapplet
