@@ -40,6 +40,31 @@ let
     echo "CPU $load"
   '';
 
+  batteryScript = pkgs.writeShellScript "dwmblock-battery" ''
+    set -eu
+    bat=""
+    for path in /sys/class/power_supply/BAT*; do
+      if [ -d "$path" ]; then
+        bat="$path"
+        break
+      fi
+    done
+
+    if [ -z "$bat" ]; then
+      echo "BAT ?"
+      exit 0
+    fi
+
+    cap="$(${pkgs.coreutils}/bin/cat "$bat/capacity" 2>/dev/null || echo "?")"
+    status="$(${pkgs.coreutils}/bin/cat "$bat/status" 2>/dev/null || echo "")"
+
+    if [ "$status" = "Charging" ]; then
+      echo "BAT ''${cap}% CHG"
+    else
+      echo "BAT ''${cap}%"
+    fi
+  '';
+
   dateScript = pkgs.writeShellScript "dwmblock-date" ''
     set -eu
     exec ${pkgs.coreutils}/bin/date '+%a %Y-%m-%d %H:%M'
@@ -53,6 +78,7 @@ let
       {"", "${volumeScript}", 2, 10},
       {"", "${netScript}", 5, 11},
       {"", "${cpuScript}", 2, 12},
+      {"", "${batteryScript}", 10, 14},
       {"", "${dateScript}", 10, 13},
     };
     
