@@ -107,7 +107,12 @@
   # Touchpad: enable natural-scrolling so content moves with fingers.
   services.libinput = {
     enable = true;
-    touchpad.naturalScrolling = true;
+    touchpad = {
+      naturalScrolling = true;
+      tapping = true;
+      tappingButtonMap = "lrm";
+      clickMethod = "clickfinger";
+    };
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.

@@ -10,11 +10,11 @@ static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 
 /* gaps (match Hyprland-ish spacing) */
-static const int smartgaps          = 1;        /* 1 means no outer gap when only one window */
+static const int smartgaps          = 0;        /* keep outer gap even with single window */
 static const unsigned int gappih    = 6;        /* inner horizontal gap */
 static const unsigned int gappiv    = 6;        /* inner vertical gap */
-static const unsigned int gappoh    = 10;       /* outer horizontal gap */
-static const unsigned int gappov    = 10;       /* outer vertical gap */
+static const unsigned int gappoh    = 6;        /* outer horizontal gap */
+static const unsigned int gappov    = 6;        /* outer vertical gap */
 static const char *fonts[]          = {
   "JetBrainsMono Nerd Font:size=11",
   "Noto Sans CJK SC:size=11",
