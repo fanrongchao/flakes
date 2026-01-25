@@ -74,6 +74,7 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     jack.enable = true;
+    wireplumber.enable = true;
   };
   services.pulseaudio.enable = false;
 
@@ -85,9 +86,6 @@
     };
     fixScript = pkgs.writeShellScript "alc298-speaker-fix" ''
       set -euo pipefail
-      if [ ! -e /dev/snd/hwC0D0 ]; then
-        exit 0
-      fi
       export PATH=${pkgs.alsa-tools}/bin:$PATH
       ${pkgs.bash}/bin/bash ${verbs}
     '';
@@ -97,6 +95,7 @@
     after = [ "sound.target" ];
     serviceConfig = {
       Type = "oneshot";
+      ConditionPathExistsGlob = "/dev/snd/hwC*D*";
       ExecStart = fixScript;
     };
   };
@@ -130,6 +129,11 @@
   # Install firefox.
   programs.firefox.enable = true;
 
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+  };
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -145,6 +149,7 @@
     easyeffects
     #bluetooth utils
     bluez
+    bun
   #  wget
   ];
   # Install clash-verge
