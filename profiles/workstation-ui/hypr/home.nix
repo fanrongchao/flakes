@@ -1,108 +1,77 @@
 { config, pkgs, ... }:
 
-let
-  waybarStart = pkgs.writeShellScript "waybar-start" ''
-    while true; do
-      for s in "$XDG_RUNTIME_DIR"/wayland-*; do
-        if [ -S "$s" ]; then
-          export WAYLAND_DISPLAY="$(basename "$s")"
-          exec ${pkgs.waybar}/bin/waybar
-        fi
-      done
-      sleep 1
-    done
-  '';
-in
 {
   imports = [
     ../shared/home.nix
   ];
 
+  programs.dank-material-shell = {
+    enable = true;
+    systemd.enable = true;
+    systemd.target = "hyprland-session.target";
+    enableSystemMonitoring = true;
+    dgop.package = pkgs.dgop;
+  };
+
   home.packages = with pkgs; [
-    # Core session tools
-    waybar
-    swaynotificationcenter
-    fuzzel
-
-    # Lock/idle
-    hyprlock
-    hypridle
-
-    # Screenshot + annotate
-    grim
-    slurp
-    swappy
-
-    # Clipboard history
     wl-clipboard
     cliphist
-
-    # Utilities
-    pavucontrol
     brightnessctl
-    swayosd
-    polkit_gnome
   ];
+
+  systemd.user.services.chrome-profile-cleanup = {
+    Unit = {
+      Description = "Clean stale Google Chrome profile locks";
+      Before = [ "dms.service" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'rm -f \"$HOME\"/.config/google-chrome/Singleton{Lock,Socket,Cookie}'";
+    };
+    Install = {
+      WantedBy = [ "hyprland-session.target" ];
+    };
+  };
 
   home.sessionVariables = {
     XMODIFIERS = "@im=fcitx";
+    GTK_IM_MODULE = "fcitx";
     QT_IM_MODULE = "fcitx";
+    SDL_IM_MODULE = "fcitx";
+    GLFW_IM_MODULE = "ibus";
   };
 
   xdg.configFile."hypr/hyprland.conf".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypr/hyprland.conf";
 
-  xdg.configFile."hypr/hyprlock.conf".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hyprlock/hyprlock.conf";
-
-  xdg.configFile."hypr/hypridle.conf".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypridle/hypridle.conf";
-
-  xdg.configFile."waybar".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/waybar";
-
-  xdg.configFile."swaync".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swaync";
-
-  xdg.configFile."fuzzel".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/fuzzel";
-
-  xdg.configFile."swayosd" = {
-    source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swayosd";
-    force = true;
+  systemd.user.targets."hyprland-session" = {
+    Unit = {
+      Description = "Hyprland Session Target";
+      Requires = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
   };
 
-  xdg.configFile."swappy".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/swappy";
-
-  systemd.user.services.swayosd = {
-    Unit = {
-      Description = "SwayOSD server";
-      PartOf = [ "graphical-session.target" ];
-    };
-    Service = {
-      ExecStart = "${pkgs.swayosd}/bin/swayosd-server";
-      Restart = "on-failure";
-    };
+  # Ensure fcitx5 daemon starts with the graphical session.
+  systemd.user.services.fcitx5-daemon = {
     Install = {
       WantedBy = [ "graphical-session.target" ];
     };
   };
 
-  systemd.user.services.waybar = {
+  # Activate fcitx5 (Rime) after login so it's ready for Ctrl+Space.
+  systemd.user.services.fcitx5-activate = {
     Unit = {
-      Description = "Waybar status bar";
+      Description = "Activate fcitx5 on login";
       PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
+      After = [ "fcitx5-daemon.service" "graphical-session.target" ];
     };
     Service = {
-      ExecStart = "${waybarStart}";
-      Restart = "on-failure";
-      RestartSec = 2;
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -lc 'sleep 1; fcitx5-remote -o >/dev/null 2>&1 || true'";
     };
     Install = {
-      WantedBy = [ "graphical-session.target" "default.target" ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 }

@@ -7,6 +7,7 @@
 
   # Keep UI-specific Home Manager bits colocated with this UI profile.
   home-manager.users.frc.imports = [
+    inputs.dank-material-shell.homeModules.dank-material-shell
     ./home.nix
   ];
 

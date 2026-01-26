@@ -80,11 +80,17 @@
     enable = true;
   };
 
+  services.power-profiles-daemon.enable = true;
+  services.accounts-daemon.enable = true;
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     google-chrome
+    (writeShellScriptBin "google-chrome" ''
+      exec ${pkgs.google-chrome}/bin/google-chrome-stable "$@"
+    '')
   #  wget
   ];
 

@@ -3,6 +3,8 @@ final: prev: {
   #      2. wrap sh and npm install -g pacakges and python app(uv) make them structural with helpers
   codex = prev.callPackage ../pkgs/codex {};
 
+  dgop = prev.callPackage ../pkgs/dgop {};
+
   opencode =
     let
       version = "1.1.26";
