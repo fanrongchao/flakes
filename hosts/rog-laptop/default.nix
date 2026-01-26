@@ -8,11 +8,5 @@
     ../../profiles/network-egress-proxy.nix
   ];
 
-  home-manager.users.frc = {
-    imports = [
-      ../../profiles/workstation-ui/hypr/home.nix
-    ];
-  };
-
   home-manager.backupFileExtension = "bak";
 }

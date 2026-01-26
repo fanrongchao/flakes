@@ -1,6 +1,18 @@
 { config, pkgs, ... }:
 
-{
+let
+  hyprlandSessionActivate = pkgs.writeShellScript "hyprland-session-activate" ''
+    set -euo pipefail
+    for _ in $(seq 1 40); do
+      if ${pkgs.coreutils}/bin/ls "/run/user/$UID"/wayland-* >/dev/null 2>&1; then
+        ${pkgs.systemd}/bin/systemctl --user start graphical-session.target hyprland-session.target
+        exit 0
+      fi
+      ${pkgs.coreutils}/bin/sleep 0.25
+    done
+    exit 0
+  '';
+in {
   imports = [
     ../shared/home.nix
   ];
@@ -17,6 +29,11 @@
     wl-clipboard
     cliphist
     brightnessctl
+    fuzzel
+    hyprlock
+    grim
+    slurp
+    swappy
   ];
 
   systemd.user.services.chrome-profile-cleanup = {
@@ -44,11 +61,31 @@
   xdg.configFile."hypr/hyprland.conf".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypr/hyprland.conf";
 
+  xdg.configFile."hypr/hyprlock.conf".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hyprlock/hyprlock.conf";
+
   systemd.user.targets."hyprland-session" = {
     Unit = {
       Description = "Hyprland Session Target";
       Requires = [ "graphical-session.target" ];
       After = [ "graphical-session.target" ];
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
+  systemd.user.services."hyprland-session-activate" = {
+    Unit = {
+      Description = "Activate Hyprland session targets";
+      After = [ "default.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = hyprlandSessionActivate;
+    };
+    Install = {
+      WantedBy = [ "default.target" ];
     };
   };
 

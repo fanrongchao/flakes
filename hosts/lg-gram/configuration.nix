@@ -114,6 +114,10 @@
     };
   };
 
+  services.accounts-daemon.enable = true;
+  services.power-profiles-daemon.enable = true;
+  systemd.services.power-profiles-daemon.wantedBy = [ "multi-user.target" ];
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.frc = {
     isNormalUser = true;

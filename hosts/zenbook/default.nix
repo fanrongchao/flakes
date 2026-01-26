@@ -9,11 +9,5 @@
     ../../profiles/zero-trust-node.nix
   ];
 
-  # Use Hypr ricing from ~/dotfiles on this host.
-  home-manager.users.frc = {
-    imports = [
-      ../../profiles/workstation-ui/hypr/home.nix
-    ];
-
-  };
+  # Host-specific Home Manager overrides go here when needed.
 }
