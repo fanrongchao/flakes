@@ -156,13 +156,7 @@
     bun
   #  wget
   ];
-  # Install clash-verge
-  programs.clash-verge = {
-    enable = true;
-    tunMode = true;
-    serviceMode = true;
-    autoStart = false;
-  };
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
