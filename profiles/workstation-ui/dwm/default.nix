@@ -29,7 +29,7 @@ in
 
   # Prefer left Alt as the main modifier. This maps Right Alt to Level3
   # (AltGr-like) so Mod1 is effectively Left Alt only.
-  services.xserver.xkb.options = "lv3:ralt_switch";
+  services.xserver.xkb.options = "lv3:ralt_switch,ctrl:nocaps";
 
   services.xserver.windowManager.dwm = {
     enable = true;
@@ -45,6 +45,9 @@ in
   # Ensure systemd --user services (input-leap, dwmblocks, picom, etc.) receive
   # session env (DISPLAY/XAUTHORITY) and get graphical-session.target.
   services.xserver.displayManager.sessionCommands = ''
+    # Ensure XKB options are applied for this X11 session.
+    ${pkgs.xorg.setxkbmap}/bin/setxkbmap -option 'lv3:ralt_switch,ctrl:nocaps'
+
     export XMODIFIERS='@im=fcitx'
     export GTK_IM_MODULE=fcitx
     export QT_IM_MODULE=fcitx

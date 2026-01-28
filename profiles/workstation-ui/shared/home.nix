@@ -43,6 +43,11 @@
     force = true;
   };
 
+  xdg.configFile."rime" = {
+    source = ./rime;
+    force = true;
+  };
+
   programs.kitty = {
     enable = true;
 

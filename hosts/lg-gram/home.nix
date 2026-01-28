@@ -1,9 +1,5 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 {
-  xdg.configFile."hypr/hyprland.conf" = lib.mkForce {
-    source = ./hyprland.conf;
-  };
-
   xdg.configFile."easyeffects/output/lg-gram-safe.json".text = ''
     {
       "output": {

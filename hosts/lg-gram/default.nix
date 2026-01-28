@@ -4,7 +4,7 @@
   imports = [
     ./configuration.nix
     #profiles
-    ../../profiles/workstation-ui/hypr
+    ../../profiles/workstation-ui/dwm
     ../../profiles/zero-trust-node.nix
     ../../profiles/network-egress-proxy.nix
   ];
