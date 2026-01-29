@@ -7,15 +7,15 @@ final: prev: {
 
   opencode =
     let
-      version = "1.1.26";
+      version = "1.1.40";
       system = prev.stdenv.hostPlatform.system;
       src = prev.applyPatches {
         name = "opencode-${version}-src";
         src = prev.fetchFromGitHub {
-          owner = "sst";
+          owner = "anomalyco";
           repo = "opencode";
           tag = "v${version}";
-          hash = "sha256-3PpnLiVB+MxnWmdKolUpQ9BQf7nzzRQhoTsL8m0eIBA=";
+          hash = "sha256-n7EYPrF+Qjk9v9m/KzKtC6lG5Bt23ScFuQMLNkujz7Q=";
         };
         patches = [
           ./patches/opencode-gitlab-null-input.patch
@@ -40,7 +40,7 @@ final: prev: {
       };
       nodeModulesHash =
         if system == "x86_64-linux" then
-          "sha256-cSuB6jv9J5IaAxXrZ+JZo45SbxkHb18sd4ICYLoqKKY="
+          "sha256-668uvopkWgfzsXMsxp6ZMNBbUIfR6bgQddGGAGUp3G8="
         else if builtins.hasAttr system hashes.nodeModules then
           hashes.nodeModules.${system}
         else

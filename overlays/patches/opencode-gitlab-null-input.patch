@@ -1,9 +1,7 @@
 diff --git a/packages/opencode/src/provider/provider.ts b/packages/opencode/src/provider/provider.ts
 --- a/packages/opencode/src/provider/provider.ts
 +++ b/packages/opencode/src/provider/provider.ts
-@@ -406,4 +406,7 @@
-       }
-     },
+@@ -1,2 +1,5 @@
      gitlab: async (input) => {
 +      if (!input?.id) {
 +        return { autoload: false }
@@ -13,12 +11,8 @@ diff --git a/packages/opencode/src/provider/provider.ts b/packages/opencode/src/
 diff --git a/packages/script/src/index.ts b/packages/script/src/index.ts
 --- a/packages/script/src/index.ts
 +++ b/packages/script/src/index.ts
-@@ -10,7 +10,7 @@
+@@ -1,3 +1,3 @@
+ if (!semver.satisfies(process.versions.bun, expectedBunVersionRange)) {
+-  throw new Error(`This script requires bun@${expectedBunVersionRange}, but you are using bun@${process.versions.bun}`)
++  console.warn(`This script expects bun@${expectedBunVersionRange}, but you are using bun@${process.versions.bun}`)
  }
- 
- if (process.versions.bun !== expectedBunVersion) {
--  throw new Error(`This script requires bun@${expectedBunVersion}, but you are using bun@${process.versions.bun}`)
-+  console.warn(`This script expects bun@${expectedBunVersion}, but you are using bun@${process.versions.bun}`)
- }
- 
- const env = {
