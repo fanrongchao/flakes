@@ -6,6 +6,7 @@
     #profiles
     ../../profiles/workstation-ui/dwm
     ../../profiles/container-runtime
+    ../../profiles/compute-cluster-control-plane.nix
     ../../profiles/zero-trust-node.nix
     ../../profiles/network-egress-proxy.nix
   ];

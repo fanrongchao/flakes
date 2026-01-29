@@ -1,8 +1,19 @@
 creation_rules:
-  - path_regex: ^secrets/.*\.(ya?ml|json)$
+  - path_regex: (^|.*/)secrets/.*\.(ya?ml|json)$
     age:
       # zenbook-laptop
       - age1245qx04gvz5rjg2mr9kmy7n95awzfvlxjgjrdsjp5xg09vx60sasr0jr7d 
+      # ai-server
+      - age1yc8rusaa3f7jdc90pgkqgwy4exdmudxn6drzfvz266p74w2a75as3vdzz0
+      # lg-gram
+      - age1yhp06fu0gysk7x63xxg5re940fwjjydaynv9tnlm49v7zgxmhs7q7hq57q
+      # rog-laptop
+      - age1q3anj703qwnqvw3hzcn64wgkqcyasp4t8rydfrh6huwfkdnhx5qqysgmxg
+
+  - path_regex: (^|.*/)clusters/.*\.sops\.ya?ml$
+    age:
+      # zenbook-laptop
+      - age1245qx04gvz5rjg2mr9kmy7n95awzfvlxjgjrdsjp5xg09vx60sasr0jr7d
       # ai-server
       - age1yc8rusaa3f7jdc90pgkqgwy4exdmudxn6drzfvz266p74w2a75as3vdzz0
       # lg-gram

@@ -4,6 +4,9 @@
     ../../profiles/workstation-ui/shared/home.nix
   ];
 
+  home.file.".kube/config".source =
+    config.lib.file.mkOutOfStoreSymlink "/etc/kubernetes/admin.conf";
+
   home.username = "frc";
   home.homeDirectory = "/home/frc";
   home.stateVersion = "25.11";
