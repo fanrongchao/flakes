@@ -99,6 +99,8 @@
   # Enable automatic login for the user.
   services.getty.autologinUser = "xfa";
 
+  security.sudo.wheelNeedsPassword = false;
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
