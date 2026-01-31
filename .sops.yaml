@@ -9,7 +9,7 @@ creation_rules:
       - age1yhp06fu0gysk7x63xxg5re940fwjjydaynv9tnlm49v7zgxmhs7q7hq57q
       # rog-laptop
       - age1q3anj703qwnqvw3hzcn64wgkqcyasp4t8rydfrh6huwfkdnhx5qqysgmxg
-      # additional recipient
+      # pve-dev-01
       - age1ht9lynx65f80xyh5wtyl8va5x4nxrpmzm6f48epp6v6edq6k0spq0pqdnr
 
   - path_regex: (^|.*/)clusters/.*\.sops\.ya?ml$
@@ -22,5 +22,5 @@ creation_rules:
       - age1yhp06fu0gysk7x63xxg5re940fwjjydaynv9tnlm49v7zgxmhs7q7hq57q
       # rog-laptop
       - age1q3anj703qwnqvw3hzcn64wgkqcyasp4t8rydfrh6huwfkdnhx5qqysgmxg
-      # additional recipient
+      # pve-dev-01
       - age1ht9lynx65f80xyh5wtyl8va5x4nxrpmzm6f48epp6v6edq6k0spq0pqdnr
