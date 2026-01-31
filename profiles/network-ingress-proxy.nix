@@ -37,11 +37,21 @@
           access_key_id {env.ALICLOUD_ACCESS_KEY}
           access_key_secret {env.ALICLOUD_SECRET_KEY}
         }
+        # Avoid split-DNS (e.g. Tailscale) breaking ACME DNS-01 propagation checks.
+        resolvers 1.1.1.1 8.8.8.8
       }
       reverse_proxy 127.0.0.1:8080
     '';
   };
 
-  systemd.services.caddy.serviceConfig.EnvironmentFile =
-    config.sops.templates."caddy-alidns.env".path;
+  systemd.services.caddy = {
+    # Ensure caddy reloads on nixos-rebuild when config or secrets change.
+    reloadTriggers = [
+      "/etc/caddy/caddy_config"
+      config.sops.templates."caddy-alidns.env".path
+    ];
+
+    serviceConfig.EnvironmentFile =
+      config.sops.templates."caddy-alidns.env".path;
+  };
 }
