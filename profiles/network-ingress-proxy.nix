@@ -25,10 +25,11 @@
     enable = true;
 
     # Run Caddy behind HAProxy (SNI passthrough on :443).
-    # Keep Caddy's HTTP port disabled to avoid redirects to :8443.
+    # Move Caddy's HTTP port away from :80 because HAProxy owns it.
     globalConfig = ''
       https_port 8443
-      http_port 0
+      http_port 18080
+      auto_https disable_redirects
     '';
     package = pkgs.caddy.withPlugins {
       # 建议先用“Latest 稳定版”tag（目前仓库的 Latest 是 v1.0.26；beta 版本也有）
