@@ -30,6 +30,10 @@
       https_port 8443
       http_port 18080
       auto_https disable_redirects
+
+      servers {
+        protocols h1 h2
+      }
     '';
     package = pkgs.caddy.withPlugins {
       # 建议先用“Latest 稳定版”tag（目前仓库的 Latest 是 v1.0.26；beta 版本也有）
