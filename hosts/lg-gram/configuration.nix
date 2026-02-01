@@ -54,7 +54,7 @@
 
   # 2) 固件（建议明确加上）
   hardware.enableAllFirmware = true;
-  hardware.firmware = [ pkgs.linux-firmware ];
+  hardware.firmware = [ pkgs.linux-firmware pkgs.sof-firmware ];
 
   # 3) 用更新的内核（非常关键：新平台/新网卡）
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -65,18 +65,7 @@
   # 5) blueman 可有可无（不冲突，但不是根因）
   services.blueman.enable = true;
 
-  # 6) 工具（方便排查）
-  # Audio: PipeWire with PulseAudio compatibility
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
-    wireplumber.enable = true;
-  };
-  services.pulseaudio.enable = false;
+  # Audio is configured by ../../profiles/workstation-ui/shared.
 
   # Speaker amp init for ALC298 on some LG Gram models.
   systemd.services.alc298-speaker-fix = let

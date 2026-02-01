@@ -2,6 +2,8 @@
 { ... }:
 
 {
+  # Base audio stack for all workstation UI profiles.
+  # PipeWire provides PulseAudio (and optionally JACK) compatibility.
   services.xserver.enable = true;
 
   # Make fcitx5 work in graphical sessions (X11/Wayland).
@@ -28,5 +30,7 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    jack.enable = true;
+    wireplumber.enable = true;
   };
 }
