@@ -23,6 +23,13 @@
 
   services.caddy = {
     enable = true;
+
+    # Run Caddy behind HAProxy (SNI passthrough on :443).
+    # Keep Caddy's HTTP port disabled to avoid redirects to :8443.
+    globalConfig = ''
+      https_port 8443
+      http_port 0
+    '';
     package = pkgs.caddy.withPlugins {
       # 建议先用“Latest 稳定版”tag（目前仓库的 Latest 是 v1.0.26；beta 版本也有）
       # 你也可以换成更新的 tag（比如 v1.0.28-beta.*），但我建议先用 Latest 稳定版
@@ -32,6 +39,7 @@
     };
 
     virtualHosts."hs.zhsjf.cn".extraConfig = ''
+      bind 127.0.0.1
       tls {
         dns alidns {
           access_key_id {env.ALICLOUD_ACCESS_KEY}
