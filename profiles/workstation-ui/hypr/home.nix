@@ -25,6 +25,12 @@ in {
     dgop.package = pkgs.dgop;
   };
 
+  # DMS spawns QuickShell via the `qs` binary. Systemd --user units don't always
+  # inherit the interactive shell's PATH, so ensure the per-user profile is on PATH.
+  systemd.user.services.dms.Service.Environment = [
+    "PATH=/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin:/run/current-system/sw/bin:/run/wrappers/bin"
+  ];
+
   home.packages = with pkgs; [
     wl-clipboard
     cliphist

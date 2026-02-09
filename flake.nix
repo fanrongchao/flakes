@@ -8,6 +8,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix.url = "github:Mic92/sops-nix";
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
     mihomo-cli.url = "github:fanrongchao/mihomocli";
     dank-material-shell = {
       url = "github:AvengeMedia/DankMaterialShell";
@@ -15,7 +16,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, dank-material-shell, ... }@inputs: 
+  outputs = { self, nixpkgs, home-manager, sops-nix, nixos-hardware, dank-material-shell, ... }@inputs: 
 
     let
       system = "x86_64-linux";
@@ -66,6 +67,23 @@
             home-manager.users.frc = import ./users/frc/home.nix;
           } 
           ./hosts/lg-gram              
+        ];
+      };
+
+      nixosConfigurations.gpd = lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs; };
+        modules = [
+          commonNixpkgsModule
+          nixos-hardware.nixosModules.gpd-pocket-4
+	  sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.frc = import ./users/frc/home.nix;
+          }
+          ./hosts/gpd
         ];
       };
 

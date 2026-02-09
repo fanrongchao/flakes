@@ -4,6 +4,7 @@
   imports = [
     ./configuration.nix
     #profiles
+    ../../profiles/ai-inference
     ../../profiles/hardware-acceleration.nix
     ../../profiles/network-egress-proxy.nix
     ../../profiles/network-ingress-proxy.nix
