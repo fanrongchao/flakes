@@ -15,6 +15,7 @@
 
   environment.systemPackages = with pkgs; [
     pciutils
+    nvtopPackages.nvidia
     cudaPackages.cudatoolkit
   ];
 }
