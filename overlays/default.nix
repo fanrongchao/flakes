@@ -3,6 +3,9 @@ final: prev: {
   #      2. wrap sh and npm install -g pacakges and python app(uv) make them structural with helpers
   codex = prev.callPackage ../pkgs/codex {};
 
+  # Pin claude-code ahead of nixpkgs when upstream lags.
+  claude-code = prev.callPackage ../pkgs/claude-code {};
+
   dgop = prev.callPackage ../pkgs/dgop {};
 
   opencode =

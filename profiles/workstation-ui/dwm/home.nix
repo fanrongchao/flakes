@@ -118,6 +118,11 @@ let
   dwmblocksPkg = pkgs.dwmblocks.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       cp ${blocksH} blocks.h
+
+      # gcc-15/glibc now rejects incompatible function pointer types for signal handlers.
+      substituteInPlace dwmblocks.c \
+        --replace-fail 'void termhandler();' 'void termhandler(int signum);' \
+        --replace-fail 'void termhandler()' 'void termhandler(int signum)'
     '';
   });
 in

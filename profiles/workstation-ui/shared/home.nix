@@ -5,7 +5,7 @@
     # fonts
     noto-fonts
     noto-fonts-cjk-sans
-    noto-fonts-emoji
+    noto-fonts-color-emoji
 
     # nerd fonts
     nerd-fonts.jetbrains-mono
@@ -33,7 +33,7 @@
         fcitx5-rime
         rime-data
         fcitx5-gtk
-        fcitx5-chinese-addons
+        qt6Packages.fcitx5-chinese-addons
       ];
     };
   };
