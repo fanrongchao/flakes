@@ -10,6 +10,9 @@
       group = "users";
       mode = "0400";
     };
+    systemd.tmpfiles.rules = [
+      "L+ /sbin/ldconfig - - - - /run/current-system/sw/sbin/ldconfig"
+    ];
 
     systemd.services.vllm-minimax-m2-awq = {
     description = "vLLM MiniMax-M2.1-AWQ";
