@@ -22,7 +22,8 @@ let
       --output "${configPath}" \
       --external-controller-url 0.0.0.0 \
       --external-controller-port 9090 \
-      --external-controller-secret "$secret"
+      --external-controller-secret "$secret" \
+      --fake-ip-bypass '+.zhsjf.cn'
 
     # Validate config before applying it.
     ${lib.getExe pkgs.mihomo} \
