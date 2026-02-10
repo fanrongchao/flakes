@@ -63,6 +63,10 @@ in
     options edns0
   '';
 
+  # Prevent Tailscale from overwriting /etc/resolv.conf (MagicDNS),
+  # otherwise the system resolver will be forced to 100.100.100.100.
+  services.tailscale.extraUpFlags = lib.mkAfter [ "--accept-dns=false" ];
+
   environment.systemPackages = with pkgs; [
     mihomo
   ];
