@@ -53,16 +53,6 @@ in
 {
   networking.firewall.enable = false;
 
-  # Make system DNS go through Mihomo's local DNS (port 53). This avoids
-  # Tailscale/MagicDNS or fake-ip setups leaking into system resolver.
-  # Keep public resolvers as fallback.
-  environment.etc."resolv.conf".text = ''
-    nameserver 127.0.0.1
-    nameserver 8.8.8.8
-    nameserver 1.1.1.1
-    options edns0
-  '';
-
   environment.systemPackages = with pkgs; [
     mihomo
   ];
