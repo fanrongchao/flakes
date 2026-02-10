@@ -1,6 +1,8 @@
 {config, pkgs, ...}:
 
 {
+  aiInference.vllmMinimaxM2Awq.enable = true;
+
   imports = [
     ./configuration.nix
     #profiles

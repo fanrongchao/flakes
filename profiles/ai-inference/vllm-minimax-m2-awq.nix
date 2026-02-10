@@ -3,6 +3,14 @@
   options.aiInference.vllmMinimaxM2Awq.enable = lib.mkEnableOption "vLLM MiniMax-M2.1-AWQ service";
 
   config = lib.mkIf config.aiInference.vllmMinimaxM2Awq.enable {
+    sops.age.keyFile = "/var/lib/sops/age/keys.txt";
+    sops.secrets."vllm/minimax/api_key" = {
+      sopsFile = ../../secrets/ai-inference.yaml;
+      owner = "xfa";
+      group = "users";
+      mode = "0400";
+    };
+
     systemd.services.vllm-minimax-m2-awq = {
     description = "vLLM MiniMax-M2.1-AWQ";
     wantedBy = [ "multi-user.target" ];
@@ -57,10 +65,12 @@
         python -m pip install -U "vllm==0.13.0" "huggingface_hub[cli]"
       fi
 
+      VLLM_API_KEY="$(cat "${config.sops.secrets."vllm/minimax/api_key".path}")"
       hf download QuantTrio/MiniMax-M2.1-AWQ --local-dir "$MODEL_DIR"
 
       exec vllm serve "$MODEL_DIR" \
         --served-model-name MiniMax-M2.1-AWQ \
+        --api-key "$VLLM_API_KEY" \
         --swap-space 16 \
         --max-num-seqs 32 \
         --max-model-len 32768 \
@@ -71,7 +81,7 @@
         --tool-call-parser minimax_m2 \
         --reasoning-parser minimax_m2_append_think \
         --trust-remote-code \
-        --host 0.0.0.0 \
+        --host 127.0.0.1 \
         --port 8000
     '';
     };
