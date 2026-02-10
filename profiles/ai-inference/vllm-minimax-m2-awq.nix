@@ -26,6 +26,7 @@
       findutils
       gnugrep
       gnused
+      stdenv.cc
       python312
     ];
 
@@ -39,6 +40,9 @@
       LimitNOFILE = 1048576;
       Environment = [
         "HF_HOME=/home/xfa/.cache/huggingface"
+        "CC=cc"
+        "TRITON_PTXAS_PATH=/run/current-system/sw/bin/ptxas"
+        "TRITON_LIBCUDA_PATH=/run/opengl-driver/lib"
         "VLLM_USE_DEEP_GEMM=0"
         "VLLM_USE_FLASHINFER_MOE_FP16=1"
         "VLLM_USE_FLASHINFER_SAMPLER=0"
