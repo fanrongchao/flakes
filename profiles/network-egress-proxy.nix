@@ -17,13 +17,24 @@ let
 
     mkdir -p "${resourcesDir}"
 
-    ${lib.getExe' mihomoCli "mihomo-cli"} merge \
+    tmp_config="$(mktemp "${resourcesDir}/config.yaml.XXXXXX")"
+    if ! ${lib.getExe' mihomoCli "mihomo-cli"} merge \
       --subscription "$sub_url" \
-      --output "${configPath}" \
+      --output "$tmp_config" \
       --external-controller-url 0.0.0.0 \
       --external-controller-port 9090 \
       --external-controller-secret "$secret" \
-      --fake-ip-bypass '+.zhsjf.cn'
+      --fake-ip-bypass '+.zhsjf.cn'; then
+      rm -f "$tmp_config"
+      if [ -s "${configPath}" ]; then
+        echo "mihomo update failed; keeping existing config" >&2
+        exit 0
+      fi
+      echo "mihomo update failed and no existing config is available" >&2
+      exit 1
+    fi
+
+    mv -f "$tmp_config" "${configPath}"
 
     # Validate config before applying it.
     ${lib.getExe pkgs.mihomo} \

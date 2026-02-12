@@ -43,7 +43,7 @@ final: prev: {
       };
       nodeModulesHash =
         if system == "x86_64-linux" then
-          "sha256-668uvopkWgfzsXMsxp6ZMNBbUIfR6bgQddGGAGUp3G8="
+          "sha256-9oI1gekRbjY6L8VwlkLdPty/9rCxC20EJlESkazEX8Y="
         else if builtins.hasAttr system hashes.nodeModules then
           hashes.nodeModules.${system}
         else
