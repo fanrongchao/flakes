@@ -14,6 +14,7 @@
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 12;
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "lg-gram"; # Define your hostname.
@@ -66,8 +67,9 @@
   services.blueman.enable = true;
 
   # Audio is configured by ../../profiles/workstation-ui/shared.
-
-  # Speaker amp init for ALC298 on some LG Gram models.
+  #
+  # Some LG Gram models with ALC298 need codec verbs at boot and resume
+  # or internal speakers stay silent while headphones/Bluetooth still work.
   systemd.services.alc298-speaker-fix = let
     verbs = pkgs.fetchurl {
       url = "https://raw.githubusercontent.com/joshuagrisham/galaxy-book2-pro-linux/main/sound/necessary-verbs.sh";
@@ -81,13 +83,30 @@
   in {
     description = "ALC298 speaker initialization (hda-verb)";
     wantedBy = [ "multi-user.target" ];
-    after = [ "sound.target" ];
+    after = [ "sound.target" "systemd-modules-load.service" ];
+    unitConfig = {
+      ConditionPathExistsGlob = "/dev/snd/hwC*D*";
+    };
     serviceConfig = {
       Type = "oneshot";
-      ConditionPathExistsGlob = "/dev/snd/hwC*D*";
       ExecStart = fixScript;
     };
   };
+
+  # Re-apply speaker verbs after suspend/resume.
+  environment.etc."systemd/system-sleep/99-alc298-speaker-fix".source =
+    pkgs.writeShellScript "99-alc298-speaker-fix" ''
+      case "$1" in
+        post)
+          ${pkgs.systemd}/bin/systemctl --no-block start alc298-speaker-fix.service || true
+          ;;
+      esac
+    '';
+
+  # Avoid HDA runtime power-save transitions that can cause speaker mute.
+  boot.extraModprobeConfig = ''
+    options snd_hda_intel power_save=0 power_save_controller=N
+  '';
 
 
 
