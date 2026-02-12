@@ -61,6 +61,7 @@
 
   # Allow wheel (including frc) to use sudo without a password.
   security.sudo.wheelNeedsPassword = false;
+  security.unprivilegedUsernsClone = true;
 
   # Install firefox.
   programs.firefox.enable = true;

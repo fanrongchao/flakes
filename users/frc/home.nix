@@ -61,6 +61,7 @@
 
     #chrome
     #secondary screen
+    pencilOfficial
   ]; 
 
 
@@ -123,6 +124,20 @@
       };
     };
   };
+
+  xdg.dataFile."applications/pencil.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Pencil
+    GenericName=AI Coding Assistant
+    Comment=Pencil Desktop
+    Exec=pencil %U
+    Icon=pencil
+    Terminal=false
+    Categories=Development;Utility;
+    StartupNotify=true
+    StartupWMClass=Pencil
+  '';
 
   programs.neovim = {
     enable = true;
