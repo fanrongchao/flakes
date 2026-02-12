@@ -83,6 +83,12 @@
   services.power-profiles-daemon.enable = true;
   services.accounts-daemon.enable = true;
 
+  # Note for future maintenance:
+  # if a rebuild reports a switch inhibitor like
+  # "dbus-implementation : dbus -> broker", use:
+  #   sudo nixos-rebuild boot --flake /home/frc/flakes#zenbook
+  # and reboot, instead of forcing `switch`.
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
