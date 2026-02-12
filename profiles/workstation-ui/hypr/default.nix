@@ -14,6 +14,7 @@
   programs.hyprland = {
     enable = true;
     package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    withUWSM = true;
   };
 
   services.greetd = {
@@ -21,13 +22,14 @@
     settings = {
       initial_session = {
         user = "frc";
-        command = "${pkgs.hyprland}/bin/Hyprland";
+        # Keep greetd and user sessions on the exact same Hyprland package/version.
+        command = "${pkgs.uwsm}/bin/uwsm start hyprland-uwsm.desktop";
       };
 
       # Fallback only; autologin uses initial_session.
       default_session = {
         user = "greeter";
-        command = "${pkgs.tuigreet}/bin/tuigreet --cmd ${pkgs.hyprland}/bin/Hyprland";
+        command = "${pkgs.tuigreet}/bin/tuigreet --cmd ${pkgs.uwsm}/bin/uwsm start hyprland-uwsm.desktop";
       };
     };
   };

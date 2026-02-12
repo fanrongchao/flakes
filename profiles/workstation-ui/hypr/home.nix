@@ -1,18 +1,6 @@
 { config, pkgs, ... }:
 
-let
-  hyprlandSessionActivate = pkgs.writeShellScript "hyprland-session-activate" ''
-    set -euo pipefail
-    for _ in $(seq 1 40); do
-      if ${pkgs.coreutils}/bin/ls "/run/user/$UID"/wayland-* >/dev/null 2>&1; then
-        ${pkgs.systemd}/bin/systemctl --user start graphical-session.target hyprland-session.target
-        exit 0
-      fi
-      ${pkgs.coreutils}/bin/sleep 0.25
-    done
-    exit 0
-  '';
-in {
+{
   imports = [
     ../shared/home.nix
   ];
@@ -20,13 +8,18 @@ in {
   programs.dank-material-shell = {
     enable = true;
     systemd.enable = true;
-    systemd.target = "hyprland-session.target";
+    systemd.target = "graphical-session.target";
     enableSystemMonitoring = true;
     dgop.package = pkgs.dgop;
   };
 
   # DMS spawns QuickShell via the `qs` binary. Systemd --user units don't always
   # inherit the interactive shell's PATH, so ensure the per-user profile is on PATH.
+  systemd.user.services.dms.Unit = {
+    After = [ "graphical-session.target" ];
+    Wants = [ "graphical-session.target" ];
+  };
+
   systemd.user.services.dms.Service.Environment = [
     "PATH=/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin:/run/current-system/sw/bin:/run/wrappers/bin"
   ];
@@ -52,7 +45,7 @@ in {
       ExecStart = "${pkgs.bash}/bin/bash -lc 'rm -f \"$HOME\"/.config/google-chrome/Singleton{Lock,Socket,Cookie}'";
     };
     Install = {
-      WantedBy = [ "hyprland-session.target" ];
+      WantedBy = [ "graphical-session.target" ];
     };
   };
 
@@ -69,31 +62,6 @@ in {
 
   xdg.configFile."hypr/hyprlock.conf".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hyprlock/hyprlock.conf";
-
-  systemd.user.targets."hyprland-session" = {
-    Unit = {
-      Description = "Hyprland Session Target";
-      Requires = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-    };
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
-  };
-
-  systemd.user.services."hyprland-session-activate" = {
-    Unit = {
-      Description = "Activate Hyprland session targets";
-      After = [ "default.target" ];
-    };
-    Service = {
-      Type = "oneshot";
-      ExecStart = hyprlandSessionActivate;
-    };
-    Install = {
-      WantedBy = [ "default.target" ];
-    };
-  };
 
   # Ensure fcitx5 daemon starts with the graphical session.
   systemd.user.services.fcitx5-daemon = {
