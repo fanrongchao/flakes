@@ -6,13 +6,29 @@
 , nodejs
 }:
 
+let
+  platformInfo =
+    if stdenv.hostPlatform.system == "x86_64-linux" then {
+      suffix = "linux-x64";
+      hash = "sha256-SyCU3AVmKNnEjQ1v5NsczJaWSEPnqATUtOKv/sEZklk=";
+    } else if stdenv.hostPlatform.system == "aarch64-linux" then {
+      suffix = "linux-arm64";
+      hash = "sha256-X5jiLZHpveZCq8HBoz3JSCiRBZ8VP1h+UVhRHbuY+KA=";
+    } else
+      throw "Unsupported platform for codex prebuilt binary: ${stdenv.hostPlatform.system}";
+in
 stdenv.mkDerivation rec {
   pname = "codex";
-  version = "0.98.0";
+  version = "0.99.0";
 
   src = fetchurl {
     url = "https://registry.npmmirror.com/@openai/codex/-/codex-${version}.tgz";
-    hash = "sha256-oo/RkmlckH+qBgFTxKrkqZ6KCHhy6TTdCFVkjWW0sqc=";
+    hash = "sha256-H9YyfGhqE8/ZXSUfhk9EUymKYCKko64Dv9H41c7RJdQ=";
+  };
+
+  platformSrc = fetchurl {
+    url = "https://registry.npmmirror.com/@openai/codex/-/codex-${version}-${platformInfo.suffix}.tgz";
+    hash = platformInfo.hash;
   };
   
   nativeBuildInputs = [ 
@@ -31,6 +47,13 @@ stdenv.mkDerivation rec {
     
     # 复制所有内容
     cp -r . $out/lib/node_modules/@openai/codex/
+
+    # 复制对应平台的可选依赖，避免运行时报 Missing optional dependency
+    mkdir -p $TMPDIR/codex-platform
+    tar -xzf ${platformSrc} -C $TMPDIR/codex-platform
+    mkdir -p $out/lib/node_modules/@openai/codex/node_modules/@openai
+    cp -r $TMPDIR/codex-platform/package \
+      $out/lib/node_modules/@openai/codex/node_modules/@openai/codex-${platformInfo.suffix}
     
     # 创建可执行命令，用 makeWrapper 确保 node 可用
     makeWrapper ${nodejs}/bin/node $out/bin/codex \
