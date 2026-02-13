@@ -13,7 +13,18 @@
       "Bash(ss:*)",
       "Bash(# Look at the app.js in the extracted asar for IPC server setup grep -n \"\"ipc\\\\|IPC\\\\|server\\\\|port\\\\|listen\\\\|websocket\\\\|WebSocket\\\\|ws://\"\" /tmp/pencil-asar/out/app.js)",
       "Bash(grep:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(nix flake update:*)",
+      "Bash(git -C /home/frc/flakes status)",
+      "Bash(git -C /home/frc/flakes diff)",
+      "Bash(git -C /home/frc/flakes log --oneline -5)",
+      "Bash(git -C /home/frc/flakes add:*)",
+      "Bash(git -C /home/frc/flakes commit -m \"$\\(cat <<''EOF''\nfix: resolve lg-gram build warnings and use remote mihomo-cli\n\nSwitch mihomo-cli input from local path to github:fanrongchao/mihomocli,\nreplace deprecated pkgs.system with pkgs.stdenv.hostPlatform.system,\nrename xorg.setxkbmap to setxkbmap, and update home-manager to match\nnixpkgs 26.05.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/frc/flakes push)",
+      "Bash(sudo systemctl reset-failed:*)",
+      "Bash(sudo systemctl stop:*)",
+      "Bash(sudo systemctl:*)",
+      "Bash(sudo find:*)"
     ],
     "deny": [],
     "ask": []
