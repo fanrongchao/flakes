@@ -456,8 +456,8 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1770943208,
-        "narHash": "sha256-aW25IyRKz6i9ny8YpNtjk43ZkKq/k7X4IZJGcWeyCk4=",
+        "lastModified": 1770945834,
+        "narHash": "sha256-yYVbMzYkT0cE2pp2AzuPfLqwBaqrU6V1Rnjgq61GJo4=",
         "path": "/home/frc/code/mihomocli",
         "type": "path"
       },
