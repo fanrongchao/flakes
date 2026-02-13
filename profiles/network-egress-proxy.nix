@@ -15,9 +15,18 @@ let
     sub_url="$(cat "${config.sops.secrets."mihomo/subscription_url".path}")"
     secret="$(cat "${config.sops.secrets."mihomo/external_controller_secret".path}")"
 
+    manual_links_path="${config.sops.secrets."mihomo/manual_share_links".path}"
+
     mkdir -p "${resourcesDir}"
 
     tmp_config="$(mktemp "${resourcesDir}/config.yaml.XXXXXX")"
+
+    ${lib.getExe' mihomoCli "mihomo-cli"} manage server add \
+      --name jp-vultr \
+      --file "$manual_links_path" \
+      --replace >/dev/null
+
+
     if ! ${lib.getExe' mihomoCli "mihomo-cli"} merge \
       --subscription "$sub_url" \
       --output "$tmp_config" \
@@ -76,6 +85,13 @@ in
     mode = "0400";
   };
   sops.secrets."mihomo/external_controller_secret" = {
+    sopsFile = ../secrets/mihomo-egress.yaml;
+    owner = "mihomo";
+    group = "mihomo";
+    mode = "0400";
+  };
+
+  sops.secrets."mihomo/manual_share_links" = {
     sopsFile = ../secrets/mihomo-egress.yaml;
     owner = "mihomo";
     group = "mihomo";

@@ -9,7 +9,7 @@
     };
     sops-nix.url = "github:Mic92/sops-nix";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
-    mihomo-cli.url = "github:fanrongchao/mihomocli";
+    mihomo-cli.url = "path:/home/frc/code/mihomocli";
     dank-material-shell = {
       url = "github:AvengeMedia/DankMaterialShell";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -4,7 +4,16 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "WebSearch",
-      "WebFetch(domain:search.nixos.org)"
+      "WebFetch(domain:search.nixos.org)",
+      "Bash(command -v:*)",
+      "Bash(pencil:*)",
+      "Bash(xargs:*)",
+      "Bash(npx asar:*)",
+      "Bash(ldd:*)",
+      "Bash(ss:*)",
+      "Bash(# Look at the app.js in the extracted asar for IPC server setup grep -n \"\"ipc\\\\|IPC\\\\|server\\\\|port\\\\|listen\\\\|websocket\\\\|WebSocket\\\\|ws://\"\" /tmp/pencil-asar/out/app.js)",
+      "Bash(grep:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

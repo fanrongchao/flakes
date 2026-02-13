@@ -58,6 +58,7 @@
     ];
   };
   programs.zsh.enable = true;
+  programs.nix-ld.enable = true;
 
   # Allow wheel (including frc) to use sudo without a password.
   security.sudo.wheelNeedsPassword = false;

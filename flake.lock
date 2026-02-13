@@ -456,17 +456,14 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1769664093,
-        "narHash": "sha256-Ozp895pUp8YoEi+th3L5dibu+Tyld5oWcTbiUhrdJrE=",
-        "owner": "fanrongchao",
-        "repo": "mihomocli",
-        "rev": "affd050a872616c41bbf1a69d072bd7c857cda55",
-        "type": "github"
+        "lastModified": 1770943208,
+        "narHash": "sha256-aW25IyRKz6i9ny8YpNtjk43ZkKq/k7X4IZJGcWeyCk4=",
+        "path": "/home/frc/code/mihomocli",
+        "type": "path"
       },
       "original": {
-        "owner": "fanrongchao",
-        "repo": "mihomocli",
-        "type": "github"
+        "path": "/home/frc/code/mihomocli",
+        "type": "path"
       }
     },
     "nixos-hardware": {
