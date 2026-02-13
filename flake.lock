@@ -117,11 +117,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1761081701,
-        "narHash": "sha256-IwpfaKg5c/WWQiy8b5QGaVPMvoEQ2J6kpwRFdpVpBNQ=",
+        "lastModified": 1770975156,
+        "narHash": "sha256-bPKv7BcIOGp4R1Q3hKhiD2CT3+7D6ibNIaJfEJdeOzo=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "9b4a2a7c4fbd75b422f00794af02d6edb4d9d315",
+        "rev": "de4cfffc98f43ab8ba90739b56991f068f9e9018",
         "type": "github"
       },
       "original": {
@@ -456,14 +456,17 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1770945834,
-        "narHash": "sha256-yYVbMzYkT0cE2pp2AzuPfLqwBaqrU6V1Rnjgq61GJo4=",
-        "path": "/home/frc/code/mihomocli",
-        "type": "path"
+        "lastModified": 1770945824,
+        "narHash": "sha256-kqxSF3CYUPdqNHdJI+NUMQP7QabJxuTt81AmI40BUlc=",
+        "owner": "fanrongchao",
+        "repo": "mihomocli",
+        "rev": "383b9e2e3e6d68392232964459b5eeb015e19c52",
+        "type": "github"
       },
       "original": {
-        "path": "/home/frc/code/mihomocli",
-        "type": "path"
+        "owner": "fanrongchao",
+        "repo": "mihomocli",
+        "type": "github"
       }
     },
     "nixos-hardware": {

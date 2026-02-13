@@ -1,7 +1,7 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  mihomoCli = inputs.mihomo-cli.packages.${pkgs.system}.mihomo-cli;
+  mihomoCli = inputs.mihomo-cli.packages.${pkgs.stdenv.hostPlatform.system}.mihomo-cli;
   runDir = "/var/lib/mihomo/.config/mihomocli";
   resourcesDir = "${runDir}/resources";
   configPath = "${resourcesDir}/config.yaml";
