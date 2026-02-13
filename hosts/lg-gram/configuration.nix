@@ -133,6 +133,10 @@
     extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.zsh;
     ignoreShellProgramCheck = true;
+    openssh.authorizedKeys.keys = [
+      # zenbook ~/.ssh/id_ed25519.pub
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKYn2d7QD2XXmprwG37RDGanwFBRU8Qu1hRDcx1W5uTa fanrongchao@gmail.com"
+    ];
     packages = with pkgs; [
     #  thunderbird
     ];
