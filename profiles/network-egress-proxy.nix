@@ -24,6 +24,7 @@ let
     ${lib.getExe' mihomoCli "mihomo-cli"} manage server add \
       --name jp-vultr \
       --file "$manual_links_path" \
+      --attach-group BosLife \
       --replace >/dev/null
 
 
