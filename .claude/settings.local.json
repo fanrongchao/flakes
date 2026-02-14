@@ -24,7 +24,22 @@
       "Bash(sudo systemctl reset-failed:*)",
       "Bash(sudo systemctl stop:*)",
       "Bash(sudo systemctl:*)",
-      "Bash(sudo find:*)"
+      "Bash(sudo find:*)",
+      "Bash(git -C /home/frc/flakes diff -- hosts/lg-gram/default.nix)",
+      "Bash(git -C /home/frc/flakes log --oneline -3)",
+      "Bash(git -C /home/frc/flakes commit -m \"$\\(cat <<''EOF''\nlg-gram: remove k3s compute cluster control plane\n\nThe etcd member address mismatch was causing k3s to hang on startup,\nblocking nixos-rebuild switch.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(head:*)",
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(rsync:*)",
+      "Bash(nix flake show:*)",
+      "Bash(nix-store --query --references:*)",
+      "Bash(nix path-info:*)",
+      "Bash(dms_rev=\"ad458dfece389f132bd8f00df4889d260a4ee9a7\")",
+      "Bash(nix eval:*)",
+      "Bash(nix flake prefetch:*)",
+      "Bash(python3:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
