@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p "$HOME/Pictures/Screenshots"
+
+geometry="$(slurp)"
+if [ -z "$geometry" ]; then
+  exit 0
+fi
+
+grim -g "$geometry" - | swappy -f -

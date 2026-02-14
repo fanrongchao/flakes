@@ -58,10 +58,10 @@
   };
 
   xdg.configFile."hypr/hyprland.conf".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hypr/hyprland.conf";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/flakes/dotfiles/hypr/hyprland.conf";
 
   xdg.configFile."hypr/hyprlock.conf".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/hyprlock/hyprlock.conf";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/flakes/dotfiles/hyprlock/hyprlock.conf";
 
   # Ensure fcitx5 daemon starts with the graphical session.
   systemd.user.services.fcitx5-daemon = {

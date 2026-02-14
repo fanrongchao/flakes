@@ -65,12 +65,10 @@
   ]; 
 
 
-  #dotfiles: do git clone git@github.com:fanrongchao/dotfiles.git ~/dotfiles/ first
   xdg.configFile."nvim".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/astronvim";
-  #tmux conf
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/flakes/dotfiles/astronvim";
   xdg.configFile."tmux/tmux.conf".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/tmux/tmux.conf";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/flakes/dotfiles/tmux/tmux.conf";
 
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
