@@ -30,6 +30,7 @@
           inherit overlays;
           config.allowUnfree = true;
         };
+        home-manager.extraSpecialArgs = { inherit inputs; };
       };
       inherit (nixpkgs) lib;
     in {

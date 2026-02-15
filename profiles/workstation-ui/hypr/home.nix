@@ -1,4 +1,36 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
+
+let
+  quickshellPatchedSrc = pkgs.applyPatches {
+    name = "quickshell-libxcb";
+    src = inputs.dank-material-shell.inputs.quickshell.outPath;
+    patches = [
+      (pkgs.writeText "quickshell-libxcb.patch" ''
+        diff --git a/default.nix b/default.nix
+        --- a/default.nix
+        +++ b/default.nix
+        @@ -16,7 +16,7 @@
+           wayland,
+           wayland-protocols,
+           wayland-scanner,
+        -  xorg,
+        +  libxcb,
+           libdrm,
+           libgbm ? null,
+           pipewire,
+        @@ -77,7 +77,7 @@
+             ++ lib.optionals withWayland [ wayland wayland-protocols ]
+             ++ lib.optionals (withWayland && libgbm != null) [ libdrm libgbm ]
+        -    ++ lib.optional withX11 xorg.libxcb
+        +    ++ lib.optional withX11 libxcb
+             ++ lib.optional withPam pam
+             ++ lib.optional withPipewire pipewire
+             ++ lib.optionals withPolkit [ polkit glib ];
+      '')
+    ];
+  };
+  quickshellPatched = pkgs.callPackage "${quickshellPatchedSrc}/default.nix" { };
+in
 
 {
   imports = [
@@ -11,6 +43,7 @@
     systemd.target = "graphical-session.target";
     enableSystemMonitoring = true;
     dgop.package = pkgs.dgop;
+    quickshell.package = quickshellPatched;
   };
 
   # DMS spawns QuickShell via the `qs` binary. Systemd --user units don't always
@@ -23,6 +56,9 @@
   systemd.user.services.dms.Service.Environment = [
     "PATH=/etc/profiles/per-user/%u/bin:%h/.nix-profile/bin:/run/current-system/sw/bin:/run/wrappers/bin"
   ];
+  systemd.user.services.dms.Install = {
+    WantedBy = [ "graphical-session.target" ];
+  };
 
   home.packages = with pkgs; [
     wl-clipboard
