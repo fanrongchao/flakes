@@ -25,6 +25,7 @@
     htop
     btop
     lazygit
+    yazi
     tree
     fzf
     jq
