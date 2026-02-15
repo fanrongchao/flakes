@@ -56,6 +56,18 @@
       reverse_proxy 127.0.0.1:8080
     '';
 
+    virtualHosts."git.zhsjf.cn".extraConfig = ''
+      bind 127.0.0.1
+      tls {
+        dns alidns {
+          access_key_id {env.ALICLOUD_ACCESS_KEY}
+          access_key_secret {env.ALICLOUD_SECRET_KEY}
+        }
+        resolvers 1.1.1.1 8.8.8.8
+      }
+      reverse_proxy 192.168.3.100:8080
+    '';
+
     virtualHosts."m2.zhsjf.cn".extraConfig = ''
       bind 127.0.0.1
       tls {
