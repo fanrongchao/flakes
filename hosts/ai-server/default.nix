@@ -13,5 +13,6 @@
     ../../profiles/ingress-haproxy-sni.nix
     ../../profiles/zero-trust-control-plane.nix
     ../../profiles/zero-trust-node.nix
+    ../../profiles/devops-baseline.nix
   ];
 }

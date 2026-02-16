@@ -7,6 +7,7 @@
     ../../profiles/workstation-input.nix
     ../../profiles/container-runtime
     ../../profiles/network-egress-proxy.nix
+    ../../profiles/devops-baseline.nix
   ];
 
   home-manager.backupFileExtension = "hm-bak";

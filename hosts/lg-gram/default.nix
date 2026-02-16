@@ -8,6 +8,7 @@
     ../../profiles/container-runtime
     ../../profiles/zero-trust-node.nix
     ../../profiles/network-egress-proxy.nix
+    ../../profiles/devops-baseline.nix
   ];
 
   home-manager.users.frc.imports = [
