@@ -1,162 +1,252 @@
-# Voice input – home-manager part.
-# Sets up whisper-writer with a nix Python environment for native deps
-# and a venv (--system-site-packages) for pip-only deps.
-{ config, pkgs, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  # Python with native packages that are hard to pip-install on NixOS
-  pythonEnv = pkgs.python3.withPackages (ps: with ps; [
-    pygobject3
-    pycairo
-    pyqt5
-    sounddevice
-    pynput
-    cffi
-    numpy
-  ]);
-
-  # Runtime native libraries
-  nativeLibs = with pkgs; [
-    portaudio
-    libsndfile
-    stdenv.cc.cc.lib
-    libxcb
-    libGL
-    glib
-    gobject-introspection
-    gst_all_1.gstreamer
-    gst_all_1.gst-plugins-base
-    gst_all_1.gst-plugins-good
-    ffmpeg
-  ];
-
-  venvDir = "${config.home.homeDirectory}/.local/share/whisper-writer/venv";
-  repoDir = "${config.home.homeDirectory}/.local/share/whisper-writer/repo";
-  configDir = "${config.xdg.configHome}/whisper-writer";
-  patchFile = ./whisper-writer.patch;
-
-  whisperWriterScript = pkgs.writeShellScript "whisper-writer" ''
-    set -euo pipefail
-
-    VENV_DIR="${venvDir}"
-    REPO_DIR="${repoDir}"
-    CONFIG_DIR="${configDir}"
-
-    export PATH="${pkgs.coreutils}/bin:${pkgs.findutils}/bin:${pkgs.gnugrep}/bin:${pkgs.xdotool}/bin:${pkgs.xclip}/bin:${pkgs.xorg.xprop}/bin:$PATH"
-    export LD_LIBRARY_PATH="${lib.makeLibraryPath nativeLibs}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    export GI_TYPELIB_PATH="${pkgs.gobject-introspection}/lib/girepository-1.0:${pkgs.gst_all_1.gstreamer.out}/lib/girepository-1.0:${pkgs.gst_all_1.gst-plugins-base.out}/lib/girepository-1.0''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
-    export QT_QPA_PLATFORM="xcb"
-    export QT_PLUGIN_PATH="${pkgs.qt5.qtbase.bin}/${pkgs.qt5.qtbase.qtPluginPrefix}"
-
-    # Clone repo on first run
-    if [ ! -d "$REPO_DIR/.git" ]; then
-      echo "Cloning whisper-writer..."
-      ${pkgs.git}/bin/git clone https://github.com/savbell/whisper-writer.git "$REPO_DIR"
-    fi
-
-    # Apply patches (idempotent: reset to upstream first)
-    cd "$REPO_DIR"
-    ${pkgs.git}/bin/git checkout -- . 2>/dev/null || true
-    ${pkgs.git}/bin/git apply --whitespace=nowarn ${patchFile} || echo "Patch already applied or failed"
-
-    # Create venv with system-site-packages (inherits nix Python packages)
-    if [ ! -f "$VENV_DIR/.installed" ]; then
-      echo "Creating Python venv..."
-      rm -rf "$VENV_DIR"
-      ${pythonEnv}/bin/python3 -m venv --system-site-packages "$VENV_DIR"
-      source "$VENV_DIR/bin/activate"
-      pip install --upgrade pip
-      pip install \
-        faster-whisper \
-        soundfile \
-        webrtcvad-wheels \
-        pyperclip \
-        pyyaml \
-        coloredlogs \
-        audioplayer \
-        pydantic \
-        openai \
-        python-dotenv
-      touch "$VENV_DIR/.installed"
-    else
-      source "$VENV_DIR/bin/activate"
-    fi
-
-    # Always symlink managed config into repo (overwrite any existing)
-    ln -sf "$CONFIG_DIR/config.yaml" "$REPO_DIR/src/config.yaml"
-
-    exec python src/main.py "$@"
-  '';
+  cfg = config.voiceInput;
+  inputMethod = if cfg.backend == "x11" then "xdotool" else "pynput";
+  qtPlatform = if cfg.backend == "wayland" then "wayland" else "xcb";
 in
 {
-  home.packages = with pkgs; [
-    xclip          # clipboard backend for pyperclip on X11
-    libnotify      # desktop notifications
-  ];
+  options.voiceInput = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable voice input for this Home Manager user.";
+    };
 
-  # Default config: medium model, auto language (Chinese+English), press_to_toggle mode
-  xdg.configFile."whisper-writer/config.yaml".text = ''
-    model_options:
-      use_api: false
-      common:
-        language: null
-        temperature: 0.0
-        initial_prompt: "以下是普通话和English混合的句子。"
-      local:
-        model: medium
-        device: cpu
-        compute_type: int8
-        condition_on_previous_text: true
-        vad_filter: true
-        model_path: null
+    engine = lib.mkOption {
+      type = lib.types.enum [ "whisper-writer" "fw-streaming" ];
+      default = "whisper-writer";
+      description = "Voice input engine to autostart.";
+    };
 
-    recording_options:
-      activation_key: ctrl+shift+space
-      input_backend: pynput
-      recording_mode: press_to_toggle
-      sound_device: null
-      sample_rate: 16000
-      silence_duration: 1500
-      min_duration: 100
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.whisper-writer-pinned;
+      description = "WhisperWriter package.";
+    };
 
-    post_processing:
-      writing_key_press_delay: 0.005
-      remove_trailing_period: false
-      add_trailing_space: true
-      remove_capitalization: false
-      input_method: xdotool
+    streamingPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.voice-input-fw-streaming;
+      description = "faster-whisper streaming package.";
+    };
 
-    misc:
-      print_to_terminal: true
-      hide_status_window: false
-      noise_on_completion: false
-  '';
+    model = lib.mkOption {
+      type = lib.types.enum [ "small" "medium" "large-v3" "turbo" ];
+      default = "medium";
+      description = "Default local model name for whisper-writer.";
+    };
 
-  # Launcher wrapper available as `whisper-writer` in PATH
-  home.file.".local/bin/whisper-writer" = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      exec ${whisperWriterScript} "$@"
-    '';
+    device = lib.mkOption {
+      type = lib.types.enum [ "cpu" "cuda" ];
+      default = "cpu";
+      description = "Compute device for whisper-writer.";
+    };
+
+    computeType = lib.mkOption {
+      type = lib.types.str;
+      default = "int8";
+      description = "Compute type for whisper-writer.";
+    };
+
+    hotkey = lib.mkOption {
+      type = lib.types.str;
+      default = "ctrl+shift+space";
+      description = "Activation hotkey.";
+    };
+
+    autoStart = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Start selected engine with graphical session.";
+    };
+
+    backend = lib.mkOption {
+      type = lib.types.enum [ "x11" "wayland" "auto" ];
+      default = "x11";
+      description = "Desktop backend preference for runtime tuning.";
+    };
+
+    streaming = {
+      model = lib.mkOption {
+        type = lib.types.enum [ "small" "medium" "large-v3" "turbo" ];
+        default = "small";
+        description = "Model used by streaming engine.";
+      };
+
+      device = lib.mkOption {
+        type = lib.types.enum [ "cpu" "cuda" ];
+        default = "cpu";
+        description = "Inference device used by streaming engine.";
+      };
+
+      computeType = lib.mkOption {
+        type = lib.types.str;
+        default = "int8";
+        description = "Compute type used by streaming engine.";
+      };
+
+      language = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Optional language code for streaming engine.";
+      };
+
+      initialPrompt = lib.mkOption {
+        type = lib.types.str;
+        default = "中英混合听写。逐字转写，保留阿拉伯数字与英文原样。不要把英文翻译成中文，不要臆测补全，不要重复前文，尽量不要自动添加标点。示例：English ABC -> English ABC；OpenAI GPT 4.1 -> OpenAI GPT 4.1；今天试123 -> 今天试123。";
+        description = "Prompt for streaming engine.";
+      };
+
+      chunkMs = lib.mkOption {
+        type = lib.types.int;
+        default = 320;
+        description = "Audio chunk size in milliseconds.";
+      };
+
+      endpointMs = lib.mkOption {
+        type = lib.types.int;
+        default = 260;
+        description = "Silence endpoint threshold in milliseconds.";
+      };
+
+      maxUtteranceMs = lib.mkOption {
+        type = lib.types.int;
+        default = 12000;
+        description = "Maximum utterance length in milliseconds.";
+      };
+    };
+
+    fallback = {
+      autoToWhisperWriter = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Auto fallback to whisper-writer when streaming startup fails.";
+      };
+    };
   };
 
-  # Systemd user service — starts after graphical session
-  systemd.user.services.whisper-writer = {
-    Unit = {
-      Description = "WhisperWriter – local voice dictation";
-      After = [ "graphical-session.target" "pipewire.service" ];
+  config = lib.mkIf cfg.enable {
+    home.packages = [
+      cfg.package
+      cfg.streamingPackage
+      pkgs.xclip
+      pkgs.libnotify
+    ];
+
+    xdg.configFile."whisper-writer/config.yaml" = {
+      force = true;
+      text = ''
+      model_options:
+        use_api: false
+        common:
+          language: null
+          temperature: 0.0
+          initial_prompt: "中英混合听写。逐字转写，保留阿拉伯数字与英文原样。不要把英文翻译成中文，不要臆测补全，不要重复前文，尽量不要自动添加标点。示例：English ABC -> English ABC；OpenAI GPT 4.1 -> OpenAI GPT 4.1；今天试123 -> 今天试123。"
+        local:
+          model: ${cfg.model}
+          device: ${cfg.device}
+          compute_type: ${cfg.computeType}
+          condition_on_previous_text: false
+          vad_filter: true
+          model_path: null
+
+      recording_options:
+        activation_key: ${cfg.hotkey}
+        input_backend: pynput
+        recording_mode: press_to_toggle
+        sound_device: null
+        sample_rate: 16000
+        silence_duration: 320
+        min_duration: 70
+
+      post_processing:
+        writing_key_press_delay: 0.003
+        remove_trailing_period: false
+        add_trailing_space: true
+        remove_capitalization: false
+        input_method: ${inputMethod}
+
+      misc:
+        print_to_terminal: true
+        hide_status_window: false
+        noise_on_completion: true
+      '';
     };
-    Service = {
-      ExecStart = toString whisperWriterScript;
-      Restart = "on-failure";
-      RestartSec = 5;
-      Environment = [
-        "DISPLAY=:0"
-      ];
+
+    xdg.configFile."voice-input-streaming/config.yaml" = {
+      force = true;
+      text = ''
+      hotkey: ${cfg.hotkey}
+
+      model:
+        name: ${cfg.streaming.model}
+        device: ${cfg.streaming.device}
+        compute_type: ${cfg.streaming.computeType}
+        language: ${if cfg.streaming.language == null then "null" else cfg.streaming.language}
+        temperature: 0.0
+        initial_prompt: "${cfg.streaming.initialPrompt}"
+        vad_filter: true
+
+      streaming:
+        sample_rate: 16000
+        chunk_ms: ${toString cfg.streaming.chunkMs}
+        endpoint_ms: ${toString cfg.streaming.endpointMs}
+        max_utterance_ms: ${toString cfg.streaming.maxUtteranceMs}
+
+      fallback:
+        auto_to_whisper_writer: ${if cfg.fallback.autoToWhisperWriter then "true" else "false"}
+      '';
     };
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
+
+    systemd.user.services.whisper-writer = {
+      Unit = {
+        Description = "WhisperWriter - local voice dictation";
+        After = [ "graphical-session.target" "pipewire.service" ];
+        PartOf = [ "graphical-session.target" ];
+        Conflicts = [ "voice-input-fw-streaming.service" ];
+      };
+      Service = {
+        ExecStart = "${cfg.package}/bin/whisper-writer";
+        Restart = "on-failure";
+        RestartSec = 3;
+        Environment = [
+          "DISPLAY=:0"
+          "XAUTHORITY=%h/.Xauthority"
+          "HF_HOME=%h/.cache/huggingface"
+          "XDG_CACHE_HOME=%h/.cache"
+          "WHISPER_WRITER_CONFIG=%h/.config/whisper-writer/config.yaml"
+          "QT_QPA_PLATFORM=${if cfg.backend == "auto" then "xcb" else qtPlatform}"
+        ];
+      };
+      Install = lib.mkIf (cfg.autoStart && cfg.engine == "whisper-writer") {
+        WantedBy = [ "graphical-session.target" ];
+      };
+    };
+
+    systemd.user.services.voice-input-fw-streaming = {
+      Unit = {
+        Description = "Voice Input - faster-whisper streaming";
+        After = [ "graphical-session.target" "pipewire.service" ];
+        PartOf = [ "graphical-session.target" ];
+        Conflicts = [ "whisper-writer.service" ];
+      };
+      Service = {
+        ExecStart = "${cfg.streamingPackage}/bin/voice-input-fw-streaming";
+        Restart = "on-failure";
+        RestartSec = 3;
+        Environment = [
+          "DISPLAY=:0"
+          "XAUTHORITY=%h/.Xauthority"
+          "HF_HOME=%h/.cache/huggingface"
+          "XDG_CACHE_HOME=%h/.cache"
+          "VOICE_INPUT_STREAMING_CONFIG=%h/.config/voice-input-streaming/config.yaml"
+          "QT_QPA_PLATFORM=${if cfg.backend == "auto" then "xcb" else qtPlatform}"
+        ];
+      };
+      Install = lib.mkIf (cfg.autoStart && cfg.engine == "fw-streaming") {
+        WantedBy = [ "graphical-session.target" ];
+      };
     };
   };
 }

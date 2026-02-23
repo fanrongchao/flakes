@@ -8,6 +8,8 @@ final: prev: {
   pencilOfficial = prev.callPackage ../pkgs/pencil-official {};
 
   dgop = prev.callPackage ../pkgs/dgop {};
+  whisper-writer-pinned = prev.callPackage ../pkgs/whisper-writer {};
+  voice-input-fw-streaming = prev.callPackage ../pkgs/voice-input-fw-streaming {};
 
   opencode =
     let

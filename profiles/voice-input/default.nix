@@ -1,17 +1,118 @@
-# Voice input via whisper-writer (local Whisper-based dictation).
-# System-level native dependencies required by the Python venv.
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
+let
+  cfg = config.voiceInput;
+in
 {
-  environment.systemPackages = with pkgs; [
-    portaudio        # sounddevice native dep
-    xdotool          # X11 utility (useful for focus debugging)
-  ];
+  options.voiceInput = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable voice-input profile on this host.";
+    };
 
-  # evdev input backend needs access to /dev/input/*
-  users.users.frc.extraGroups = [ "input" "audio" ];
+    model = lib.mkOption {
+      type = lib.types.enum [ "small" "medium" "large-v3" "turbo" ];
+      default = "medium";
+      description = "Default local model.";
+    };
 
-  home-manager.users.frc.imports = [
-    ./home.nix
-  ];
+    engine = lib.mkOption {
+      type = lib.types.enum [ "whisper-writer" "fw-streaming" ];
+      default = "whisper-writer";
+      description = "Voice input engine to run.";
+    };
+
+    device = lib.mkOption {
+      type = lib.types.enum [ "cpu" "cuda" ];
+      default = "cpu";
+      description = "Inference device.";
+    };
+
+    computeType = lib.mkOption {
+      type = lib.types.str;
+      default = "int8";
+      description = "faster-whisper compute type.";
+    };
+
+    hotkey = lib.mkOption {
+      type = lib.types.str;
+      default = "ctrl+shift+space";
+      description = "Activation hotkey.";
+    };
+
+    autoStart = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Autostart user service in graphical session.";
+    };
+
+    backend = lib.mkOption {
+      type = lib.types.enum [ "x11" "wayland" "auto" ];
+      default = "x11";
+      description = "Preferred backend for service tuning.";
+    };
+
+    streaming = {
+      model = lib.mkOption {
+        type = lib.types.enum [ "small" "medium" "large-v3" "turbo" ];
+        default = "small";
+        description = "Model used by faster-whisper streaming service.";
+      };
+
+      device = lib.mkOption {
+        type = lib.types.enum [ "cpu" "cuda" ];
+        default = "cpu";
+        description = "Inference device for streaming service.";
+      };
+
+      computeType = lib.mkOption {
+        type = lib.types.str;
+        default = "int8";
+        description = "Compute type for streaming service.";
+      };
+
+      chunkMs = lib.mkOption {
+        type = lib.types.int;
+        default = 320;
+        description = "Audio chunk size in ms for streaming service.";
+      };
+
+      endpointMs = lib.mkOption {
+        type = lib.types.int;
+        default = 260;
+        description = "Silence endpoint threshold in ms.";
+      };
+
+      maxUtteranceMs = lib.mkOption {
+        type = lib.types.int;
+        default = 12000;
+        description = "Maximum utterance duration before forced finalize.";
+      };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [
+      pkgs.portaudio
+      pkgs.xdotool
+    ];
+
+    users.users.frc.extraGroups = [ "audio" "input" ];
+
+    home-manager.users.frc = {
+      imports = [ ./home.nix ];
+      voiceInput = {
+        enable = true;
+        engine = cfg.engine;
+        model = cfg.model;
+        device = cfg.device;
+        computeType = cfg.computeType;
+        hotkey = cfg.hotkey;
+        autoStart = cfg.autoStart;
+        backend = cfg.backend;
+        streaming = cfg.streaming;
+      };
+    };
+  };
 }

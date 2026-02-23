@@ -61,7 +61,7 @@ index 6003d52..18f4eca 100644
 +        is_term = self._is_terminal(wid)
 +
 +        # Set the appropriate X selection
-+        selection = "primary" if is_term else "clipboard"
++        selection = "clipboard"
 +        try:
 +            p = subprocess.Popen(["xclip", "-selection", selection],
 +                                 stdin=subprocess.PIPE)
@@ -176,3 +176,25 @@ index 7b0a8c3..17ae587 100644
          
          status_layout = QHBoxLayout()
          status_layout.setContentsMargins(0, 0, 0, 0)
+diff --git a/src/transcription.py b/src/transcription.py
+index 0fd7b1f..85f6b31 100644
+--- a/src/transcription.py
++++ b/src/transcription.py
+@@ -1,5 +1,6 @@
+ import io
+ import os
++import re
+ import numpy as np
+ import soundfile as sf
+ from faster_whisper import WhisperModel
+@@ -95,6 +96,10 @@ def post_process_transcription(transcription):
+     Apply post-processing to the transcription.
+     """
+     transcription = transcription.strip()
++    # Normalize enumerated single digits into contiguous digits:
++    # "1、2、3" / "1,2,3" -> "123"
++    transcription = re.sub(r'(?<!\d)(?:\d\s*[、,，]\s*)+\d(?!\d)',
++                           lambda m: re.sub(r'\D', '', m.group(0)), transcription)
+     post_processing = ConfigManager.get_config_section('post_processing')
+     if post_processing['remove_trailing_period'] and transcription.endswith('.'):
+         transcription = transcription[:-1]

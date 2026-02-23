@@ -20,4 +20,15 @@
     enable = true;
     dockerCompat = true;
   };
+
+  voiceInput = {
+    enable = true;
+    engine = "fw-streaming";
+    model = "medium";
+    device = "cpu";
+    computeType = "int8";
+    hotkey = "meta";
+    autoStart = true;
+    backend = "x11";
+  };
 }
