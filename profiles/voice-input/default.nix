@@ -18,7 +18,7 @@ in
     };
 
     engine = lib.mkOption {
-      type = lib.types.enum [ "whisper-writer" "fw-streaming" ];
+      type = lib.types.enum [ "whisper-writer" "fw-streaming" "sherpa-onnx" ];
       default = "whisper-writer";
       description = "Voice input engine to run.";
     };
@@ -90,6 +90,44 @@ in
         description = "Maximum utterance duration before forced finalize.";
       };
     };
+
+    sherpa = {
+      model = lib.mkOption {
+        type = lib.types.enum [ "bilingual-small" "bilingual-medium" "zh-only-small" ];
+        default = "bilingual-small";
+        description = "Model profile used by sherpa-onnx service.";
+      };
+
+      sampleRate = lib.mkOption {
+        type = lib.types.int;
+        default = 16000;
+        description = "Sample rate for sherpa-onnx recorder.";
+      };
+
+      chunkMs = lib.mkOption {
+        type = lib.types.int;
+        default = 320;
+        description = "Audio chunk size in ms for sherpa-onnx service.";
+      };
+
+      endpointMs = lib.mkOption {
+        type = lib.types.int;
+        default = 260;
+        description = "Reserved endpoint threshold in ms for sherpa-onnx.";
+      };
+
+      maxUtteranceMs = lib.mkOption {
+        type = lib.types.int;
+        default = 12000;
+        description = "Maximum utterance duration before forced finalize.";
+      };
+
+      punctuationPolicy = lib.mkOption {
+        type = lib.types.enum [ "light-normalize" "asr-raw" ];
+        default = "light-normalize";
+        description = "Post-processing policy for sherpa-onnx output text.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -112,6 +150,8 @@ in
         autoStart = cfg.autoStart;
         backend = cfg.backend;
         streaming = cfg.streaming;
+        sherpa = cfg.sherpa;
+        fallback.autoToFwStreaming = true;
       };
     };
   };

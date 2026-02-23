@@ -14,7 +14,7 @@ in
     };
 
     engine = lib.mkOption {
-      type = lib.types.enum [ "whisper-writer" "fw-streaming" ];
+      type = lib.types.enum [ "whisper-writer" "fw-streaming" "sherpa-onnx" ];
       default = "whisper-writer";
       description = "Voice input engine to autostart.";
     };
@@ -29,6 +29,12 @@ in
       type = lib.types.package;
       default = pkgs.voice-input-fw-streaming;
       description = "faster-whisper streaming package.";
+    };
+
+    sherpaPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.voice-input-sherpa-onnx;
+      description = "sherpa-onnx package.";
     };
 
     model = lib.mkOption {
@@ -117,11 +123,55 @@ in
       };
     };
 
+    sherpa = {
+      model = lib.mkOption {
+        type = lib.types.enum [ "bilingual-small" "bilingual-medium" "zh-only-small" ];
+        default = "bilingual-small";
+        description = "Model profile used by sherpa-onnx service.";
+      };
+
+      sampleRate = lib.mkOption {
+        type = lib.types.int;
+        default = 16000;
+        description = "Sample rate for sherpa-onnx recorder.";
+      };
+
+      chunkMs = lib.mkOption {
+        type = lib.types.int;
+        default = 320;
+        description = "Audio chunk size in milliseconds.";
+      };
+
+      endpointMs = lib.mkOption {
+        type = lib.types.int;
+        default = 260;
+        description = "Reserved endpoint threshold in milliseconds.";
+      };
+
+      maxUtteranceMs = lib.mkOption {
+        type = lib.types.int;
+        default = 12000;
+        description = "Maximum utterance length in milliseconds.";
+      };
+
+      punctuationPolicy = lib.mkOption {
+        type = lib.types.enum [ "light-normalize" "asr-raw" ];
+        default = "light-normalize";
+        description = "Post-processing policy for sherpa output.";
+      };
+    };
+
     fallback = {
       autoToWhisperWriter = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Auto fallback to whisper-writer when streaming startup fails.";
+      };
+
+      autoToFwStreaming = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Auto fallback to fw-streaming when sherpa startup fails.";
       };
     };
   };
@@ -130,6 +180,7 @@ in
     home.packages = [
       cfg.package
       cfg.streamingPackage
+      cfg.sherpaPackage
       pkgs.xclip
       pkgs.libnotify
     ];
@@ -199,12 +250,30 @@ in
       '';
     };
 
+    xdg.configFile."voice-input-sherpa-onnx/config.yaml" = {
+      force = true;
+      text = ''
+      hotkey: ${cfg.hotkey}
+
+      sherpa:
+        model: ${cfg.sherpa.model}
+        sample_rate: ${toString cfg.sherpa.sampleRate}
+        chunk_ms: ${toString cfg.sherpa.chunkMs}
+        endpoint_ms: ${toString cfg.sherpa.endpointMs}
+        max_utterance_ms: ${toString cfg.sherpa.maxUtteranceMs}
+        punctuation_policy: ${cfg.sherpa.punctuationPolicy}
+
+      fallback:
+        auto_to_fw_streaming: ${if cfg.fallback.autoToFwStreaming then "true" else "false"}
+      '';
+    };
+
     systemd.user.services.whisper-writer = {
       Unit = {
         Description = "WhisperWriter - local voice dictation";
         After = [ "graphical-session.target" "pipewire.service" ];
         PartOf = [ "graphical-session.target" ];
-        Conflicts = [ "voice-input-fw-streaming.service" ];
+        Conflicts = [ "voice-input-fw-streaming.service" "voice-input-sherpa-onnx.service" ];
       };
       Service = {
         ExecStart = "${cfg.package}/bin/whisper-writer";
@@ -229,7 +298,7 @@ in
         Description = "Voice Input - faster-whisper streaming";
         After = [ "graphical-session.target" "pipewire.service" ];
         PartOf = [ "graphical-session.target" ];
-        Conflicts = [ "whisper-writer.service" ];
+        Conflicts = [ "whisper-writer.service" "voice-input-sherpa-onnx.service" ];
       };
       Service = {
         ExecStart = "${cfg.streamingPackage}/bin/voice-input-fw-streaming";
@@ -245,6 +314,35 @@ in
         ];
       };
       Install = lib.mkIf (cfg.autoStart && cfg.engine == "fw-streaming") {
+        WantedBy = [ "graphical-session.target" ];
+      };
+    };
+
+    systemd.user.services.voice-input-sherpa-onnx = {
+      Unit = {
+        Description = "Voice Input - sherpa-onnx";
+        After = [ "graphical-session.target" "pipewire.service" ];
+        PartOf = [ "graphical-session.target" ];
+        Conflicts = [ "whisper-writer.service" "voice-input-fw-streaming.service" ];
+      };
+      Service = {
+        ExecStart = "${cfg.sherpaPackage}/bin/voice-input-sherpa-onnx";
+        Restart = "on-failure";
+        RestartSec = 3;
+        Environment = [
+          "DISPLAY=:0"
+          "XAUTHORITY=%h/.Xauthority"
+          "XDG_CACHE_HOME=%h/.cache"
+          "VOICE_INPUT_SHERPA_CONFIG=%h/.config/voice-input-sherpa-onnx/config.yaml"
+          "VOICE_INPUT_TECH_WORDS=%h/.local/share/voice-input-sherpa-onnx/lexicons/tech_en.user.words:${cfg.sherpaPackage}/share/voice-input-sherpa-onnx/lexicons/tech_en.words"
+          "VOICE_INPUT_USER_CORRECTIONS=%h/.local/share/voice-input-sherpa-onnx/lexicons/user_corrections.rules"
+          "VOICE_INPUT_AUTO_CORRECTIONS=%h/.local/state/voice-input-sherpa-onnx/auto_corrections.rules"
+          "VOICE_INPUT_AUTO_LEARNING_STATE=%h/.local/state/voice-input-sherpa-onnx/auto_learning.json"
+          "VOICE_INPUT_HISTORY_PATH=%h/.local/state/voice-input-sherpa-onnx/history.jsonl"
+          "QT_QPA_PLATFORM=${if cfg.backend == "auto" then "xcb" else qtPlatform}"
+        ];
+      };
+      Install = lib.mkIf (cfg.autoStart && cfg.engine == "sherpa-onnx") {
         WantedBy = [ "graphical-session.target" ];
       };
     };
