@@ -1,0 +1,178 @@
+diff --git a/src/input_simulation.py b/src/input_simulation.py
+index 6003d52..18f4eca 100644
+--- a/src/input_simulation.py
++++ b/src/input_simulation.py
+@@ -59,7 +59,9 @@ class InputSimulator:
+             text (str): The text to type.
+         """
+         interval = ConfigManager.get_config_value('post_processing', 'writing_key_press_delay')
+-        if self.input_method == 'pynput':
++        if self.input_method == 'xdotool':
++            self._typewrite_xdotool(text)
++        elif self.input_method == 'pynput':
+             self._typewrite_pynput(text, interval)
+         elif self.input_method == 'ydotool':
+             self._typewrite_ydotool(text, interval)
+@@ -110,6 +112,80 @@ class InputSimulator:
+         self.dotool_process.stdin.write(f"type {text}\n")
+         self.dotool_process.stdin.flush()
+ 
++    def save_active_window(self):
++        """Save the currently focused window ID, skipping WhisperWriter's own windows."""
++        try:
++            result = subprocess.run(["xdotool", "getactivewindow"],
++                                    capture_output=True, text=True, timeout=2)
++            if result.returncode == 0:
++                wid = result.stdout.strip()
++                name_r = subprocess.run(["xdotool", "getwindowname", wid],
++                                        capture_output=True, text=True, timeout=2)
++                wname = name_r.stdout.strip() if name_r.returncode == 0 else ""
++                if "WhisperWriter" in wname or "whisperwriter" in wname.lower():
++                    return
++                self._saved_window_id = wid
++        except Exception:
++            pass
++
++    def _is_terminal(self, wid):
++        """Check if window is a terminal emulator by WM_CLASS."""
++        terminals = {"kitty", "alacritty", "st", "st-256color", "xterm", "urxvt",
++                     "gnome-terminal-server", "konsole", "xfce4-terminal", "foot",
++                     "wezterm-gui", "terminator", "tilix", "sakura"}
++        try:
++            r = subprocess.run(["xprop", "-id", wid, "WM_CLASS"],
++                               capture_output=True, text=True, timeout=2)
++            if r.returncode == 0:
++                wm_class = r.stdout.lower()
++                return any(t in wm_class for t in terminals)
++        except Exception:
++            pass
++        return False
++
++    def _typewrite_xdotool(self, text):
++        """
++        Paste text into the target window.
++        For terminals: use primary selection + middle-click (avoids bracketed paste highlight).
++        For other windows: use clipboard + Ctrl+V.
++        """
++        wid = getattr(self, '_saved_window_id', None)
++        if not wid:
++            return
++
++        is_term = self._is_terminal(wid)
++
++        # Set the appropriate X selection
++        selection = "primary" if is_term else "clipboard"
++        try:
++            p = subprocess.Popen(["xclip", "-selection", selection],
++                                 stdin=subprocess.PIPE)
++            p.communicate(input=text.encode('utf-8'), timeout=2)
++        except Exception:
++            return
++
++        # Focus the target window
++        try:
++            subprocess.run(["xdotool", "windowfocus", wid],
++                           capture_output=True, text=True, timeout=2)
++            time.sleep(0.15)
++        except Exception:
++            pass
++
++        if is_term:
++            # Middle-click paste from primary selection (no bracketed paste)
++            try:
++                subprocess.run(["xdotool", "click", "--window", wid, "2"], timeout=5)
++            except Exception:
++                pass
++        else:
++            # Ctrl+V paste from clipboard
++            try:
++                subprocess.run(["xdotool", "key", "--window", wid,
++                               "--clearmodifiers", "ctrl+v"], timeout=5)
++            except Exception:
++                pass
++
+     def cleanup(self):
+         """
+         Perform cleanup operations, such as terminating the dotool process.
+diff --git a/src/main.py b/src/main.py
+index 81b26d6..31d9500 100644
+--- a/src/main.py
++++ b/src/main.py
+@@ -53,6 +53,7 @@ class WhisperWriterApp(QObject):
+         self.local_model = create_local_model() if not model_options.get('use_api') else None
+ 
+         self.result_thread = None
++        self._ignore_activation = False
+ 
+         self.main_window = MainWindow()
+         self.main_window.openSettings.connect(self.settings_window.show)
+@@ -123,10 +124,14 @@ class WhisperWriterApp(QObject):
+         """
+         Called when the activation key combination is pressed.
+         """
++        if self._ignore_activation:
++            return
++        self.input_simulator.save_active_window()
+         if self.result_thread and self.result_thread.isRunning():
+             recording_mode = ConfigManager.get_config_value('recording_options', 'recording_mode')
+             if recording_mode == 'press_to_toggle':
+                 self.result_thread.stop_recording()
++                self._ignore_activation = True
+             elif recording_mode == 'continuous':
+                 self.stop_result_thread()
+             return
+@@ -157,10 +162,11 @@ class WhisperWriterApp(QObject):
+ 
+     def stop_result_thread(self):
+         """
+-        Stop the result thread.
++        Stop the result thread. Only stop during recording, not during transcription.
+         """
+         if self.result_thread and self.result_thread.isRunning():
+-            self.result_thread.stop()
++            if self.result_thread.is_recording:
++                self.result_thread.stop()
+ 
+     def on_transcription_complete(self, result):
+         """
+@@ -171,10 +177,9 @@ class WhisperWriterApp(QObject):
+         if ConfigManager.get_config_value('misc', 'noise_on_completion'):
+             AudioPlayer(os.path.join('assets', 'beep.wav')).play(block=True)
+ 
++        self._ignore_activation = False
+         if ConfigManager.get_config_value('recording_options', 'recording_mode') == 'continuous':
+             self.start_result_thread()
+-        else:
+-            self.key_listener.start()
+ 
+     def run(self):
+         """
+diff --git a/src/result_thread.py b/src/result_thread.py
+index a9e8309..f7342dd 100644
+--- a/src/result_thread.py
++++ b/src/result_thread.py
+@@ -94,8 +94,10 @@ class ResultThread(QThread):
+             if not self.is_running:
+                 return
+ 
+-            self.statusSignal.emit('idle')
++            # Emit result BEFORE idle status, because idle triggers status window
++            # close -> closeSignal -> stop_result_thread() -> stop() -> is_running=False
+             self.resultSignal.emit(result)
++            self.statusSignal.emit('idle')
+ 
+         except Exception as e:
+             traceback.print_exc()
+diff --git a/src/ui/status_window.py b/src/ui/status_window.py
+index 7b0a8c3..17ae587 100644
+--- a/src/ui/status_window.py
++++ b/src/ui/status_window.py
+@@ -23,7 +23,7 @@ class StatusWindow(BaseWindow):
+         """
+         Initialize the status user interface.
+         """
+-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
++        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.WindowDoesNotAcceptFocus)
+         
+         status_layout = QHBoxLayout()
+         status_layout.setContentsMargins(0, 0, 0, 0)

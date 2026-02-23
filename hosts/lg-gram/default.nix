@@ -9,6 +9,7 @@
     ../../profiles/zero-trust-node.nix
     ../../profiles/network-egress-proxy.nix
     ../../profiles/devops-baseline.nix
+    ../../profiles/voice-input
   ];
 
   home-manager.users.frc.imports = [
