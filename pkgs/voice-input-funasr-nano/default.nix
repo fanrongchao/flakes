@@ -1,6 +1,7 @@
 { lib
 , stdenvNoCC
 , python312
+, python312Packages
 , coreutils
 , findutils
 , gnugrep
@@ -16,7 +17,74 @@
 }:
 
 let
+  kaldiioPkg = python312Packages.buildPythonPackage rec {
+    pname = "kaldiio";
+    version = "2.18.1";
+    format = "wheel";
+    dontBuild = true;
+
+    src = python312Packages.fetchPypi {
+      inherit pname version;
+      format = "wheel";
+      dist = "py3";
+      python = "py3";
+      abi = "none";
+      platform = "any";
+      hash = "sha256-OXpM0Yl3rKrnrKv7poB+4KaXjGIAZDgaJm6sFbPBoKA=";
+    };
+
+    propagatedBuildInputs = with python312Packages; [
+      numpy
+    ];
+    doCheck = false;
+  };
+
+  funasrPkg = python312Packages.buildPythonPackage rec {
+    pname = "funasr";
+    version = "1.3.1";
+    format = "wheel";
+    dontBuild = true;
+
+    src = python312Packages.fetchPypi {
+      inherit pname version;
+      format = "wheel";
+      dist = "py3";
+      python = "py3";
+      abi = "none";
+      platform = "any";
+      hash = "sha256-9jBQ19Yl8ofsdBuEoDJTZWmcSVUKS/06zkrLQ+Qah6g=";
+    };
+
+    propagatedBuildInputs = with python312Packages; [
+      kaldiioPkg
+      editdistance
+      hydra-core
+      jaconv
+      jamo
+      jieba
+      librosa
+      modelscope
+      oss2
+      pyyaml
+      requests
+      scipy
+      sentencepiece
+      soundfile
+      tensorboardx
+      tqdm
+      umap-learn
+      torch
+      torchaudio
+      transformers
+      openai-whisper
+    ];
+
+    pythonImportsCheck = [ ];
+    doCheck = false;
+  };
+
   pythonEnv = python312.withPackages (ps: with ps; [
+    funasrPkg
     pynput
     sounddevice
     soundfile
@@ -66,20 +134,8 @@ stdenvNoCC.mkDerivation rec {
     : "\''${VOICE_INPUT_FUNASR_NANO_CONFIG:=\$HOME/.config/voice-input-funasr-nano/config.yaml}"
     export VOICE_INPUT_FUNASR_NANO_CONFIG
 
-    VENV_DIR="\$HOME/.cache/voice-input-funasr-nano/venv"
-    DEPS_MARK="\$VENV_DIR/.deps.v3.ready"
-    if [ ! -x "\$VENV_DIR/bin/python" ]; then
-      mkdir -p "\$HOME/.cache/voice-input-funasr-nano"
-      ${pythonEnv}/bin/python -m venv --system-site-packages "\$VENV_DIR"
-    fi
-    if [ ! -f "\$DEPS_MARK" ]; then
-      "\$VENV_DIR/bin/python" -m pip install --upgrade pip >/dev/null 2>&1 || true
-      "\$VENV_DIR/bin/python" -m pip install "funasr>=1.2.0" "modelscope>=1.20.0" "transformers>=4.49.0" "openai-whisper>=20240930" >/dev/null
-      touch "\$DEPS_MARK"
-    fi
-
     cd "$out/share/voice-input-funasr-nano"
-    exec "\$VENV_DIR/bin/python" main.py "\$@"
+    exec ${pythonEnv}/bin/python main.py "\$@"
     SCRIPT
     chmod +x "$out/bin/voice-input-funasr-nano"
 

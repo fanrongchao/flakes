@@ -190,8 +190,8 @@ in
     funasrNano = {
       model = lib.mkOption {
         type = lib.types.str;
-        default = "FunAudioLLM/Fun-ASR-Nano-2512";
-        description = "Model repo/profile used by funasr-nano service.";
+        default = "/home/frc/.cache/huggingface/FunAudioLLM-Fun-ASR-Nano-2512";
+        description = "Absolute local model directory used by funasr-nano service; if missing, auto-downloads from https://huggingface.co/FunAudioLLM/Fun-ASR-Nano-2512.";
       };
 
       device = lib.mkOption {
@@ -339,6 +339,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion =
+          cfg.engine != "funasr-nano"
+          || (lib.hasPrefix "/" cfg.funasrNano.model);
+        message = "voiceInput.funasrNano.model must be an absolute local path when engine is funasr-nano.";
+      }
+    ];
+
     environment.systemPackages = [
       pkgs.portaudio
       pkgs.xdotool

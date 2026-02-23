@@ -22,6 +22,56 @@ import soundfile as sf
 import yaml
 from pynput import keyboard
 
+NOISY_RUNTIME_PATTERNS = (
+    "Warning, miss key in ckpt:",
+    "WARNING:root:trust_remote_code",
+    "Loading remote code successfully:",
+    "Please install torch_complex firstly",
+)
+
+MODEL_REPO_ID = "FunAudioLLM/Fun-ASR-Nano-2512"
+MODEL_INFO_URL = f"https://huggingface.co/{MODEL_REPO_ID}"
+
+
+class _LineFilterStream:
+    def __init__(self, inner, patterns):
+        self._inner = inner
+        self._patterns = tuple(patterns)
+        self._buf = ""
+
+    def write(self, data):
+        if not data:
+            return 0
+        self._buf += data
+        wrote = 0
+        while "\n" in self._buf:
+            line, self._buf = self._buf.split("\n", 1)
+            if not any(p in line for p in self._patterns):
+                self._inner.write(line + "\n")
+                wrote += len(line) + 1
+        return wrote
+
+    def flush(self):
+        if self._buf and not any(p in self._buf for p in self._patterns):
+            self._inner.write(self._buf)
+        self._buf = ""
+        self._inner.flush()
+
+    def isatty(self):
+        return self._inner.isatty()
+
+    @property
+    def encoding(self):
+        return getattr(self._inner, "encoding", None)
+
+    def fileno(self):
+        return self._inner.fileno()
+
+
+def install_runtime_log_filter():
+    sys.stdout = _LineFilterStream(sys.stdout, NOISY_RUNTIME_PATTERNS)
+    sys.stderr = _LineFilterStream(sys.stderr, NOISY_RUNTIME_PATTERNS)
+
 
 def load_config():
     path = os.getenv(
@@ -433,10 +483,7 @@ def extract_text_from_result(obj):
 
 
 def _filter_model_load_logs(text):
-    noisy_patterns = (
-        "Warning, miss key in ckpt:",
-        "Loading remote code successfully:",
-        "WARNING:root:trust_remote_code",
+    noisy_patterns = NOISY_RUNTIME_PATTERNS + (
         "Notice: If you want to use whisper",
     )
     out = []
@@ -535,7 +582,9 @@ class App:
         self._lock = threading.Lock()
         self._status_notify_id = None
 
-        self.model_id = str(s.get("model", "FunAudioLLM/Fun-ASR-Nano-2512")).strip()
+        self.model_id = str(
+            s.get("model", "~/.cache/huggingface/FunAudioLLM-Fun-ASR-Nano-2512")
+        ).strip()
         self.device = str(s.get("device", "cpu")).strip()
         self.dtype = str(s.get("dtype", "float32")).strip()
         self.hotword_boost_enable = to_bool(s.get("hotword_boost_enable", True), True)
@@ -552,17 +601,53 @@ class App:
         self._nano_kwargs = None
 
     def resolve_model_source(self):
-        model_src = self.model_id
-        expanded = os.path.expanduser(model_src)
-        if os.path.exists(expanded):
-            return expanded
-
-        hf_home = os.path.expanduser(os.getenv("HF_HOME", "~/.cache/huggingface"))
-        repo_like = model_src.replace("/", "-")
-        local_dir = os.path.join(hf_home, repo_like)
-        if os.path.exists(os.path.join(local_dir, "model.pt")):
-            return local_dir
+        model_src = os.path.expanduser(self.model_id)
+        if not os.path.isabs(model_src):
+            raise RuntimeError(
+                f"funasr_nano.model must be an absolute local path, got: {self.model_id}"
+            )
+        model_pt = os.path.join(model_src, "model.pt")
+        if not os.path.isfile(model_pt):
+            self.ensure_local_model(model_src)
+        if not os.path.isdir(model_src):
+            raise RuntimeError(f"model directory not found after download: {model_src}")
+        if not os.path.isfile(model_pt):
+            raise RuntimeError(
+                f"model file not found after download: {model_pt} ; source: {MODEL_INFO_URL}"
+            )
         return model_src
+
+    def ensure_local_model(self, model_dir):
+        notify(f"Model missing, downloading from {MODEL_INFO_URL}")
+        print(f"model missing, downloading from: {MODEL_INFO_URL}", flush=True)
+        os.makedirs(model_dir, exist_ok=True)
+        try:
+            from huggingface_hub import snapshot_download
+
+            snapshot_download(
+                repo_id=MODEL_REPO_ID,
+                local_dir=model_dir,
+                local_dir_use_symlinks=False,
+                resume_download=True,
+                allow_patterns=[
+                    "model.pt",
+                    "config*.json",
+                    "*.yaml",
+                    "*.txt",
+                    "README.md",
+                    "model.py",
+                    "ctc.py",
+                    "tools/*",
+                    "example/*",
+                    "am.mvn",
+                    "tokens.json",
+                ],
+            )
+            notify("Model download complete")
+        except Exception as e:
+            raise RuntimeError(
+                f"auto-download model failed from {MODEL_INFO_URL}: {e}"
+            ) from e
 
     def run(self):
         if self.warmup_on_start:
@@ -931,6 +1016,7 @@ class App:
 
 
 def main():
+    install_runtime_log_filter()
     cfg = load_config()
     signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
