@@ -1,0 +1,5 @@
+# base_zh: Mandarin-oriented normalization and common homophone fixes
+四点一 => 4.1
+一二三 => 123
+四五六 => 456
+七八九 => 789

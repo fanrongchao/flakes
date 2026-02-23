@@ -18,7 +18,7 @@ in
     };
 
     engine = lib.mkOption {
-      type = lib.types.enum [ "whisper-writer" "fw-streaming" "sherpa-onnx" ];
+      type = lib.types.enum [ "whisper-writer" "fw-streaming" "sherpa-onnx" "funasr-nano" ];
       default = "whisper-writer";
       description = "Voice input engine to run.";
     };
@@ -186,6 +186,132 @@ in
         };
       };
     };
+
+    funasrNano = {
+      model = lib.mkOption {
+        type = lib.types.str;
+        default = "FunAudioLLM/Fun-ASR-Nano-2512";
+        description = "Model repo/profile used by funasr-nano service.";
+      };
+
+      device = lib.mkOption {
+        type = lib.types.str;
+        default = "cpu";
+        description = "Inference device for funasr-nano (e.g. cpu, cuda:0).";
+      };
+
+      dtype = lib.mkOption {
+        type = lib.types.str;
+        default = "float32";
+        description = "Preferred dtype hint for funasr-nano inference.";
+      };
+
+      sampleRate = lib.mkOption {
+        type = lib.types.int;
+        default = 16000;
+        description = "Sample rate for funasr-nano recorder.";
+      };
+
+      chunkMs = lib.mkOption {
+        type = lib.types.int;
+        default = 320;
+        description = "Audio chunk size in ms for funasr-nano service.";
+      };
+
+      endpointMs = lib.mkOption {
+        type = lib.types.int;
+        default = 260;
+        description = "Reserved endpoint threshold in ms for funasr-nano.";
+      };
+
+      maxUtteranceMs = lib.mkOption {
+        type = lib.types.int;
+        default = 12000;
+        description = "Maximum utterance duration before forced finalize.";
+      };
+
+      punctuationPolicy = lib.mkOption {
+        type = lib.types.enum [ "light-normalize" "asr-raw" ];
+        default = "light-normalize";
+        description = "Post-processing policy for funasr-nano output text.";
+      };
+
+      interactionMode = lib.mkOption {
+        type = lib.types.enum [ "hold-to-talk" "toggle" ];
+        default = "hold-to-talk";
+        description = "Hotkey interaction mode for funasr-nano.";
+      };
+
+      hotwordBoostEnable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable tech lexicon hotword boost for funasr-nano.";
+      };
+
+      hotwordBoostWeight = lib.mkOption {
+        type = lib.types.float;
+        default = 0.6;
+        description = "Hotword boost weight used by funasr-nano.";
+      };
+
+      learningMinHits = lib.mkOption {
+        type = lib.types.int;
+        default = 2;
+        description = "Minimum repeated corrections before auto rule promotion.";
+      };
+
+      feedback = {
+        recordingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show recording status notification.";
+        };
+
+        thinkingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show thinking status notification.";
+        };
+
+        doneNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Show done notification after text injection.";
+        };
+
+        sound = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Enable feedback sounds.";
+          };
+
+          onStart = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording starts.";
+          };
+
+          onStop = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording stops and enters thinking.";
+          };
+
+          onDone = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Play sound when injection is done.";
+          };
+
+          theme = lib.mkOption {
+            type = lib.types.str;
+            default = "wispr-like";
+            description = "Feedback sound theme.";
+          };
+        };
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -209,6 +335,7 @@ in
         backend = cfg.backend;
         streaming = cfg.streaming;
         sherpa = cfg.sherpa;
+        funasrNano = cfg.funasrNano;
         fallback.autoToFwStreaming = true;
       };
     };

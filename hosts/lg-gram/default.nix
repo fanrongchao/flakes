@@ -23,12 +23,25 @@
 
   voiceInput = {
     enable = true;
-    engine = "fw-streaming";
+    engine = "funasr-nano";
     model = "medium";
     device = "cpu";
     computeType = "int8";
     hotkey = "meta";
     autoStart = true;
     backend = "x11";
+    funasrNano = {
+      model = "/home/frc/.cache/huggingface/FunAudioLLM-Fun-ASR-Nano-2512";
+      device = "cpu";
+      dtype = "float32";
+      chunkMs = 320;
+      endpointMs = 260;
+      maxUtteranceMs = 12000;
+      punctuationPolicy = "light-normalize";
+      interactionMode = "hold-to-talk";
+      hotwordBoostEnable = true;
+      hotwordBoostWeight = 0.6;
+      learningMinHits = 2;
+    };
   };
 }

@@ -1,0 +1,27 @@
+# base_en: English phrase and acronym normalization
+open en ai => OpenAI
+open and ai => OpenAI
+open a i => OpenAI
+open ai => OpenAI
+opopen ai => OpenAI
+opopen => OpenAI
+codex => Codex
+xcode => Codex
+chat g p t => ChatGPT
+g p t => GPT
+gp t => GPT
+ipt => GPT
+igpt => GPT
+abb c => ABC
+a b c => ABC
+english => English
+abc => ABC
+api => API
+cpu => CPU
+ram => RAM
+nixos => NixOS
+four point one => 4.1
+for point one => 4.1
+one four point => 4.1
+gpt four point => GPT 4.1
+gpt 4. => GPT 4.1

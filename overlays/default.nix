@@ -10,6 +10,8 @@ final: prev: {
   dgop = prev.callPackage ../pkgs/dgop {};
   whisper-writer-pinned = prev.callPackage ../pkgs/whisper-writer {};
   voice-input-fw-streaming = prev.callPackage ../pkgs/voice-input-fw-streaming {};
+  voice-input-sherpa-onnx = prev.callPackage ../pkgs/voice-input-sherpa-onnx {};
+  voice-input-funasr-nano = prev.callPackage ../pkgs/voice-input-funasr-nano {};
 
   opencode =
     let

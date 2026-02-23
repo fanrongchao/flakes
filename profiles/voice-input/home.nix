@@ -14,7 +14,7 @@ in
     };
 
     engine = lib.mkOption {
-      type = lib.types.enum [ "whisper-writer" "fw-streaming" "sherpa-onnx" ];
+      type = lib.types.enum [ "whisper-writer" "fw-streaming" "sherpa-onnx" "funasr-nano" ];
       default = "whisper-writer";
       description = "Voice input engine to autostart.";
     };
@@ -35,6 +35,12 @@ in
       type = lib.types.package;
       default = pkgs.voice-input-sherpa-onnx;
       description = "sherpa-onnx package.";
+    };
+
+    funasrNanoPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.voice-input-funasr-nano;
+      description = "funasr-nano package.";
     };
 
     model = lib.mkOption {
@@ -219,6 +225,132 @@ in
       };
     };
 
+    funasrNano = {
+      model = lib.mkOption {
+        type = lib.types.str;
+        default = "FunAudioLLM/Fun-ASR-Nano-2512";
+        description = "Model repo/profile used by funasr-nano service.";
+      };
+
+      device = lib.mkOption {
+        type = lib.types.str;
+        default = "cpu";
+        description = "Inference device for funasr-nano (e.g. cpu, cuda:0).";
+      };
+
+      dtype = lib.mkOption {
+        type = lib.types.str;
+        default = "float32";
+        description = "Preferred dtype hint for funasr-nano inference.";
+      };
+
+      sampleRate = lib.mkOption {
+        type = lib.types.int;
+        default = 16000;
+        description = "Sample rate for funasr-nano recorder.";
+      };
+
+      chunkMs = lib.mkOption {
+        type = lib.types.int;
+        default = 320;
+        description = "Audio chunk size in milliseconds.";
+      };
+
+      endpointMs = lib.mkOption {
+        type = lib.types.int;
+        default = 260;
+        description = "Reserved endpoint threshold in milliseconds.";
+      };
+
+      maxUtteranceMs = lib.mkOption {
+        type = lib.types.int;
+        default = 12000;
+        description = "Maximum utterance length in milliseconds.";
+      };
+
+      punctuationPolicy = lib.mkOption {
+        type = lib.types.enum [ "light-normalize" "asr-raw" ];
+        default = "light-normalize";
+        description = "Post-processing policy for funasr-nano output.";
+      };
+
+      interactionMode = lib.mkOption {
+        type = lib.types.enum [ "hold-to-talk" "toggle" ];
+        default = "hold-to-talk";
+        description = "Hotkey interaction mode for funasr-nano.";
+      };
+
+      hotwordBoostEnable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable tech lexicon hotword boost for funasr-nano.";
+      };
+
+      hotwordBoostWeight = lib.mkOption {
+        type = lib.types.float;
+        default = 0.6;
+        description = "Hotword boost weight used by funasr-nano.";
+      };
+
+      learningMinHits = lib.mkOption {
+        type = lib.types.int;
+        default = 2;
+        description = "Minimum repeated corrections before auto rule promotion.";
+      };
+
+      feedback = {
+        recordingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show recording status notification.";
+        };
+
+        thinkingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show thinking status notification.";
+        };
+
+        doneNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Show done notification after text injection.";
+        };
+
+        sound = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Enable feedback sounds.";
+          };
+
+          onStart = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording starts.";
+          };
+
+          onStop = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording stops and enters thinking.";
+          };
+
+          onDone = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Play sound when injection is done.";
+          };
+
+          theme = lib.mkOption {
+            type = lib.types.str;
+            default = "wispr-like";
+            description = "Feedback sound theme.";
+          };
+        };
+      };
+    };
+
     fallback = {
       autoToWhisperWriter = lib.mkOption {
         type = lib.types.bool;
@@ -229,7 +361,7 @@ in
       autoToFwStreaming = lib.mkOption {
         type = lib.types.bool;
         default = true;
-        description = "Auto fallback to fw-streaming when sherpa startup fails.";
+        description = "Auto fallback to fw-streaming when sherpa/funasr startup fails.";
       };
     };
   };
@@ -239,6 +371,7 @@ in
       cfg.package
       cfg.streamingPackage
       cfg.sherpaPackage
+      cfg.funasrNanoPackage
       pkgs.xclip
       pkgs.libnotify
     ];
@@ -337,6 +470,40 @@ in
       '';
     };
 
+    xdg.configFile."voice-input-funasr-nano/config.yaml" = {
+      force = true;
+      text = ''
+      hotkey: ${cfg.hotkey}
+
+      funasr_nano:
+        model: ${cfg.funasrNano.model}
+        device: ${cfg.funasrNano.device}
+        dtype: ${cfg.funasrNano.dtype}
+        sample_rate: ${toString cfg.funasrNano.sampleRate}
+        chunk_ms: ${toString cfg.funasrNano.chunkMs}
+        endpoint_ms: ${toString cfg.funasrNano.endpointMs}
+        max_utterance_ms: ${toString cfg.funasrNano.maxUtteranceMs}
+        punctuation_policy: ${cfg.funasrNano.punctuationPolicy}
+        interaction_mode: ${cfg.funasrNano.interactionMode}
+        hotword_boost_enable: ${if cfg.funasrNano.hotwordBoostEnable then "true" else "false"}
+        hotword_boost_weight: ${toString cfg.funasrNano.hotwordBoostWeight}
+        learning_min_hits: ${toString cfg.funasrNano.learningMinHits}
+        feedback:
+          recording_notify: ${if cfg.funasrNano.feedback.recordingNotify then "true" else "false"}
+          thinking_notify: ${if cfg.funasrNano.feedback.thinkingNotify then "true" else "false"}
+          done_notify: ${if cfg.funasrNano.feedback.doneNotify then "true" else "false"}
+          sound:
+            enable: ${if cfg.funasrNano.feedback.sound.enable then "true" else "false"}
+            on_start: ${if cfg.funasrNano.feedback.sound.onStart then "true" else "false"}
+            on_stop: ${if cfg.funasrNano.feedback.sound.onStop then "true" else "false"}
+            on_done: ${if cfg.funasrNano.feedback.sound.onDone then "true" else "false"}
+            theme: ${cfg.funasrNano.feedback.sound.theme}
+
+      fallback:
+        auto_to_fw_streaming: ${if cfg.fallback.autoToFwStreaming then "true" else "false"}
+      '';
+    };
+
     xdg.configFile."voice-input-sherpa-onnx/seed/tech_en.user.words" = {
       source = ./seed/tech_en.user.words;
       force = true;
@@ -352,12 +519,27 @@ in
       force = true;
     };
 
+    xdg.configFile."voice-input-funasr-nano/seed/tech_en.user.words" = {
+      source = ./seed/tech_en.user.words;
+      force = true;
+    };
+
+    xdg.configFile."voice-input-funasr-nano/seed/user_corrections.rules" = {
+      source = ./seed/user_corrections.rules;
+      force = true;
+    };
+
+    xdg.configFile."voice-input-funasr-nano/seed/auto_corrections.rules" = {
+      source = ./seed/auto_corrections.rules;
+      force = true;
+    };
+
     systemd.user.services.whisper-writer = {
       Unit = {
         Description = "WhisperWriter - local voice dictation";
         After = [ "graphical-session.target" "pipewire.service" ];
         PartOf = [ "graphical-session.target" ];
-        Conflicts = [ "voice-input-fw-streaming.service" "voice-input-sherpa-onnx.service" ];
+        Conflicts = [ "voice-input-fw-streaming.service" "voice-input-sherpa-onnx.service" "voice-input-funasr-nano.service" ];
       };
       Service = {
         ExecStart = "${cfg.package}/bin/whisper-writer";
@@ -382,7 +564,7 @@ in
         Description = "Voice Input - faster-whisper streaming";
         After = [ "graphical-session.target" "pipewire.service" ];
         PartOf = [ "graphical-session.target" ];
-        Conflicts = [ "whisper-writer.service" "voice-input-sherpa-onnx.service" ];
+        Conflicts = [ "whisper-writer.service" "voice-input-sherpa-onnx.service" "voice-input-funasr-nano.service" ];
       };
       Service = {
         ExecStart = "${cfg.streamingPackage}/bin/voice-input-fw-streaming";
@@ -407,7 +589,7 @@ in
         Description = "Voice Input - sherpa-onnx";
         After = [ "graphical-session.target" "pipewire.service" ];
         PartOf = [ "graphical-session.target" ];
-        Conflicts = [ "whisper-writer.service" "voice-input-fw-streaming.service" ];
+        Conflicts = [ "whisper-writer.service" "voice-input-fw-streaming.service" "voice-input-funasr-nano.service" ];
       };
       Service = {
         ExecStart = "${cfg.sherpaPackage}/bin/voice-input-sherpa-onnx";
@@ -428,6 +610,37 @@ in
         ];
       };
       Install = lib.mkIf (cfg.autoStart && cfg.engine == "sherpa-onnx") {
+        WantedBy = [ "graphical-session.target" ];
+      };
+    };
+
+    systemd.user.services.voice-input-funasr-nano = {
+      Unit = {
+        Description = "Voice Input - funasr-nano";
+        After = [ "graphical-session.target" "pipewire.service" ];
+        PartOf = [ "graphical-session.target" ];
+        Conflicts = [ "whisper-writer.service" "voice-input-fw-streaming.service" "voice-input-sherpa-onnx.service" ];
+      };
+      Service = {
+        ExecStart = "${cfg.funasrNanoPackage}/bin/voice-input-funasr-nano";
+        Restart = "on-failure";
+        RestartSec = 3;
+        Environment = [
+          "DISPLAY=:0"
+          "XAUTHORITY=%h/.Xauthority"
+          "HF_HOME=%h/.cache/huggingface"
+          "XDG_CACHE_HOME=%h/.cache"
+          "VOICE_INPUT_FUNASR_NANO_CONFIG=%h/.config/voice-input-funasr-nano/config.yaml"
+          "VOICE_INPUT_TECH_WORDS=%h/.local/share/voice-input-funasr-nano/lexicons/tech_en.user.words:%h/.config/voice-input-funasr-nano/seed/tech_en.user.words:${cfg.funasrNanoPackage}/share/voice-input-funasr-nano/lexicons/tech_en.words"
+          "VOICE_INPUT_USER_CORRECTIONS=%h/.local/share/voice-input-funasr-nano/lexicons/user_corrections.rules:%h/.config/voice-input-funasr-nano/seed/user_corrections.rules"
+          "VOICE_INPUT_AUTO_CORRECTIONS=%h/.local/state/voice-input-funasr-nano/auto_corrections.rules:%h/.config/voice-input-funasr-nano/seed/auto_corrections.rules"
+          "VOICE_INPUT_AUTO_CORRECTIONS_WRITE=%h/.local/state/voice-input-funasr-nano/auto_corrections.rules"
+          "VOICE_INPUT_AUTO_LEARNING_STATE=%h/.local/state/voice-input-funasr-nano/auto_learning.json"
+          "VOICE_INPUT_HISTORY_PATH=%h/.local/state/voice-input-funasr-nano/history.jsonl"
+          "QT_QPA_PLATFORM=${if cfg.backend == "auto" then "xcb" else qtPlatform}"
+        ];
+      };
+      Install = lib.mkIf (cfg.autoStart && cfg.engine == "funasr-nano") {
         WantedBy = [ "graphical-session.target" ];
       };
     };
