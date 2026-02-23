@@ -81,22 +81,30 @@ def norm_token(key):
     return ""
 
 
-def is_terminal_window(window_id):
-    terminals = {
-        "kitty", "alacritty", "st", "xterm", "urxvt", "gnome-terminal-server",
-        "konsole", "xfce4-terminal", "foot", "wezterm-gui", "terminator", "tilix",
-    }
+def get_window_class(window_id):
     try:
-        out = subprocess.run(
+        return subprocess.run(
             ["xprop", "-id", window_id, "WM_CLASS"],
             capture_output=True,
             text=True,
             timeout=2,
             check=False,
         ).stdout.lower()
-        return any(t in out for t in terminals)
     except Exception:
-        return False
+        return ""
+
+
+def is_terminal_window(window_id):
+    terminals = {
+        "kitty", "alacritty", "st", "xterm", "urxvt", "gnome-terminal-server",
+        "konsole", "xfce4-terminal", "foot", "wezterm-gui", "terminator", "tilix",
+    }
+    out = get_window_class(window_id)
+    return any(t in out for t in terminals)
+
+
+def is_kitty_window(window_id):
+    return "kitty" in get_window_class(window_id)
 
 
 def load_replacements_file(path):
@@ -790,20 +798,29 @@ class App:
         if not wid:
             return
         is_term = is_terminal_window(wid)
+        is_kitty = is_kitty_window(wid)
         try:
-            p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE)
-            p.communicate(input=text.encode("utf-8"), timeout=2)
+            p1 = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE)
+            p1.communicate(input=text.encode("utf-8"), timeout=2)
         except Exception:
             return
         try:
             subprocess.run(["xdotool", "windowfocus", wid], timeout=2, check=False)
             time.sleep(0.12)
             if is_term:
+                term_paste_key = "ctrl+shift+v"
                 subprocess.run(
-                    ["xdotool", "key", "--window", wid, "--clearmodifiers", "ctrl+shift+v"],
+                    ["xdotool", "key", "--window", wid, "--clearmodifiers", term_paste_key],
                     timeout=3,
                     check=False,
                 )
+                if is_kitty:
+                    # Clear residual selection/preedit visual state without mode switch.
+                    subprocess.run(
+                        ["xdotool", "key", "--window", wid, "--clearmodifiers", "Left", "Right"],
+                        timeout=3,
+                        check=False,
+                    )
             else:
                 subprocess.run(
                     ["xdotool", "key", "--window", wid, "--clearmodifiers", "ctrl+v"],
