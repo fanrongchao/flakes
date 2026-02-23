@@ -159,6 +159,64 @@ in
         default = "light-normalize";
         description = "Post-processing policy for sherpa output.";
       };
+
+      interactionMode = lib.mkOption {
+        type = lib.types.enum [ "hold-to-talk" "toggle" ];
+        default = "hold-to-talk";
+        description = "Hotkey interaction mode for sherpa-onnx.";
+      };
+
+      feedback = {
+        recordingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show recording status notification.";
+        };
+
+        thinkingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show thinking status notification.";
+        };
+
+        doneNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Show done notification after text injection.";
+        };
+
+        sound = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Enable feedback sounds.";
+          };
+
+          onStart = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording starts.";
+          };
+
+          onStop = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording stops and enters thinking.";
+          };
+
+          onDone = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Play sound when injection is done.";
+          };
+
+          theme = lib.mkOption {
+            type = lib.types.str;
+            default = "wispr-like";
+            description = "Feedback sound theme.";
+          };
+        };
+      };
     };
 
     fallback = {
@@ -262,6 +320,17 @@ in
         endpoint_ms: ${toString cfg.sherpa.endpointMs}
         max_utterance_ms: ${toString cfg.sherpa.maxUtteranceMs}
         punctuation_policy: ${cfg.sherpa.punctuationPolicy}
+        interaction_mode: ${cfg.sherpa.interactionMode}
+        feedback:
+          recording_notify: ${if cfg.sherpa.feedback.recordingNotify then "true" else "false"}
+          thinking_notify: ${if cfg.sherpa.feedback.thinkingNotify then "true" else "false"}
+          done_notify: ${if cfg.sherpa.feedback.doneNotify then "true" else "false"}
+          sound:
+            enable: ${if cfg.sherpa.feedback.sound.enable then "true" else "false"}
+            on_start: ${if cfg.sherpa.feedback.sound.onStart then "true" else "false"}
+            on_stop: ${if cfg.sherpa.feedback.sound.onStop then "true" else "false"}
+            on_done: ${if cfg.sherpa.feedback.sound.onDone then "true" else "false"}
+            theme: ${cfg.sherpa.feedback.sound.theme}
 
       fallback:
         auto_to_fw_streaming: ${if cfg.fallback.autoToFwStreaming then "true" else "false"}

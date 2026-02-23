@@ -127,6 +127,64 @@ in
         default = "light-normalize";
         description = "Post-processing policy for sherpa-onnx output text.";
       };
+
+      interactionMode = lib.mkOption {
+        type = lib.types.enum [ "hold-to-talk" "toggle" ];
+        default = "hold-to-talk";
+        description = "Hotkey interaction mode for sherpa-onnx.";
+      };
+
+      feedback = {
+        recordingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show recording status notification.";
+        };
+
+        thinkingNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Show thinking status notification.";
+        };
+
+        doneNotify = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Show done notification after text injection.";
+        };
+
+        sound = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Enable feedback sounds.";
+          };
+
+          onStart = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording starts.";
+          };
+
+          onStop = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Play sound when recording stops and enters thinking.";
+          };
+
+          onDone = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Play sound when injection is done.";
+          };
+
+          theme = lib.mkOption {
+            type = lib.types.str;
+            default = "wispr-like";
+            description = "Feedback sound theme.";
+          };
+        };
+      };
     };
   };
 

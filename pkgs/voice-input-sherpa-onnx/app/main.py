@@ -26,9 +26,33 @@ def load_config():
         return yaml.safe_load(f) or {}
 
 
-def notify(msg):
-    if shutil.which("notify-send"):
-        subprocess.run(["notify-send", "Voice Input Sherpa", msg], check=False)
+def notify(msg, expire_ms=None, replace_id=None):
+    if not shutil.which("notify-send"):
+        return replace_id
+    cmd = ["notify-send"]
+    if replace_id is not None:
+        cmd.extend(["-r", str(replace_id)])
+    if expire_ms is not None:
+        cmd.extend(["-t", str(int(expire_ms))])
+    cmd.extend(["-p", "Voice Input Sherpa", msg])
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        out = (r.stdout or "").strip()
+        return int(out) if out.isdigit() else replace_id
+    except Exception:
+        return replace_id
+
+
+def to_bool(v, default=False):
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        s = v.strip().lower()
+        if s in {"1", "true", "yes", "on"}:
+            return True
+        if s in {"0", "false", "no", "off"}:
+            return False
+    return default
 
 
 def fallback_to_fw_streaming(reason):
@@ -383,6 +407,19 @@ class App:
         self.chunk_ms = int(s.get("chunk_ms", 320))
         self.max_utterance_ms = int(s.get("max_utterance_ms", 12000))
         self.punctuation_policy = s.get("punctuation_policy", "light-normalize")
+        self.interaction_mode = str(s.get("interaction_mode", "hold-to-talk")).strip().lower()
+        if self.interaction_mode not in {"hold-to-talk", "toggle"}:
+            self.interaction_mode = "hold-to-talk"
+        feedback = s.get("feedback", {}) if isinstance(s.get("feedback"), dict) else {}
+        sound_cfg = feedback.get("sound", {}) if isinstance(feedback.get("sound"), dict) else {}
+        self.recording_notify = to_bool(feedback.get("recording_notify", True), True)
+        self.thinking_notify = to_bool(feedback.get("thinking_notify", True), True)
+        self.done_notify = to_bool(feedback.get("done_notify", False), False)
+        self.sound_enable = to_bool(sound_cfg.get("enable", True), True)
+        self.sound_on_start = to_bool(sound_cfg.get("on_start", True), True)
+        self.sound_on_stop = to_bool(sound_cfg.get("on_stop", True), True)
+        self.sound_on_done = to_bool(sound_cfg.get("on_done", False), False)
+        self.sound_theme = str(sound_cfg.get("theme", "wispr-like")).strip().lower()
 
         self.base_zh_spec = expand_pathspec(
             os.getenv("VOICE_INPUT_BASE_ZH_RULES", os.path.join("lexicons", "base_zh.rules"))
@@ -438,12 +475,14 @@ class App:
                 self.required_keys.add(tok)
         self.pressed = set()
         self.chord_active = False
+        self.state = "idle"
 
         self._recording = False
         self._q = queue.Queue()
         self._frames = []
         self._target_window = None
         self._lock = threading.Lock()
+        self._status_notify_id = None
 
         self.model_dir = os.getenv("SHERPA_ONNX_MODEL_DIR", "")
         self.bin_dir = os.getenv("SHERPA_ONNX_BIN_DIR", "")
@@ -471,7 +510,10 @@ class App:
         active = self.required_keys.issubset(self.pressed)
         if active and not self.chord_active:
             self.chord_active = True
-            self.toggle_recording()
+            if self.interaction_mode == "toggle":
+                self.toggle_recording()
+            else:
+                self.start_recording()
 
     def on_release(self, key):
         tok = norm_token(key)
@@ -479,6 +521,81 @@ class App:
             self.pressed.remove(tok)
         if self.chord_active and not self.required_keys.issubset(self.pressed):
             self.chord_active = False
+            if self.interaction_mode == "hold-to-talk":
+                self.stop_to_thinking()
+
+    def play_feedback_sound(self, event):
+        if not self.sound_enable:
+            return
+        if event == "start" and not self.sound_on_start:
+            return
+        if event == "stop" and not self.sound_on_stop:
+            return
+        if event == "done" and not self.sound_on_done:
+            return
+
+        # Short non-blocking earcons, inspired by voice dictation UI cues.
+        if self.sound_theme == "wispr-like":
+            mapping = {
+                "start": (987.77, 0.050),
+                "stop": (659.25, 0.060),
+                "done": (523.25, 0.050),
+            }
+        else:
+            mapping = {
+                "start": (880.0, 0.050),
+                "stop": (660.0, 0.060),
+                "done": (520.0, 0.050),
+            }
+
+        tone = mapping.get(event)
+        if not tone:
+            return
+        freq, dur = tone
+        try:
+            sr = 24000
+            n = max(1, int(sr * dur))
+            t = np.arange(n, dtype=np.float32) / np.float32(sr)
+            env = np.linspace(1.0, 0.75, n, dtype=np.float32)
+            wave = (0.12 * np.sin(2.0 * np.pi * np.float32(freq) * t) * env).astype(np.float32)
+            sd.play(wave, sr, blocking=False)
+        except Exception:
+            return
+
+    def emit_feedback(self, event):
+        if event == "start":
+            if self.recording_notify:
+                self._status_notify_id = notify(
+                    "Recording...",
+                    expire_ms=10000,
+                    replace_id=self._status_notify_id,
+                )
+            self.play_feedback_sound("start")
+            return
+        if event == "stop":
+            if self.thinking_notify:
+                self._status_notify_id = notify(
+                    "Thinking...",
+                    expire_ms=10000,
+                    replace_id=self._status_notify_id,
+                )
+            self.play_feedback_sound("stop")
+            return
+        if event == "done":
+            if self.done_notify:
+                self._status_notify_id = notify(
+                    "Done",
+                    expire_ms=400,
+                    replace_id=self._status_notify_id,
+                )
+            elif self._status_notify_id is not None:
+                self._status_notify_id = notify(
+                    " ",
+                    expire_ms=1,
+                    replace_id=self._status_notify_id,
+                )
+            self.play_feedback_sound("done")
+            return
 
     def save_active_window(self):
         try:
@@ -500,15 +617,38 @@ class App:
 
     def toggle_recording(self):
         with self._lock:
-            if self._recording:
+            if self.state == "thinking":
+                return
+            if self.state == "recording":
                 self._recording = False
-                notify("Thinking...")
+                self.state = "thinking"
+                self.emit_feedback("stop")
                 return
             self._recording = True
+            self.state = "recording"
             self._frames = []
             self.save_active_window()
-            notify("Recording... (press hotkey again to stop)")
+            self.emit_feedback("start")
             threading.Thread(target=self.record_loop, daemon=True).start()
+
+    def start_recording(self):
+        with self._lock:
+            if self.state != "idle":
+                return
+            self._recording = True
+            self.state = "recording"
+            self._frames = []
+            self.save_active_window()
+            self.emit_feedback("start")
+            threading.Thread(target=self.record_loop, daemon=True).start()
+
+    def stop_to_thinking(self):
+        with self._lock:
+            if self.state != "recording":
+                return
+            self._recording = False
+            self.state = "thinking"
+            self.emit_feedback("stop")
 
     def record_loop(self):
         blocksize = max(1, int(self.sample_rate * self.chunk_ms / 1000))
@@ -526,6 +666,9 @@ class App:
                         break
                     if (time.time() - started) * 1000 > self.max_utterance_ms:
                         self._recording = False
+                        if self.state == "recording":
+                            self.state = "thinking"
+                            self.emit_feedback("stop")
                         break
                     try:
                         chunk = self._q.get(timeout=0.1).reshape(-1)
@@ -587,7 +730,7 @@ class App:
 
     def finish_transcription(self):
         if not self._frames:
-            notify("Done (no audio)")
+            self.state = "idle"
             return
         # Hot-reload user-updated correction/lexicon files without restarting service.
         self.base_zh_rules = load_replacements_sources(self.base_zh_spec)
@@ -630,12 +773,13 @@ class App:
             )
             if text:
                 self.inject_text(text)
-                notify("Done")
+                self.emit_feedback("done")
             else:
-                notify("Done (empty)")
+                self.emit_feedback("done")
         except Exception as e:
             notify(f"ASR error: {e}")
         finally:
+            self.state = "idle"
             try:
                 os.remove(wav_path)
             except Exception:
