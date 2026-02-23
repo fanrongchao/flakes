@@ -298,6 +298,30 @@ in
         description = "Minimum repeated corrections before auto rule promotion.";
       };
 
+      autoLearnEnable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable auto-learning correction updates during transcription.";
+      };
+
+      warmupOnStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Warm up FunASR model once at service startup.";
+      };
+
+      warmupBlockingStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Block service readiness until warmup finishes to avoid first-use lag.";
+      };
+
+      torchNumThreads = lib.mkOption {
+        type = lib.types.int;
+        default = 8;
+        description = "Torch CPU threads used by funasr-nano.";
+      };
+
       feedback = {
         recordingNotify = lib.mkOption {
           type = lib.types.bool;
@@ -488,6 +512,10 @@ in
         hotword_boost_enable: ${if cfg.funasrNano.hotwordBoostEnable then "true" else "false"}
         hotword_boost_weight: ${toString cfg.funasrNano.hotwordBoostWeight}
         learning_min_hits: ${toString cfg.funasrNano.learningMinHits}
+        auto_learn_enable: ${if cfg.funasrNano.autoLearnEnable then "true" else "false"}
+        warmup_on_start: ${if cfg.funasrNano.warmupOnStart then "true" else "false"}
+        warmup_blocking_start: ${if cfg.funasrNano.warmupBlockingStart then "true" else "false"}
+        torch_num_threads: ${toString cfg.funasrNano.torchNumThreads}
         feedback:
           recording_notify: ${if cfg.funasrNano.feedback.recordingNotify then "true" else "false"}
           thinking_notify: ${if cfg.funasrNano.feedback.thinkingNotify then "true" else "false"}

@@ -260,6 +260,30 @@ in
         description = "Minimum repeated corrections before auto rule promotion.";
       };
 
+      autoLearnEnable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable auto-learning correction updates during transcription.";
+      };
+
+      warmupOnStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Warm up FunASR model once at service startup.";
+      };
+
+      warmupBlockingStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Block service readiness until warmup finishes to avoid first-use lag.";
+      };
+
+      torchNumThreads = lib.mkOption {
+        type = lib.types.int;
+        default = 8;
+        description = "Torch CPU threads used by funasr-nano.";
+      };
+
       feedback = {
         recordingNotify = lib.mkOption {
           type = lib.types.bool;

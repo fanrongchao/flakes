@@ -42,6 +42,10 @@
       hotwordBoostEnable = true;
       hotwordBoostWeight = 0.6;
       learningMinHits = 2;
+      autoLearnEnable = false;
+      warmupOnStart = true;
+      warmupBlockingStart = true;
+      torchNumThreads = 10;
     };
   };
 }

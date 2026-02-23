@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import importlib
+import io
 import os
 import queue
 import re
@@ -13,6 +14,7 @@ import time
 import json
 import difflib
 from datetime import datetime, timezone
+from contextlib import redirect_stderr, redirect_stdout
 
 import numpy as np
 import sounddevice as sd
@@ -430,6 +432,24 @@ def extract_text_from_result(obj):
     return ""
 
 
+def _filter_model_load_logs(text):
+    noisy_patterns = (
+        "Warning, miss key in ckpt:",
+        "Loading remote code successfully:",
+        "WARNING:root:trust_remote_code",
+        "Notice: If you want to use whisper",
+    )
+    out = []
+    for ln in text.splitlines():
+        s = ln.strip()
+        if not s:
+            continue
+        if any(p in s for p in noisy_patterns):
+            continue
+        out.append(s)
+    return out
+
+
 class App:
     def __init__(self, cfg):
         self.cfg = cfg
@@ -521,6 +541,10 @@ class App:
         self.hotword_boost_enable = to_bool(s.get("hotword_boost_enable", True), True)
         self.hotword_boost_weight = float(s.get("hotword_boost_weight", 0.6))
         self.learning_min_hits = int(s.get("learning_min_hits", 2))
+        self.auto_learn_enable = to_bool(s.get("auto_learn_enable", True), True)
+        self.warmup_on_start = to_bool(s.get("warmup_on_start", True), True)
+        self.warmup_blocking_start = to_bool(s.get("warmup_blocking_start", True), True)
+        self.torch_num_threads = int(s.get("torch_num_threads", 8))
         self.language = s.get("language", "中文")
         self.itn = to_bool(s.get("itn", True), True)
 
@@ -541,11 +565,31 @@ class App:
         return model_src
 
     def run(self):
+        if self.warmup_on_start:
+            if self.warmup_blocking_start:
+                print("warming up model before ready...", flush=True)
+                self._warmup_model()
+                print("warmup done", flush=True)
+            else:
+                threading.Thread(target=self._warmup_model, daemon=True).start()
         listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
         listener.start()
         print("voice-input-funasr-nano started")
         while True:
             time.sleep(1)
+
+    def _warmup_model(self):
+        try:
+            self.ensure_model()
+            example = os.path.join(
+                os.path.expanduser(self.resolve_model_source()),
+                "example",
+                "zh.mp3",
+            )
+            if os.path.exists(example):
+                self.transcribe_with_funasr(example)
+        except Exception as e:
+            print(f"warmup skipped: {e}", flush=True)
 
     def on_press(self, key):
         tok = norm_token(key)
@@ -730,12 +774,35 @@ class App:
         if self._nano_model is not None:
             return
 
+        try:
+            import torch
+            if self.torch_num_threads > 0:
+                torch.set_num_threads(self.torch_num_threads)
+                torch.set_num_interop_threads(max(1, min(4, self.torch_num_threads // 2)))
+        except Exception:
+            pass
+
         module = importlib.import_module("model")
         if not hasattr(module, "FunASRNano"):
             raise RuntimeError("FunASRNano class not found in downloaded model")
 
         model_source = self.resolve_model_source()
-        model, kwargs = module.FunASRNano.from_pretrained(model=model_source, device=self.device)
+        buf_out = io.StringIO()
+        buf_err = io.StringIO()
+        try:
+            with redirect_stdout(buf_out), redirect_stderr(buf_err):
+                model, kwargs = module.FunASRNano.from_pretrained(model=model_source, device=self.device)
+        except Exception as e:
+            captured = "\n".join(
+                _filter_model_load_logs("\n".join([buf_out.getvalue(), buf_err.getvalue()]))
+            )
+            msg = f"from_pretrained failed: {e}"
+            if captured:
+                msg = f"{msg}\n{captured[-800:]}"
+            raise RuntimeError(msg) from e
+
+        for ln in _filter_model_load_logs("\n".join([buf_out.getvalue(), buf_err.getvalue()])):
+            print(ln, flush=True)
         model.eval()
         self._nano_model = model
         self._nano_kwargs = kwargs
@@ -791,14 +858,16 @@ class App:
             text = apply_replacements(text, self.user_correction_rules, ignore_case=True)
             text = apply_replacements(text, self.auto_correction_rules, ignore_case=True)
             text = apply_tech_fuzzy(text, self.tech_words)
-            learned = auto_learn_corrections(
-                pre_text,
-                text,
-                self.tech_words,
-                self.auto_learning_state_path,
-                self.auto_rules_write_path,
-                min_hits=self.learning_min_hits,
-            )
+            learned = []
+            if self.auto_learn_enable:
+                learned = auto_learn_corrections(
+                    pre_text,
+                    text,
+                    self.tech_words,
+                    self.auto_learning_state_path,
+                    self.auto_rules_write_path,
+                    min_hits=self.learning_min_hits,
+                )
             append_jsonl(
                 self.history_path,
                 {
