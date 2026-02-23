@@ -13,6 +13,7 @@
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "rog-laptop"; # Define your hostname.
@@ -126,12 +127,11 @@
   services.xserver.videoDrivers = [ "nvidia" ];
   boot.blacklistedKernelModules = [ "nouveau" ];
 
+  # This host currently runs X11 + dwm with PRIME offload.
+  # Forcing NVIDIA GLX/GBM variables globally can break X11 apps that need a GL
+  # context (kitty was failing with GLXBadFBConfig). Keep only generic vars here.
   environment.sessionVariables = {
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    LIBVA_DRIVER_NAME = "nvidia";
     NIXOS_OZONE_WL = "1";
-    WLR_NO_HARDWARE_CURSORS = "1";
   };
 
   hardware.nvidia = {

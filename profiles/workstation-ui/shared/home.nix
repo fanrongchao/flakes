@@ -70,7 +70,8 @@
     };
 
     extraConfig = ''
-      enable_wayland yes
+      # Work on both Wayland (Hyprland) and X11 (dwm) hosts.
+      linux_display_server auto
       background_opacity 0.94
       cursor_beam_thickness 1.5
       disable_ligatures never
