@@ -268,6 +268,21 @@ in
       '';
     };
 
+    xdg.configFile."voice-input-sherpa-onnx/seed/tech_en.user.words" = {
+      source = ./seed/tech_en.user.words;
+      force = true;
+    };
+
+    xdg.configFile."voice-input-sherpa-onnx/seed/user_corrections.rules" = {
+      source = ./seed/user_corrections.rules;
+      force = true;
+    };
+
+    xdg.configFile."voice-input-sherpa-onnx/seed/auto_corrections.rules" = {
+      source = ./seed/auto_corrections.rules;
+      force = true;
+    };
+
     systemd.user.services.whisper-writer = {
       Unit = {
         Description = "WhisperWriter - local voice dictation";
@@ -334,9 +349,10 @@ in
           "XAUTHORITY=%h/.Xauthority"
           "XDG_CACHE_HOME=%h/.cache"
           "VOICE_INPUT_SHERPA_CONFIG=%h/.config/voice-input-sherpa-onnx/config.yaml"
-          "VOICE_INPUT_TECH_WORDS=%h/.local/share/voice-input-sherpa-onnx/lexicons/tech_en.user.words:${cfg.sherpaPackage}/share/voice-input-sherpa-onnx/lexicons/tech_en.words"
-          "VOICE_INPUT_USER_CORRECTIONS=%h/.local/share/voice-input-sherpa-onnx/lexicons/user_corrections.rules"
-          "VOICE_INPUT_AUTO_CORRECTIONS=%h/.local/state/voice-input-sherpa-onnx/auto_corrections.rules"
+          "VOICE_INPUT_TECH_WORDS=%h/.local/share/voice-input-sherpa-onnx/lexicons/tech_en.user.words:%h/.config/voice-input-sherpa-onnx/seed/tech_en.user.words:${cfg.sherpaPackage}/share/voice-input-sherpa-onnx/lexicons/tech_en.words"
+          "VOICE_INPUT_USER_CORRECTIONS=%h/.local/share/voice-input-sherpa-onnx/lexicons/user_corrections.rules:%h/.config/voice-input-sherpa-onnx/seed/user_corrections.rules"
+          "VOICE_INPUT_AUTO_CORRECTIONS=%h/.local/state/voice-input-sherpa-onnx/auto_corrections.rules:%h/.config/voice-input-sherpa-onnx/seed/auto_corrections.rules"
+          "VOICE_INPUT_AUTO_CORRECTIONS_WRITE=%h/.local/state/voice-input-sherpa-onnx/auto_corrections.rules"
           "VOICE_INPUT_AUTO_LEARNING_STATE=%h/.local/state/voice-input-sherpa-onnx/auto_learning.json"
           "VOICE_INPUT_HISTORY_PATH=%h/.local/state/voice-input-sherpa-onnx/history.jsonl"
           "QT_QPA_PLATFORM=${if cfg.backend == "auto" then "xcb" else qtPlatform}"

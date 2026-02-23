@@ -94,6 +94,19 @@ def load_replacements_file(path):
     return rules
 
 
+def expand_pathspec(spec):
+    parts = [p.strip() for p in str(spec).split(os.pathsep) if p.strip()]
+    return os.pathsep.join(os.path.expanduser(p) for p in parts)
+
+
+def load_replacements_sources(spec):
+    rules = []
+    parts = [p.strip() for p in str(spec).split(os.pathsep) if p.strip()]
+    for p in parts:
+        rules.extend(load_replacements_file(os.path.expanduser(p)))
+    return rules
+
+
 def append_jsonl(path, obj):
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -246,7 +259,7 @@ def load_words_sources(spec):
     seen = set()
     merged = []
     for p in parts:
-        for w in load_words_from_path(p):
+        for w in load_words_from_path(os.path.expanduser(p)):
             low = w.lower()
             if low in seen:
                 continue
@@ -371,21 +384,27 @@ class App:
         self.max_utterance_ms = int(s.get("max_utterance_ms", 12000))
         self.punctuation_policy = s.get("punctuation_policy", "light-normalize")
 
-        self.base_zh_rules = load_replacements_file(
+        self.base_zh_spec = expand_pathspec(
             os.getenv("VOICE_INPUT_BASE_ZH_RULES", os.path.join("lexicons", "base_zh.rules"))
         )
-        self.base_en_rules = load_replacements_file(
+        self.base_en_spec = expand_pathspec(
             os.getenv("VOICE_INPUT_BASE_EN_RULES", os.path.join("lexicons", "base_en.rules"))
         )
-        self.user_corrections_path = os.path.expanduser(
+        self.user_corrections_spec = expand_pathspec(
             os.getenv(
                 "VOICE_INPUT_USER_CORRECTIONS",
                 "~/.local/share/voice-input-sherpa-onnx/lexicons/user_corrections.rules",
             )
         )
-        self.auto_rules_path = os.path.expanduser(
+        self.auto_rules_spec = expand_pathspec(
             os.getenv(
                 "VOICE_INPUT_AUTO_CORRECTIONS",
+                "~/.local/state/voice-input-sherpa-onnx/auto_corrections.rules",
+            )
+        )
+        self.auto_rules_write_path = os.path.expanduser(
+            os.getenv(
+                "VOICE_INPUT_AUTO_CORRECTIONS_WRITE",
                 "~/.local/state/voice-input-sherpa-onnx/auto_corrections.rules",
             )
         )
@@ -395,9 +414,13 @@ class App:
                 "~/.local/state/voice-input-sherpa-onnx/auto_learning.json",
             )
         )
-        self.tech_words_spec = os.getenv("VOICE_INPUT_TECH_WORDS", os.path.join("lexicons", "tech_en.words"))
-        self.user_correction_rules = load_replacements_file(self.user_corrections_path)
-        self.auto_correction_rules = load_replacements_file(self.auto_rules_path)
+        self.tech_words_spec = expand_pathspec(
+            os.getenv("VOICE_INPUT_TECH_WORDS", os.path.join("lexicons", "tech_en.words"))
+        )
+        self.base_zh_rules = load_replacements_sources(self.base_zh_spec)
+        self.base_en_rules = load_replacements_sources(self.base_en_spec)
+        self.user_correction_rules = load_replacements_sources(self.user_corrections_spec)
+        self.auto_correction_rules = load_replacements_sources(self.auto_rules_spec)
         self.tech_words = load_words_sources(self.tech_words_spec)
         self.history_path = os.path.expanduser(
             os.getenv(
@@ -567,8 +590,10 @@ class App:
             notify("Done (no audio)")
             return
         # Hot-reload user-updated correction/lexicon files without restarting service.
-        self.user_correction_rules = load_replacements_file(self.user_corrections_path)
-        self.auto_correction_rules = load_replacements_file(self.auto_rules_path)
+        self.base_zh_rules = load_replacements_sources(self.base_zh_spec)
+        self.base_en_rules = load_replacements_sources(self.base_en_spec)
+        self.user_correction_rules = load_replacements_sources(self.user_corrections_spec)
+        self.auto_correction_rules = load_replacements_sources(self.auto_rules_spec)
         self.tech_words = load_words_sources(self.tech_words_spec)
 
         audio_i16 = np.concatenate(self._frames).astype(np.int16)
@@ -591,7 +616,7 @@ class App:
                 text,
                 self.tech_words,
                 self.auto_learning_state_path,
-                self.auto_rules_path,
+                self.auto_rules_write_path,
                 min_hits=2,
             )
             append_jsonl(
