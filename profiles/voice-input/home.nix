@@ -681,5 +681,32 @@ in
         WantedBy = [ "graphical-session.target" ];
       };
     };
+
+    systemd.user.services.voice-input-funasr-tech-lexicon-sync = lib.mkIf (cfg.engine == "funasr-nano") {
+      Unit = {
+        Description = "Voice Input - FunASR tech lexicon sync";
+        After = [ "network-online.target" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${cfg.funasrNanoPackage}/bin/voice-input-funasr-tech-lexicon-sync --disable-stackoverflow --ignore-existing --max-words 1200 --out %h/.local/share/voice-input-funasr-nano/lexicons/tech_en.user.words";
+        ExecStartPost = "${pkgs.systemd}/bin/systemctl --user try-restart voice-input-funasr-nano.service";
+      };
+    };
+
+    systemd.user.timers.voice-input-funasr-tech-lexicon-sync = lib.mkIf (cfg.engine == "funasr-nano") {
+      Unit = {
+        Description = "Voice Input - FunASR tech lexicon auto update timer";
+      };
+      Timer = {
+        OnBootSec = "10m";
+        OnUnitActiveSec = "1d";
+        RandomizedDelaySec = "45m";
+        Persistent = true;
+      };
+      Install = {
+        WantedBy = [ "timers.target" ];
+      };
+    };
   };
 }

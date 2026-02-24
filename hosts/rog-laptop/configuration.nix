@@ -9,7 +9,16 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
-  nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    # Prefer community cache for heavy ML artifacts (e.g., torch CUDA stack used by funasr-nano).
+    extra-substituters = [
+      "https://nix-community.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+  };
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -47,8 +56,19 @@
     LC_TIME = "zh_CN.UTF-8";
   };
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
+  # Touchpad behavior on X11 (dwm).
+  services.libinput = {
+    enable = true;
+    touchpad = {
+      # Use natural scroll direction.
+      naturalScrolling = true;
+      tapping = true;
+      # Tap: one finger = left, two fingers = right, three fingers = middle.
+      tappingButtonMap = "lrm";
+      # Physical click on clickpad: one/two/three fingers -> left/right/middle.
+      clickMethod = "clickfinger";
+    };
+  };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.frc = {

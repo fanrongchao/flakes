@@ -14,6 +14,10 @@
 , zlib
 , libsndfile
 , stdenv
+, torchPackage ? python312Packages.torch
+, torchaudioPackage ? python312Packages.torchaudio
+, openaiWhisperPackage ? python312Packages.openai-whisper
+, includeOpenaiWhisper ? true
 }:
 
 let
@@ -55,7 +59,7 @@ let
       hash = "sha256-9jBQ19Yl8ofsdBuEoDJTZWmcSVUKS/06zkrLQ+Qah6g=";
     };
 
-    propagatedBuildInputs = with python312Packages; [
+    propagatedBuildInputs = (with python312Packages; [
       kaldiioPkg
       editdistance
       hydra-core
@@ -73,13 +77,15 @@ let
       tensorboardx
       tqdm
       umap-learn
-      torch
-      torchaudio
+      torchPackage
+      torchaudioPackage
       transformers
-      openai-whisper
+    ]) ++ lib.optionals includeOpenaiWhisper [
+      openaiWhisperPackage
     ];
 
     pythonImportsCheck = [ ];
+    dontUsePythonCatchConflicts = true;
     doCheck = false;
   };
 
@@ -90,8 +96,8 @@ let
     soundfile
     numpy
     pyyaml
-    torch
-    torchaudio
+    torchPackage
+    torchaudioPackage
     ps."huggingface-hub"
   ]);
 
