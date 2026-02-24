@@ -29,5 +29,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Python cache
+__pycache__/
+*.py[cod]
+
 #age-keys
 age-keys/*.txt

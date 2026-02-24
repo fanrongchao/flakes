@@ -15,6 +15,7 @@ import json
 import difflib
 from datetime import datetime, timezone
 from contextlib import redirect_stderr, redirect_stdout
+from functools import lru_cache
 
 import numpy as np
 import sounddevice as sd
@@ -31,6 +32,8 @@ NOISY_RUNTIME_PATTERNS = (
 
 MODEL_REPO_ID = "FunAudioLLM/Fun-ASR-Nano-2512"
 MODEL_INFO_URL = f"https://huggingface.co/{MODEL_REPO_ID}"
+QWEN_SUBDIR = "Qwen3-0.6B"
+LOCAL_WHISPER_ASSETS = os.path.join(os.path.dirname(__file__), "whisper_assets")
 
 
 class _LineFilterStream:
@@ -600,20 +603,115 @@ class App:
         self._nano_model = None
         self._nano_kwargs = None
 
+    def _patch_whisper_asset_fallbacks(self):
+        # Some FunASR wheels miss whisper_lib/assets in site-packages.
+        # Patch loader functions to fallback to bundled local assets.
+        try:
+            tok_mod = importlib.import_module("funasr.models.sense_voice.whisper_lib.tokenizer")
+            audio_mod = importlib.import_module("funasr.models.sense_voice.whisper_lib.audio")
+        except Exception:
+            return
+
+        if not getattr(tok_mod, "_voice_input_assets_patched", False):
+            original_get_encoding = tok_mod.get_encoding
+
+            @lru_cache(maxsize=None)
+            def patched_get_encoding(name: str = "gpt2", num_languages: int = 99, vocab_path: str = None):
+                if vocab_path and not os.path.isfile(vocab_path):
+                    fallback_path = os.path.join(
+                        LOCAL_WHISPER_ASSETS,
+                        os.path.basename(vocab_path),
+                    )
+                    if os.path.isfile(fallback_path):
+                        vocab_path = fallback_path
+                elif vocab_path is None:
+                    default_path = os.path.join(
+                        os.path.dirname(tok_mod.__file__),
+                        "assets",
+                        f"{name}.tiktoken",
+                    )
+                    if not os.path.isfile(default_path):
+                        fallback_path = os.path.join(LOCAL_WHISPER_ASSETS, f"{name}.tiktoken")
+                        if os.path.isfile(fallback_path):
+                            vocab_path = fallback_path
+                return original_get_encoding(
+                    name=name,
+                    num_languages=num_languages,
+                    vocab_path=vocab_path,
+                )
+
+            tok_mod.get_encoding = patched_get_encoding
+            tok_mod._voice_input_assets_patched = True
+
+        if not getattr(audio_mod, "_voice_input_assets_patched", False):
+            original_mel_filters = audio_mod.mel_filters
+
+            @lru_cache(maxsize=None)
+            def patched_mel_filters(device, n_mels: int, filters_path: str = None):
+                if filters_path and not os.path.isfile(filters_path):
+                    fallback_path = os.path.join(LOCAL_WHISPER_ASSETS, os.path.basename(filters_path))
+                    if os.path.isfile(fallback_path):
+                        filters_path = fallback_path
+                elif filters_path is None:
+                    default_path = os.path.join(
+                        os.path.dirname(audio_mod.__file__),
+                        "assets",
+                        "mel_filters.npz",
+                    )
+                    if not os.path.isfile(default_path):
+                        fallback_path = os.path.join(LOCAL_WHISPER_ASSETS, "mel_filters.npz")
+                        if os.path.isfile(fallback_path):
+                            filters_path = fallback_path
+                return original_mel_filters(device, n_mels, filters_path=filters_path)
+
+            audio_mod.mel_filters = patched_mel_filters
+            audio_mod._voice_input_assets_patched = True
+
+    def _model_artifacts_health(self, model_dir):
+        required_root_files = [
+            "model.pt",
+            "configuration.json",
+            "config.yaml",
+        ]
+        for rel in required_root_files:
+            if not os.path.isfile(os.path.join(model_dir, rel)):
+                return False, f"missing {rel}"
+
+        qwen_dir = os.path.join(model_dir, QWEN_SUBDIR)
+        if not os.path.isdir(qwen_dir):
+            return False, f"missing {QWEN_SUBDIR}/"
+        if not os.path.isfile(os.path.join(qwen_dir, "config.json")):
+            return False, f"missing {QWEN_SUBDIR}/config.json"
+
+        has_tokenizer = (
+            os.path.isfile(os.path.join(qwen_dir, "tokenizer.json"))
+            or (
+                os.path.isfile(os.path.join(qwen_dir, "vocab.json"))
+                and os.path.isfile(os.path.join(qwen_dir, "merges.txt"))
+            )
+        )
+        if not has_tokenizer:
+            return False, f"missing tokenizer files under {QWEN_SUBDIR}/"
+
+        return True, "ok"
+
     def resolve_model_source(self):
         model_src = os.path.expanduser(self.model_id)
         if not os.path.isabs(model_src):
             raise RuntimeError(
                 f"funasr_nano.model must be an absolute local path, got: {self.model_id}"
             )
-        model_pt = os.path.join(model_src, "model.pt")
-        if not os.path.isfile(model_pt):
+        ok, reason = self._model_artifacts_health(model_src)
+        if not ok:
+            print(f"model incomplete ({reason}), downloading from: {MODEL_INFO_URL}", flush=True)
             self.ensure_local_model(model_src)
+
         if not os.path.isdir(model_src):
             raise RuntimeError(f"model directory not found after download: {model_src}")
-        if not os.path.isfile(model_pt):
+        ok, reason = self._model_artifacts_health(model_src)
+        if not ok:
             raise RuntimeError(
-                f"model file not found after download: {model_pt} ; source: {MODEL_INFO_URL}"
+                f"model artifacts incomplete after download ({reason}); source: {MODEL_INFO_URL}"
             )
         return model_src
 
@@ -632,15 +730,20 @@ class App:
                 allow_patterns=[
                     "model.pt",
                     "config*.json",
+                    "**/*.json",
                     "*.yaml",
                     "*.txt",
                     "README.md",
                     "model.py",
                     "ctc.py",
                     "tools/*",
+                    "tools/**",
                     "example/*",
+                    "example/**",
                     "am.mvn",
                     "tokens.json",
+                    f"{QWEN_SUBDIR}/*",
+                    f"{QWEN_SUBDIR}/**",
                 ],
             )
             notify("Model download complete")
@@ -864,8 +967,16 @@ class App:
             if self.torch_num_threads > 0:
                 torch.set_num_threads(self.torch_num_threads)
                 torch.set_num_interop_threads(max(1, min(4, self.torch_num_threads // 2)))
+            if str(self.device).startswith("cuda") and not torch.cuda.is_available():
+                print(
+                    "cuda requested but torch has no CUDA runtime; fallback to cpu",
+                    flush=True,
+                )
+                self.device = "cpu"
         except Exception:
             pass
+
+        self._patch_whisper_asset_fallbacks()
 
         module = importlib.import_module("model")
         if not hasattr(module, "FunASRNano"):
@@ -874,17 +985,35 @@ class App:
         model_source = self.resolve_model_source()
         buf_out = io.StringIO()
         buf_err = io.StringIO()
-        try:
-            with redirect_stdout(buf_out), redirect_stderr(buf_err):
-                model, kwargs = module.FunASRNano.from_pretrained(model=model_source, device=self.device)
-        except Exception as e:
+        last_err = None
+        for attempt in range(2):
+            try:
+                with redirect_stdout(buf_out), redirect_stderr(buf_err):
+                    model, kwargs = module.FunASRNano.from_pretrained(
+                        model=model_source,
+                        device=self.device,
+                    )
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                if attempt == 0 and "Unrecognized model in" in str(e):
+                    print(
+                        "model load failed with incomplete HF artifacts; retrying download once...",
+                        flush=True,
+                    )
+                    self.ensure_local_model(model_source)
+                    continue
+                break
+
+        if last_err is not None:
             captured = "\n".join(
                 _filter_model_load_logs("\n".join([buf_out.getvalue(), buf_err.getvalue()]))
             )
-            msg = f"from_pretrained failed: {e}"
+            msg = f"from_pretrained failed: {last_err}"
             if captured:
                 msg = f"{msg}\n{captured[-800:]}"
-            raise RuntimeError(msg) from e
+            raise RuntimeError(msg) from last_err
 
         for ln in _filter_model_load_logs("\n".join([buf_out.getvalue(), buf_err.getvalue()])):
             print(ln, flush=True)
