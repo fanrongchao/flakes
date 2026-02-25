@@ -1,0 +1,57 @@
+- id: L-20260225-001
+  kind: prior
+  scope: global
+  trigger: user says "rebuild" without explicit target host
+  decision: infer host from local hostname and use matching flake output
+  rule: sudo nixos-rebuild switch --flake /home/frc/flakes#$(hostname)
+  evidence:
+    - hostname resolves to rog-laptop
+    - hosts/rog-laptop exists
+  risk: high
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - hosts/<hostname> does not exist
+    - user explicitly requests different host
+  fallback: ask user to pick one host from hosts/
+  promotion: adopted
+  added_at: "2026-02-25"
+  last_validated_at: "2026-02-25"
+
+- id: L-20260225-002
+  kind: prior
+  scope: global
+  trigger: task requires temporary tool/runtime not already present
+  decision: prefer nix shell or nix run over global install
+  rule: use Nix-provided ephemeral environment first
+  evidence:
+    - repository is NixOS-focused flake workflow
+    - reproducibility and rollback safety are primary goals
+  risk: medium
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - tool is unavailable in nixpkgs/flake inputs
+    - user explicitly requires non-Nix install path
+  fallback: provide explicit non-Nix path with rationale and cleanup plan
+  promotion: adopted
+  added_at: "2026-02-25"
+  last_validated_at: "2026-02-25"
+
+- id: L-20260225-003
+  kind: prior
+  scope: profiles
+  trigger: modifications under profiles/
+  decision: treat as cross-host impact by default
+  rule: enumerate potentially impacted hosts before execution
+  evidence:
+    - hosts import shared profiles heavily
+  risk: medium
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - changed profile is proven single-host only
+  fallback: run conservative host-impact list using imports and ask for final target set
+  promotion: adopted
+  added_at: "2026-02-25"
+  last_validated_at: "2026-02-25"
