@@ -119,7 +119,27 @@ def fallback_to_fw_streaming(reason):
     subprocess.run(["systemctl", "--user", "start", "voice-input-fw-streaming.service"], check=False)
 
 
+def is_cuda_runtime_error(exc):
+    msg = str(exc).lower()
+    markers = (
+        "cuda error",
+        "cudaerror",
+        "cudnn",
+        "cublas",
+        "device-side assert",
+        "driver shutting down",
+        "unspecified launch failure",
+    )
+    return any(marker in msg for marker in markers)
+
+
 def norm_token(key):
+    # Some Linux/X11 layouts expose Super as raw virtual keycodes rather than
+    # keyboard.Key.cmd_* symbols. Normalize those to "meta" as well.
+    vk = getattr(key, "vk", None)
+    if vk in (91, 92, 133, 134):
+        return "meta"
+
     if key in (keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):
         return "ctrl"
     if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
@@ -1021,7 +1041,23 @@ class App:
         self._nano_model = model
         self._nano_kwargs = kwargs
 
-    def transcribe_with_funasr(self, wav_path):
+    def _reload_model_on_cpu(self):
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            pass
+
+        self.device = "cpu"
+        if str(self.dtype).lower() in {"float16", "half", "fp16"}:
+            self.dtype = "float32"
+        self._nano_model = None
+        self._nano_kwargs = None
+        self.ensure_model()
+
+    def transcribe_with_funasr(self, wav_path, retried_after_cuda_fallback=False):
         self.ensure_model()
         infer_kwargs = dict(self._nano_kwargs or {})
         if self.hotword_boost_enable and self.tech_words:
@@ -1036,6 +1072,20 @@ class App:
         try:
             res = self._nano_model.inference(data_in=[wav_path], **infer_kwargs)
         except Exception as e:
+            if (
+                str(self.device).startswith("cuda")
+                and not retried_after_cuda_fallback
+                and is_cuda_runtime_error(e)
+            ):
+                print(
+                    f"cuda inference failed ({e}); falling back to cpu and retrying once",
+                    flush=True,
+                )
+                notify("FunASR CUDA failed, switching to CPU")
+                self._reload_model_on_cpu()
+                return self.transcribe_with_funasr(
+                    wav_path, retried_after_cuda_fallback=True
+                )
             raise RuntimeError(f"nano inference failed: {e}") from e
 
         text = extract_text_from_result(res)

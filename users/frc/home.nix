@@ -14,7 +14,7 @@
     #ai code cli
     codex
     claude-code
-    gemini-cli
+    gemini-cli-0_30_0
     opencode
     cursor-cli
 
