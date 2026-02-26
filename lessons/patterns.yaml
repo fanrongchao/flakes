@@ -55,3 +55,42 @@
   promotion: adopted
   added_at: "2026-02-25"
   last_validated_at: "2026-02-25"
+
+- id: L-20260226-001
+  kind: prior
+  scope: host
+  trigger: execute system switch on NixOS host
+  decision: default to sudo for nixos-rebuild switch activation
+  rule: sudo nixos-rebuild switch --flake /home/frc/flakes#$(hostname)
+  evidence:
+    - non-sudo run can finish build but fail at activation profile write under /nix/var/nix/profiles/system
+    - sudo rerun succeeds with same derivation
+  risk: high
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - user explicitly requests dry-run/eval-only checks
+    - user explicitly forbids sudo
+  fallback: run nix build/eval first and request sudo only for activation
+  promotion: adopted
+  added_at: "2026-02-26"
+  last_validated_at: "2026-02-26"
+
+- id: L-20260226-002
+  kind: prior
+  scope: profiles
+  trigger: adding a reusable Home Manager user service capability
+  decision: define service in profiles and compose via host imports
+  rule: implement in profiles/<capability>.nix and import from hosts/<host>/default.nix
+  evidence:
+    - user-service capability is infra concern and should follow host/profile composition model
+    - keeping users/<name>/home.nix focused reduces coupling and drift
+  risk: medium
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - service is strictly personal and intentionally non-reusable
+  fallback: keep in users/<name>/home.nix but document why in lesson
+  promotion: adopted
+  added_at: "2026-02-26"
+  last_validated_at: "2026-02-26"

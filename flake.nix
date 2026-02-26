@@ -14,13 +14,20 @@
       url = "github:AvengeMedia/DankMaterialShell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-openclaw = {
+      url = "github:openclaw/nix-openclaw";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, nixos-hardware, dank-material-shell, ... }@inputs: 
+  outputs = { self, nixpkgs, home-manager, sops-nix, nixos-hardware, dank-material-shell, nix-openclaw, ... }@inputs:
 
     let
       system = "x86_64-linux";
-      overlays = [(import ./overlays)];
+      overlays = [
+        nix-openclaw.overlays.default
+        (import ./overlays)
+      ];
       pkgs = import nixpkgs {
         inherit system overlays;
         config.allowUnfree = true;

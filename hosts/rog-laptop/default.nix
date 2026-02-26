@@ -13,6 +13,7 @@ in
     #../../profiles/zero-trust-node.nix
     ../../profiles/network-egress-proxy.nix
     ../../profiles/devops-baseline.nix
+    ../../profiles/openclaw-gateway.nix
     ../../profiles/voice-input
   ];
 

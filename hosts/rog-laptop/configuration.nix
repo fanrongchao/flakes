@@ -112,6 +112,7 @@
     cudaPackages.cudatoolkit
     mesa-demos
     asusctl
+    openclaw
   #  wget
   ];
 
