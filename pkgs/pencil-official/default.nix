@@ -9,7 +9,7 @@ let
   platformInfo =
     if stdenv.hostPlatform.system == "x86_64-linux" then {
       url = "https://5ykymftd1soethh5.public.blob.vercel-storage.com/Pencil-linux-x86_64.AppImage";
-      hash = "sha256-Nlh4SoATXRZMwVzOTNZo+UfTA0QYgTWx/fTOt2c0eAw=";
+      hash = "sha256-p2FuhjrGiaZz7uSMAoGOB9vrJ5spG88qM+bQ1serOug=";
     } else if stdenv.hostPlatform.system == "aarch64-linux" then {
       url = "https://5ykymftd1soethh5.public.blob.vercel-storage.com/Pencil-linux-arm64.AppImage";
       hash = "sha256-e2CgmyiO6rFJLfMQkGFBlhQaXN4c8dFmezNOCtTq9SM=";
