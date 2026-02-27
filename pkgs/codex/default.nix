@@ -10,20 +10,20 @@ let
   platformInfo =
     if stdenv.hostPlatform.system == "x86_64-linux" then {
       suffix = "linux-x64";
-      hash = "sha256-eQjShAeqYq6tmY15Kek1In55pEJdymaAKZ3im6+B3gs=";
+      hash = "sha256-T3D3t3V+JawmyiN1TRGzzLPeGSyCYP1rTylKNcssZ3w=";
     } else if stdenv.hostPlatform.system == "aarch64-linux" then {
       suffix = "linux-arm64";
-      hash = "sha256-Fv+XpFkB+UIhKCKZRpsZbIwyMPBZbmgE/nqW9R5Nn2U=";
+      hash = "sha256-Dza8c9NaKsuK73CSdM/CPHfMoIKWNNMCwvjbj0NbA2M=";
     } else
       throw "Unsupported platform for codex prebuilt binary: ${stdenv.hostPlatform.system}";
 in
 stdenv.mkDerivation rec {
   pname = "codex";
-  version = "0.104.0";
+  version = "0.106.0";
 
   src = fetchurl {
     url = "https://registry.npmmirror.com/@openai/codex/-/codex-${version}.tgz";
-    hash = "sha256-Dn5tpyhWsQVLCm1n5I/ut1DCvNcKGZxk+BLrk/76qiI=";
+    hash = "sha256-UTbEnsypzh/FqVu7SWrQqJD6NobTyNp1kJNFbIHFa8k=";
   };
 
   platformSrc = fetchurl {
