@@ -27,6 +27,13 @@ let
       --attach-group BosLife \
       --replace >/dev/null
 
+    # Antigravity uses *.goog and Cloud Run updater endpoints that are not
+    # covered before the provider's final MATCH,DIRECT catch-all rule.
+    # Custom rules are persisted and automatically prepended during merge.
+    ${lib.getExe' mihomoCli "mihomo-cli"} manage custom add \
+      --domain antigravity-unleash.goog --kind suffix --via BosLife 2>/dev/null || true
+    ${lib.getExe' mihomoCli "mihomo-cli"} manage custom add \
+      --domain antigravity-auto-updater --kind keyword --via BosLife 2>/dev/null || true
 
     if ! ${lib.getExe' mihomoCli "mihomo-cli"} merge \
       --subscription "$sub_url" \
