@@ -6,6 +6,7 @@ final: prev: {
   # Pin claude-code ahead of nixpkgs when upstream lags.
   claude-code = prev.callPackage ../pkgs/claude-code {};
   gemini-cli-0_30_0 = prev.callPackage ../pkgs/gemini-cli {};
+  antigravity = prev.callPackage ../pkgs/antigravity {};
   pencilOfficial = prev.callPackage ../pkgs/pencil-official {};
 
   dgop = prev.callPackage ../pkgs/dgop {};

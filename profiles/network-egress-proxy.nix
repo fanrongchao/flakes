@@ -44,6 +44,23 @@ let
       exit 1
     fi
 
+    # Antigravity uses *.goog endpoints that are not covered by the generic
+    # "google" keyword rule, so insert explicit proxy rules before the final
+    # catch-all DIRECT rule.
+    if ! grep -Fq 'DOMAIN-SUFFIX,antigravity-unleash.goog,BosLife' "$tmp_config"; then
+      tmp_rules="$(mktemp "${resourcesDir}/config.rules.XXXXXX")"
+      awk '
+        /^- MATCH,DIRECT$/ && !inserted {
+          print "- DOMAIN-SUFFIX,antigravity.google,BosLife"
+          print "- DOMAIN-SUFFIX,antigravity-unleash.goog,BosLife"
+          print "- DOMAIN-SUFFIX,one.google.com,BosLife"
+          inserted = 1
+        }
+        { print }
+      ' "$tmp_config" > "$tmp_rules"
+      mv -f "$tmp_rules" "$tmp_config"
+    fi
+
     mv -f "$tmp_config" "${configPath}"
 
     # Validate config before applying it.

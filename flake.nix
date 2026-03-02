@@ -43,6 +43,7 @@
     in {
       #overlay packages
       packages.${system} = {
+        antigravity = pkgs.antigravity;
         codex = pkgs.codex;
       };
 

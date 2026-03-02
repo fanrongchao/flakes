@@ -24,3 +24,12 @@
 - Evidence: profile placement keeps host composition explicit and avoids user file bloat for infra capabilities.
 - Reusable rule: place infra-style Home Manager services in `profiles/<capability>.nix`; wire via `hosts/<host>/default.nix` imports.
 - Promotion: adopted (generalizable repo structure rule).
+
+## 2026-02-27
+
+### L-20260227-001
+- Context: `openclaw-gateway` service on `pve-dev-01` kept restarting after host import.
+- Decision: override service ExecStart with `--allow-unconfigured` for first-boot web access.
+- Evidence: user journal showed repeated `Missing config. Run \`openclaw setup\` ... (or pass --allow-unconfigured)` and stabilized immediately after switch.
+- Reusable rule: when enabling OpenClaw gateway on a fresh host, include `--allow-unconfigured` (or pre-seed config) to avoid restart loops.
+- Promotion: candidate (needs another host confirmation).
