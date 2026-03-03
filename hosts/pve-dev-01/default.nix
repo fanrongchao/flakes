@@ -12,7 +12,10 @@
   ];
 
   home-manager.backupFileExtension = "hm-bak";
-  home-manager.users.frc.home.packages = lib.mkAfter [ pkgs.antigravity ];
+  home-manager.users.frc.home.packages = lib.mkAfter [
+    pkgs.antigravity
+    pkgs.antigravity-manager
+  ];
 
   # input-leap (client) -> Windows server
   workstation.inputLeap = {

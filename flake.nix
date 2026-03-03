@@ -44,6 +44,7 @@
       #overlay packages
       packages.${system} = {
         antigravity = pkgs.antigravity;
+        antigravity-manager = pkgs.antigravity-manager;
         codex = pkgs.codex;
       };
 

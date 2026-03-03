@@ -7,6 +7,7 @@ final: prev: {
   claude-code = prev.callPackage ../pkgs/claude-code {};
   gemini-cli-0_30_0 = prev.callPackage ../pkgs/gemini-cli {};
   antigravity = prev.callPackage ../pkgs/antigravity {};
+  antigravity-manager = prev.callPackage ../pkgs/antigravity-manager {};
   pencilOfficial = prev.callPackage ../pkgs/pencil-official {};
 
   dgop = prev.callPackage ../pkgs/dgop {};
