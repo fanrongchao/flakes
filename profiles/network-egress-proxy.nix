@@ -128,6 +128,15 @@ in
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
 
+    # Ensure nixos-rebuild reapplies subscription-derived config when the
+    # update script or its secret inputs change.
+    reloadTriggers = [
+      updateScript
+      config.sops.secrets."mihomo/subscription_url".path
+      config.sops.secrets."mihomo/external_controller_secret".path
+      config.sops.secrets."mihomo/manual_share_links".path
+    ];
+
     serviceConfig = {
       Type = "simple";
       User = "mihomo";
