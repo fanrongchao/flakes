@@ -16,12 +16,22 @@
     git
     jq
     just
+    lua-language-server
+    neovim
     nerd-fonts.caskaydia-cove
     nerd-fonts.fira-code
     nerd-fonts.jetbrains-mono
+    nixd
+    nodejs
+    python3
     ripgrep
+    shellcheck
+    shfmt
+    stylua
     tmux
     tree
+    unzip
+    uv
     yq-go
     zoxide
   ];
