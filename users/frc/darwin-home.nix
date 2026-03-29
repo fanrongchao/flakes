@@ -6,8 +6,24 @@
   home.stateVersion = "25.11";
 
   home.packages = with pkgs; [
+    bat
+    btop
+    direnv
+    eza
+    fd
     fzf
+    gh
     git
+    jq
+    just
+    nerd-fonts.caskaydia-cove
+    nerd-fonts.fira-code
+    nerd-fonts.jetbrains-mono
+    ripgrep
+    tmux
+    tree
+    yq-go
+    zoxide
   ];
 
   programs.home-manager.enable = true;
