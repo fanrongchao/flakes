@@ -63,6 +63,8 @@
     #chrome
     #secondary screen
     pencilOfficial
+    libreoffice
+    onlyoffice-desktopeditors
   ]; 
 
 
