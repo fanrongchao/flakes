@@ -2,6 +2,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprland.url = "github:hyprwm/Hyprland";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -20,18 +24,21 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, sops-nix, nixos-hardware, dank-material-shell, nix-openclaw, ... }@inputs:
+  outputs = { self, nixpkgs, nix-darwin, home-manager, sops-nix, nixos-hardware, dank-material-shell, nix-openclaw, ... }@inputs:
 
     let
-      system = "x86_64-linux";
+      linuxSystem = "x86_64-linux";
+      darwinSystem = "aarch64-darwin";
       overlays = [
         nix-openclaw.overlays.default
         (import ./overlays)
       ];
-      pkgs = import nixpkgs {
+      mkPkgs = system: import nixpkgs {
         inherit system overlays;
         config.allowUnfree = true;
       };
+      pkgs = mkPkgs linuxSystem;
+      darwinPkgs = mkPkgs darwinSystem;
       commonNixpkgsModule = {
         nixpkgs = {
           inherit overlays;
@@ -42,14 +49,14 @@
       inherit (nixpkgs) lib;
     in {
       #overlay packages
-      packages.${system} = {
+      packages.${linuxSystem} = {
         antigravity = pkgs.antigravity;
         antigravity-manager = pkgs.antigravity-manager;
         codex = pkgs.codex;
       };
 
       nixosConfigurations.zenbook = lib.nixosSystem {
-        inherit system;
+        system = linuxSystem;
         specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
@@ -65,7 +72,7 @@
       };
 
       nixosConfigurations.lg-gram = lib.nixosSystem {
-        inherit system;
+        system = linuxSystem;
         specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
@@ -81,7 +88,7 @@
       };
 
       nixosConfigurations.gpd = lib.nixosSystem {
-        inherit system;
+        system = linuxSystem;
         specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
@@ -98,7 +105,7 @@
       };
 
       nixosConfigurations.pve-dev-01 = lib.nixosSystem {
-        inherit system;
+        system = linuxSystem;
         specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
@@ -114,7 +121,7 @@
       };
 
       nixosConfigurations.ai-server= lib.nixosSystem {
-        inherit system;
+        system = linuxSystem;
         specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
@@ -130,7 +137,7 @@
       };
 
       nixosConfigurations.rog-laptop = lib.nixosSystem {
-        inherit system;
+        system = linuxSystem;
         specialArgs = { inherit inputs; };
         modules = [
           commonNixpkgsModule
@@ -142,6 +149,20 @@
             home-manager.users.frc = import ./users/frc/home.nix;
           } 
           ./hosts/rog-laptop              
+        ];
+      };
+
+      darwinConfigurations.m5-air = nix-darwin.lib.darwinSystem {
+        system = darwinSystem;
+        specialArgs = { inherit inputs self; };
+        modules = [
+          commonNixpkgsModule
+          home-manager.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+          }
+          ./hosts/m5-air
         ];
       };
 
@@ -158,6 +179,13 @@
         inherit pkgs;
         modules = [
           ./users/xfa/home.nix
+        ];
+      };
+
+      homeConfigurations.frc-m5-air = home-manager.lib.homeManagerConfiguration {
+        pkgs = darwinPkgs;
+        modules = [
+          ./users/frc/darwin-home.nix
         ];
       };
     };
