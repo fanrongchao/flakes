@@ -49,3 +49,10 @@
 - Evidence: `security.sudo.extraRules` failed evaluation on nix-darwin, while `security.sudo.extraConfig = ''frc ALL=(ALL) NOPASSWD: ALL'';` built successfully and passed `sudo -n true`.
 - Reusable rule: for nix-darwin sudo policy changes, prefer `security.sudo.extraConfig`, do a build preflight first, then verify with `sudo -n`.
 - Promotion: adopted (high-risk and generalizable).
+
+### L-20260331-003
+- Context: granting the local `m5-air` machine SSH access to the `xfa` account on `ai-server`.
+- Decision: add the local machine public key directly to `users.users.xfa.openssh.authorizedKeys.keys` in the target host module and verify with `nix eval` before remote deployment.
+- Evidence: the local public key from `~/.ssh/id_ed25519_github.pub` appeared in `nixosConfigurations.ai-server.config.users.users.xfa.openssh.authorizedKeys.keys` immediately after the config edit.
+- Reusable rule: for repo-managed host access, add new machine SSH public keys in the target host's `authorizedKeys` list and verify the evaluated list before asking the remote host to pull and switch.
+- Promotion: candidate (needs another host confirmation).
