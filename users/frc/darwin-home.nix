@@ -8,6 +8,7 @@
   home.packages = with pkgs; [
     bat
     btop
+    codex
     direnv
     eza
     fd
@@ -38,11 +39,19 @@
 
   programs.home-manager.enable = true;
 
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
+    initContent = ''
+      eval "$(zoxide init zsh)"
+    '';
 
     oh-my-zsh = {
       enable = true;

@@ -14,6 +14,10 @@
     shell = pkgs.zsh;
   };
 
+  security.sudo.extraConfig = ''
+    frc ALL=(ALL) NOPASSWD: ALL
+  '';
+
   system.primaryUser = "frc";
 
   programs.zsh.enable = true;

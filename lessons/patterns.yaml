@@ -94,3 +94,23 @@
   promotion: adopted
   added_at: "2026-02-26"
   last_validated_at: "2026-02-26"
+
+- id: L-20260331-002
+  kind: prior
+  scope: host
+  trigger: changing sudo policy on a nix-darwin host
+  decision: use nix-darwin's sudo extraConfig path and preflight with a build before switch
+  rule: set security.sudo.extraConfig, run darwin-rebuild build first, then darwin-rebuild switch, and verify with sudo -n
+  evidence:
+    - nix-darwin evaluation rejected security.sudo.extraRules on m5-air
+    - security.sudo.extraConfig built successfully and enabled passwordless sudo after switch
+  risk: high
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - user wants narrower sudo scope than NOPASSWD ALL
+    - host is not managed by nix-darwin
+  fallback: keep passworded sudo and only automate the needed privileged commands
+  promotion: adopted
+  added_at: "2026-03-31"
+  last_validated_at: "2026-03-31"

@@ -33,3 +33,19 @@
 - Evidence: user journal showed repeated `Missing config. Run \`openclaw setup\` ... (or pass --allow-unconfigured)` and stabilized immediately after switch.
 - Reusable rule: when enabling OpenClaw gateway on a fresh host, include `--allow-unconfigured` (or pre-seed config) to avoid restart loops.
 - Promotion: candidate (needs another host confirmation).
+
+## 2026-03-31
+
+### L-20260331-001
+- Context: packaging OpenAI Codex for the `m5-air` nix-darwin host inside this flake.
+- Decision: package Codex from official GitHub release tarballs instead of the older npm prebuilt layout.
+- Evidence: latest stable release `0.117.0` is published on GitHub Releases with per-platform tarballs, and the Darwin tarball contains a standalone `codex` binary at the archive root.
+- Reusable rule: when updating Codex in this repo, prefer GitHub release assets keyed by host platform and pin the release SHA256 from the official release metadata.
+- Promotion: candidate (first confirmation in this repo).
+
+### L-20260331-002
+- Context: enabling passwordless sudo on the `m5-air` nix-darwin host.
+- Decision: use `security.sudo.extraConfig` on nix-darwin and validate with `darwin-rebuild build` before `darwin-rebuild switch`.
+- Evidence: `security.sudo.extraRules` failed evaluation on nix-darwin, while `security.sudo.extraConfig = ''frc ALL=(ALL) NOPASSWD: ALL'';` built successfully and passed `sudo -n true`.
+- Reusable rule: for nix-darwin sudo policy changes, prefer `security.sudo.extraConfig`, do a build preflight first, then verify with `sudo -n`.
+- Promotion: adopted (high-risk and generalizable).

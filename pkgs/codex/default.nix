@@ -1,73 +1,58 @@
-{ lib
-, stdenv
-, fetchurl
-, autoPatchelfHook
-, makeWrapper
-, nodejs
+{
+  lib,
+  stdenvNoCC,
+  fetchurl,
 }:
 
 let
-  platformInfo =
-    if stdenv.hostPlatform.system == "x86_64-linux" then {
-      suffix = "linux-x64";
-      hash = "sha256-t9PmgdvnSDFVkvCgrpzhhvLlnPftqdfGd1KQ8JROWlE=";
-    } else if stdenv.hostPlatform.system == "aarch64-linux" then {
-      suffix = "linux-arm64";
-      hash = "sha256-9qX/VJMhjoDT3vUdO8fn5N4bC3r1suxhEDcu1ZD+TKQ=";
-    } else
-      throw "Unsupported platform for codex prebuilt binary: ${stdenv.hostPlatform.system}";
+  version = "0.117.0";
+  releaseTag = "rust-v${version}";
+  assets = {
+    x86_64-linux = {
+      asset = "codex-x86_64-unknown-linux-gnu.tar.gz";
+      hash = "sha256:05c1decf82e9e8dd3dd7565352b447d55f481dd0d3b35afaab628e449d68895d";
+    };
+    aarch64-darwin = {
+      asset = "codex-aarch64-apple-darwin.tar.gz";
+      hash = "sha256:1e82f62b4d8f8ef9c0defcb0e68dc35da1687d2c8fb5e68ca2f441f3959987fd";
+    };
+    x86_64-darwin = {
+      asset = "codex-x86_64-apple-darwin.tar.gz";
+      hash = "sha256:948d30f0d9b762de38f54a8de2e7c9420fab41190c5ce28b0c21bed5de7f1a32";
+    };
+  };
+  assetInfo =
+    assets.${stdenvNoCC.hostPlatform.system}
+    or (throw "Unsupported platform for codex binary: ${stdenvNoCC.hostPlatform.system}");
+  binaryName = lib.removeSuffix ".tar.gz" assetInfo.asset;
 in
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation {
   pname = "codex";
-  version = "0.116.0";
+  inherit version;
 
   src = fetchurl {
-    url = "https://registry.npmmirror.com/@openai/codex/-/codex-${version}.tgz";
-    hash = "sha256-8fgQDXrNwRl7gQ7yq1RD8XnPK3tHiIXogiWJP+2jw0c=";
+    url = "https://github.com/openai/codex/releases/download/${releaseTag}/${assetInfo.asset}";
+    hash = assetInfo.hash;
   };
 
-  platformSrc = fetchurl {
-    url = "https://registry.npmmirror.com/@openai/codex/-/codex-${version}-${platformInfo.suffix}.tgz";
-    hash = platformInfo.hash;
-  };
-  
-  nativeBuildInputs = [ 
-    autoPatchelfHook  # 自动修补预编译二进制的动态链接
-    makeWrapper 
-  ];
-  
-  dontBuild = true;  # 不需要构建
-  
+  dontUnpack = true;
+
   installPhase = ''
     runHook preInstall
-    
-    # 创建标准的 node_modules 结构
-    mkdir -p $out/lib/node_modules/@openai/codex
-    mkdir -p $out/bin
-    
-    # 复制所有内容
-    cp -r . $out/lib/node_modules/@openai/codex/
 
-    # 复制对应平台的可选依赖，避免运行时报 Missing optional dependency
-    mkdir -p $TMPDIR/codex-platform
-    tar -xzf ${platformSrc} -C $TMPDIR/codex-platform
-    mkdir -p $out/lib/node_modules/@openai/codex/node_modules/@openai
-    cp -r $TMPDIR/codex-platform/package \
-      $out/lib/node_modules/@openai/codex/node_modules/@openai/codex-${platformInfo.suffix}
-    
-    # 创建可执行命令，用 makeWrapper 确保 node 可用
-    makeWrapper ${nodejs}/bin/node $out/bin/codex \
-      --add-flags "$out/lib/node_modules/@openai/codex/bin/codex.js"
-    
+    mkdir -p $out/bin
+    tar -xzf $src -C $TMPDIR
+    install -m755 $TMPDIR/${binaryName} $out/bin/codex
+
     runHook postInstall
   '';
-  
+
   meta = with lib; {
     description = "OpenAI Codex CLI tool";
     homepage = "https://github.com/openai/codex";
+    downloadPage = "https://github.com/openai/codex/releases/tag/${releaseTag}";
     license = licenses.asl20;
     mainProgram = "codex";
-    platforms = platforms.linux;
-    maintainers = [ ];
+    platforms = builtins.attrNames assets;
   };
 }
