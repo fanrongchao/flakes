@@ -7,29 +7,28 @@ let
       postgres:
         image: docker.io/postgres:16-alpine
         restart: unless-stopped
+        network_mode: host
         env_file:
           - ${cfg.dataDir}/runtime.env
         environment:
           POSTGRES_DB: ${cfg.database.name}
           POSTGRES_USER: ${cfg.database.user}
+        command: ["postgres", "-c", "listen_addresses=127.0.0.1", "-p", "15432"]
         volumes:
           - ${cfg.dataDir}/postgres:/var/lib/postgresql/data:Z
 
       redis:
         image: docker.io/redis:7-alpine
         restart: unless-stopped
-        command: ["redis-server", "--appendonly", "yes"]
+        network_mode: host
+        command: ["redis-server", "--appendonly", "yes", "--bind", "127.0.0.1", "--port", "16379"]
         volumes:
           - ${cfg.dataDir}/redis:/data:Z
 
       sub2api:
         image: docker.io/weishaw/sub2api:latest
         restart: unless-stopped
-        depends_on:
-          - postgres
-          - redis
-        ports:
-          - "127.0.0.1:${toString cfg.listenPort}:8080"
+        network_mode: host
         volumes:
           - ${cfg.dataDir}/app:/app/data:Z
   '';
@@ -198,14 +197,14 @@ in
         admin_email="$(tr -d '\n' < ${cfg.dataDir}/secrets/admin-email)"
 
         payload="$(${pkgs.jq}/bin/jq -n \
-          --arg dbHost "postgres" \
-          --argjson dbPort 5432 \
+          --arg dbHost "127.0.0.1" \
+          --argjson dbPort 15432 \
           --arg dbUser "${cfg.database.user}" \
           --arg dbPassword "$postgres_password" \
           --arg dbName "${cfg.database.name}" \
           --arg dbSslMode "disable" \
-          --arg redisHost "redis" \
-          --argjson redisPort 6379 \
+          --arg redisHost "127.0.0.1" \
+          --argjson redisPort 16379 \
           --arg redisPassword "" \
           --argjson redisDb 0 \
           --arg adminEmail "$admin_email" \
