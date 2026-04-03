@@ -14,11 +14,6 @@ let
           POSTGRES_USER: ${cfg.database.user}
         volumes:
           - ${cfg.dataDir}/postgres:/var/lib/postgresql/data:Z
-        healthcheck:
-          test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-          interval: 10s
-          timeout: 5s
-          retries: 10
 
       redis:
         image: docker.io/redis:7-alpine
@@ -26,20 +21,13 @@ let
         command: ["redis-server", "--appendonly", "yes"]
         volumes:
           - ${cfg.dataDir}/redis:/data:Z
-        healthcheck:
-          test: ["CMD", "redis-cli", "ping"]
-          interval: 10s
-          timeout: 5s
-          retries: 10
 
       sub2api:
         image: docker.io/weishaw/sub2api:latest
         restart: unless-stopped
         depends_on:
-          postgres:
-            condition: service_healthy
-          redis:
-            condition: service_healthy
+          - postgres
+          - redis
         ports:
           - "127.0.0.1:${toString cfg.listenPort}:8080"
         volumes:
@@ -163,12 +151,11 @@ in
       restartTriggers = [ composeFile ];
       path = with pkgs; [ podman podman-compose ];
       serviceConfig = {
-        Type = "simple";
+        Type = "oneshot";
+        RemainAfterExit = true;
         WorkingDirectory = "/etc/sub2api";
-        ExecStart = "${pkgs.podman-compose}/bin/podman-compose -f /etc/sub2api/docker-compose.yml up";
+        ExecStart = "${pkgs.podman-compose}/bin/podman-compose -f /etc/sub2api/docker-compose.yml up -d";
         ExecStop = "${pkgs.podman-compose}/bin/podman-compose -f /etc/sub2api/docker-compose.yml down";
-        Restart = "always";
-        RestartSec = 10;
         TimeoutStartSec = 300;
         TimeoutStopSec = 60;
       };
@@ -179,9 +166,9 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "sub2api.service" ];
       requires = [ "sub2api.service" ];
+      unitConfig.ConditionPathExists = "!${cfg.dataDir}/initialized";
       serviceConfig = {
         Type = "oneshot";
-        ConditionPathExists = "!${cfg.dataDir}/initialized";
       };
       path = with pkgs; [ curl jq coreutils ];
       script = ''
