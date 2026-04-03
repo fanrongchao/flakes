@@ -109,6 +109,7 @@ in
       "d ${cfg.dataDir}/postgres 0750 root root - -"
       "d ${cfg.dataDir}/redis 0750 root root - -"
       "d ${cfg.dataDir}/secrets 0700 root root - -"
+      "d ${cfg.dataDir}/tmp 0750 root root - -"
     ];
 
     services.caddy.virtualHosts."${cfg.domain}".extraConfig = ''
@@ -178,24 +179,30 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "sub2api.service" ];
       requires = [ "sub2api.service" ];
-      serviceConfig.Type = "oneshot";
+      serviceConfig = {
+        Type = "oneshot";
+        ConditionPathExists = "!${cfg.dataDir}/initialized";
+      };
       path = with pkgs; [ curl jq coreutils ];
       script = ''
         set -euo pipefail
+        status_file=${cfg.dataDir}/tmp/setup-status.json
+        install_file=${cfg.dataDir}/tmp/setup-install.json
 
         for _ in $(seq 1 120); do
-          if curl -fsS http://127.0.0.1:${toString cfg.listenPort}/setup/status >/tmp/sub2api-status.json; then
+          if curl -fsS http://127.0.0.1:${toString cfg.listenPort}/setup/status >"$status_file"; then
             break
           fi
           sleep 2
         done
 
-        if ! test -s /tmp/sub2api-status.json; then
+        if ! test -s "$status_file"; then
           echo "Sub2API setup endpoint did not become ready" >&2
           exit 1
         fi
 
-        if [ "$(jq -r '.data.needs_setup' /tmp/sub2api-status.json)" != "true" ]; then
+        if [ "$(jq -r '.data.needs_setup' "$status_file")" != "true" ]; then
+          touch ${cfg.dataDir}/initialized
           exit 0
         fi
 
@@ -251,11 +258,12 @@ in
           -X POST \
           -H 'Content-Type: application/json' \
           -d "$payload" \
-          http://127.0.0.1:${toString cfg.listenPort}/setup/install >/tmp/sub2api-install.json
+          http://127.0.0.1:${toString cfg.listenPort}/setup/install >"$install_file"
 
         for _ in $(seq 1 120); do
-          if curl -fsS http://127.0.0.1:${toString cfg.listenPort}/setup/status >/tmp/sub2api-status.json; then
-            if [ "$(jq -r '.data.needs_setup' /tmp/sub2api-status.json)" = "false" ]; then
+          if curl -fsS http://127.0.0.1:${toString cfg.listenPort}/setup/status >"$status_file"; then
+            if [ "$(jq -r '.data.needs_setup' "$status_file")" = "false" ]; then
+              touch ${cfg.dataDir}/initialized
               exit 0
             fi
           fi
