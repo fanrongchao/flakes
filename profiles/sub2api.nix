@@ -2,35 +2,55 @@
 
 let
   cfg = config.services.sub2api;
+  networkName = "sub2api_default";
+  networkSubnet = "10.233.0.0/24";
+  postgresAddress = "10.233.0.11";
+  redisAddress = "10.233.0.12";
+  sub2apiAddress = "10.233.0.13";
   composeFile = pkgs.writeText "sub2api-compose.yml" ''
     services:
       postgres:
         image: docker.io/postgres:16-alpine
         restart: unless-stopped
-        network_mode: host
         env_file:
           - ${cfg.dataDir}/runtime.env
         environment:
           POSTGRES_DB: ${cfg.database.name}
           POSTGRES_USER: ${cfg.database.user}
-        command: ["postgres", "-c", "listen_addresses=127.0.0.1", "-p", "15432"]
         volumes:
           - ${cfg.dataDir}/postgres:/var/lib/postgresql/data:Z
+        networks:
+          sub2api:
+            ipv4_address: ${postgresAddress}
 
       redis:
         image: docker.io/redis:7-alpine
         restart: unless-stopped
-        network_mode: host
-        command: ["redis-server", "--appendonly", "yes", "--bind", "127.0.0.1", "--port", "16379"]
+        command: ["redis-server", "--appendonly", "yes"]
         volumes:
           - ${cfg.dataDir}/redis:/data:Z
+        networks:
+          sub2api:
+            ipv4_address: ${redisAddress}
 
       sub2api:
         image: docker.io/weishaw/sub2api:latest
         restart: unless-stopped
-        network_mode: host
+        depends_on:
+          - postgres
+          - redis
+        ports:
+          - "127.0.0.1:${toString cfg.listenPort}:8080"
         volumes:
           - ${cfg.dataDir}/app:/app/data:Z
+        networks:
+          sub2api:
+            ipv4_address: ${sub2apiAddress}
+
+    networks:
+      sub2api:
+        external: true
+        name: ${networkName}
   '';
 in
 {
@@ -141,12 +161,27 @@ in
       '';
     };
 
+    systemd.services.sub2api-network = {
+      description = "Prepare Podman network for Sub2API";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "sub2api.service" ];
+      serviceConfig.Type = "oneshot";
+      path = with pkgs; [ podman ];
+      script = ''
+        set -euo pipefail
+
+        if ! podman network exists ${networkName}; then
+          podman network create --subnet ${networkSubnet} --disable-dns ${networkName}
+        fi
+      '';
+    };
+
     systemd.services.sub2api = {
       description = "Sub2API container stack";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" "sub2api-prepare.service" ];
-      wants = [ "network-online.target" "sub2api-prepare.service" ];
-      requires = [ "sub2api-prepare.service" ];
+      after = [ "network-online.target" "sub2api-prepare.service" "sub2api-network.service" ];
+      wants = [ "network-online.target" "sub2api-prepare.service" "sub2api-network.service" ];
+      requires = [ "sub2api-prepare.service" "sub2api-network.service" ];
       restartTriggers = [ composeFile ];
       path = with pkgs; [ podman podman-compose ];
       serviceConfig = {
@@ -197,14 +232,14 @@ in
         admin_email="$(tr -d '\n' < ${cfg.dataDir}/secrets/admin-email)"
 
         payload="$(${pkgs.jq}/bin/jq -n \
-          --arg dbHost "127.0.0.1" \
-          --argjson dbPort 15432 \
+          --arg dbHost "${postgresAddress}" \
+          --argjson dbPort 5432 \
           --arg dbUser "${cfg.database.user}" \
           --arg dbPassword "$postgres_password" \
           --arg dbName "${cfg.database.name}" \
           --arg dbSslMode "disable" \
-          --arg redisHost "127.0.0.1" \
-          --argjson redisPort 16379 \
+          --arg redisHost "${redisAddress}" \
+          --argjson redisPort 6379 \
           --arg redisPassword "" \
           --argjson redisDb 0 \
           --arg adminEmail "$admin_email" \
