@@ -82,7 +82,11 @@
       "Bash(DISPLAY=:0 bash -c 'echo -n \"\"窗口键粘贴测试ABC123\"\" | xclip -selection clipboard && xdotool windowfocus 56623118 && sleep 0.15 && xdotool key --window 56623118 --clearmodifiers ctrl+shift+v')",
       "Bash(DISPLAY=:0 bash -c '\necho -n \"\"精确粘贴测试XYZ\"\" | xclip -selection clipboard\nxclip -selection clipboard -o\necho \"\"\"\"\necho \"\"clipboard set, now pasting...\"\"\nxdotool windowfocus 56623118\nsleep 0.15\nxdotool key --window 56623118 --clearmodifiers ctrl+shift+v\necho \"\"done\"\"\n')",
       "Bash(ps:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(sops:*)",
+      "Bash(wc:*)",
+      "Bash(nix develop:*)",
+      "Bash(git -C /home/frc/flakes commit -m \"$\\(cat <<''EOF''\nUpdate SOPS secrets with m5-air age recipient\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
