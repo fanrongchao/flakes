@@ -11,8 +11,11 @@
     ../../profiles/network-egress-proxy.nix
     ../../profiles/network-ingress-proxy.nix
     ../../profiles/ingress-haproxy-sni.nix
+    ../../profiles/sub2api.nix
     ../../profiles/zero-trust-control-plane.nix
     ../../profiles/zero-trust-node.nix
     ../../profiles/devops-baseline.nix
   ];
+
+  services.sub2api.enable = true;
 }
