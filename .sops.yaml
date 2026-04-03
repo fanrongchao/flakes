@@ -13,6 +13,8 @@ creation_rules:
       - age1ht9lynx65f80xyh5wtyl8va5x4nxrpmzm6f48epp6v6edq6k0spq0pqdnr
       # gpd
       - age146mmq2zwlvp9x3hyf7c4adff236mkmvzqrx4gm9n78s9g4cntgmqd0d67u
+      # m5-air
+      - age1rh55ur647fd784v55daarpysmqujkkyw8u7zz7lled2wlwemlcrqmaz32d
 
   - path_regex: (^|.*/)clusters/.*\.sops\.ya?ml$
     age:
@@ -28,3 +30,5 @@ creation_rules:
       - age1ht9lynx65f80xyh5wtyl8va5x4nxrpmzm6f48epp6v6edq6k0spq0pqdnr
       # gpd
       - age146mmq2zwlvp9x3hyf7c4adff236mkmvzqrx4gm9n78s9g4cntgmqd0d67u
+      # m5-air
+      - age1rh55ur647fd784v55daarpysmqujkkyw8u7zz7lled2wlwemlcrqmaz32d
