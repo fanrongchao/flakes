@@ -244,8 +244,8 @@ in
           --argjson redisDb 0 \
           --arg adminEmail "$admin_email" \
           --arg adminPassword "$admin_password" \
-          --arg serverHost "${cfg.domain}" \
-          --argjson serverPort 443 \
+          --arg serverHost "0.0.0.0" \
+          --argjson serverPort 8080 \
           --arg serverMode "release" \
           '{
             database: {
