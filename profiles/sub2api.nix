@@ -135,12 +135,12 @@ in
         install -d -m 0700 ${cfg.dataDir}/secrets
 
         if [ ! -s ${cfg.dataDir}/secrets/postgres-password ]; then
-          tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32 > ${cfg.dataDir}/secrets/postgres-password
+          od -An -N16 -tx1 /dev/urandom | tr -d ' \n' > ${cfg.dataDir}/secrets/postgres-password
           printf '\n' >> ${cfg.dataDir}/secrets/postgres-password
         fi
 
         if [ ! -s ${cfg.dataDir}/secrets/admin-password ]; then
-          tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24 > ${cfg.dataDir}/secrets/admin-password
+          od -An -N12 -tx1 /dev/urandom | tr -d ' \n' > ${cfg.dataDir}/secrets/admin-password
           printf '\n' >> ${cfg.dataDir}/secrets/admin-password
         fi
 
