@@ -258,7 +258,7 @@ in
       script = ''
         set -euo pipefail
 
-        if ! podman network exists ${networkName}; then
+        if ! podman network inspect ${networkName} >/dev/null 2>&1; then
           podman network create --subnet ${networkSubnet} --disable-dns ${networkName}
         fi
       '';
