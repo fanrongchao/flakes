@@ -4,8 +4,21 @@
     enable = true;
 
     settings = {
-      server_url  = "https://hs.zhsjf.cn";
+      server_url = "https://hs.zhsjf.cn";
       listen_addr = "127.0.0.1:8080";
+
+      derp = {
+        # Keep the embedded DERP on the same hostname as the control plane so
+        # existing TLS and reverse proxying continue to work unchanged.
+        server = {
+          enabled = true;
+          region_id = 901;
+          region_code = "cn-bgp-jf";
+          region_name = "China BGP JF";
+          stun_listen_addr = "0.0.0.0:3478";
+          automatically_add_embedded_derp_region = true;
+        };
+      };
 
       dns = {
         magic_dns = true;
