@@ -4,6 +4,10 @@ let
   cfg = config.services.aiRelayServices;
   serviceName = "ai-relay-services";
   legacyDir = "/home/xfa/code/claude-relay-service";
+  networkName = "ai-relay-services_default";
+  networkSubnet = "10.234.0.0/24";
+  redisAddress = "10.234.0.11";
+  relayAddress = "10.234.0.12";
   composeFile = pkgs.writeText "ai-relay-services-compose.yml" ''
     services:
       redis:
@@ -12,6 +16,9 @@ let
         command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--appendfsync", "everysec"]
         volumes:
           - ${cfg.dataDir}/redis:/data:Z
+        networks:
+          airs:
+            ipv4_address: ${redisAddress}
 
       claude-relay:
         image: docker.io/weishaw/claude-relay-service:latest
@@ -25,11 +32,19 @@ let
         volumes:
           - ${cfg.dataDir}/logs:/app/logs:Z
           - ${cfg.dataDir}/data:/app/data:Z
+        networks:
+          airs:
+            ipv4_address: ${relayAddress}
         healthcheck:
           test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
           interval: 30s
           timeout: 10s
           retries: 3
+
+    networks:
+      airs:
+        external: true
+        name: ${networkName}
   '';
 in
 {
@@ -205,7 +220,7 @@ in
           echo "ADMIN_PASSWORD=$(tr -d '\n' < ${cfg.dataDir}/secrets/admin-password)"
           echo "ADMIN_SESSION_TIMEOUT=86400000"
           echo "API_KEY_PREFIX=${cfg.apiKeyPrefix}"
-          echo "REDIS_HOST=redis"
+          echo "REDIS_HOST=${redisAddress}"
           echo "REDIS_PORT=6379"
           echo "REDIS_PASSWORD="
           echo "REDIS_DB=0"
@@ -234,12 +249,27 @@ in
       '';
     };
 
+    systemd.services.ai-relay-services-network = {
+      description = "Prepare Podman network for AIRS";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "ai-relay-services.service" ];
+      serviceConfig.Type = "oneshot";
+      path = with pkgs; [ podman ];
+      script = ''
+        set -euo pipefail
+
+        if ! podman network exists ${networkName}; then
+          podman network create --subnet ${networkSubnet} --disable-dns ${networkName}
+        fi
+      '';
+    };
+
     systemd.services.ai-relay-services = {
       description = "AIRS container stack";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" "ai-relay-services-prepare.service" ];
-      wants = [ "network-online.target" "ai-relay-services-prepare.service" ];
-      requires = [ "ai-relay-services-prepare.service" ];
+      after = [ "network-online.target" "ai-relay-services-prepare.service" "ai-relay-services-network.service" ];
+      wants = [ "network-online.target" "ai-relay-services-prepare.service" "ai-relay-services-network.service" ];
+      requires = [ "ai-relay-services-prepare.service" "ai-relay-services-network.service" ];
       restartTriggers = [ composeFile ];
       path = with pkgs; [ podman podman-compose ];
       serviceConfig = {
