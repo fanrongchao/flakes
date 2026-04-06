@@ -15,6 +15,7 @@
           region_id = 901;
           region_code = "cn-bgp-jf";
           region_name = "China BGP JF";
+          ipv4 = "218.11.1.14";
           stun_listen_addr = "0.0.0.0:3478";
           automatically_add_embedded_derp_region = true;
         };
