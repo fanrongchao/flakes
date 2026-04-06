@@ -1,5 +1,21 @@
 { config, pkgs, lib, ... }:
 {
+  environment.etc."headscale/derp.yaml".text = ''
+    regions:
+      902:
+        regionid: 902
+        regioncode: cn-ali-qd
+        regionname: China Ali Qingdao
+        nodes:
+          - name: 902a
+            regionid: 902
+            hostname: derp.zhsjf.cn
+            ipv4: 114.215.124.90
+            stunport: 3478
+            derpport: 443
+            canport80: true
+  '';
+
   services.headscale = {
     enable = true;
 
@@ -8,17 +24,9 @@
       listen_addr = "127.0.0.1:8080";
 
       derp = {
-        # Keep the embedded DERP on the same hostname as the control plane so
-        # existing TLS and reverse proxying continue to work unchanged.
-        server = {
-          enabled = true;
-          region_id = 901;
-          region_code = "cn-bgp-jf";
-          region_name = "China BGP JF";
-          ipv4 = "218.11.1.14";
-          stun_listen_addr = "0.0.0.0:3478";
-          automatically_add_embedded_derp_region = true;
-        };
+        server.enabled = false;
+        urls = [ "https://controlplane.tailscale.com/derpmap/default" ];
+        paths = [ "/etc/headscale/derp.yaml" ];
       };
 
       dns = {
