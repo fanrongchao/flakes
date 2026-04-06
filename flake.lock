@@ -495,11 +495,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1775483303,
-        "narHash": "sha256-944n0BcP6tRAyj3LN8wZI4t4g8EfWqvktMaAC6Nk0pg=",
+        "lastModified": 1775483631,
+        "narHash": "sha256-KZnBSj6zzFR+MUsYiD/Bll4KA8GO+9SvN9v4kuk4X6s=",
         "owner": "fanrongchao",
         "repo": "mihomocli",
-        "rev": "cccd6670c1595c4340a33c570f8c43e5b7654510",
+        "rev": "89dbb3152524a4e8361af8922495da2c08f68ef6",
         "type": "github"
       },
       "original": {
