@@ -7,6 +7,9 @@ let
     tailnetBaseDomain = "tail.zhsjf.cn";
     derpHostname = "derp.zhsjf.cn";
     derpIPv4 = "218.11.1.14";
+    publicIPv4 = "218.11.1.14";
+    tailnetIPv4 = "100.64.0.3";
+    mihomoControllerHost = "mihomo.zhsjf.cn";
   };
 
   tailnetSuffix = lib.removePrefix "tail." site.tailnetBaseDomain;
@@ -16,6 +19,13 @@ let
     "${site.derpHostname}" = "127.0.0.1:8080";
     "git.${site.apexDomain}" = "192.168.3.100:8080";
     "m2.${site.apexDomain}" = "127.0.0.1:8000";
+  };
+
+  tailnetIngressVirtualHosts = {
+    "${site.mihomoControllerHost}" = {
+      upstream = "127.0.0.1:9090";
+      bindAddress = site.tailnetIPv4;
+    };
   };
 in
 
@@ -54,9 +64,15 @@ in
     };
   };
   services.networkIngressProxy.virtualHosts =
-    lib.mapAttrs (_: upstream: { inherit upstream; }) publicIngressUpstreams;
+    (lib.mapAttrs (_: upstream: { inherit upstream; }) publicIngressUpstreams)
+    // tailnetIngressVirtualHosts;
   services.ingressHaproxySni = {
+    publicHttpBindAddresses = [ "${site.publicIPv4}:80" ];
+    publicTlsBindAddresses = [ "${site.publicIPv4}:443" ];
     tlsServerNames = builtins.attrNames publicIngressUpstreams;
+    tailnetTlsBindAddresses = [ "${site.tailnetIPv4}:443" ];
+    tailnetTlsServerNames = [ site.mihomoControllerHost ];
+    tailnetCaddyBackend = "${site.tailnetIPv4}:8443";
     gitSshBackend = "192.168.3.100:2222";
   };
   services.mihomoEgress = {
