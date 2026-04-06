@@ -13,6 +13,14 @@ let
 
   publicSniRules = mkSniRules "be_caddy" cfg.tlsServerNames;
   tailnetSniRules = mkSniRules "be_caddy_tailnet" cfg.tailnetTlsServerNames;
+  blockedPublicSniRules = lib.concatMapStringsSep "\n" (host:
+    let
+      aclName = "blocked_public_" + lib.replaceStrings [ "." "-" ] [ "_" "_" ] host;
+    in ''
+        acl ${aclName} req.ssl_sni -i ${host}
+        tcp-request content reject if ${aclName}
+    ''
+  ) cfg.tailnetTlsServerNames;
   publicHttpBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.publicHttpBindAddresses;
   publicTlsBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.publicTlsBindAddresses;
   tailnetTlsBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.tailnetTlsBindAddresses;
@@ -108,6 +116,7 @@ ${publicTlsBinds}
 
           # TLS traffic by SNI
 ${publicSniRules}
+${blockedPublicSniRules}
           default_backend be_caddy
 ${tailnetFrontend}
 
