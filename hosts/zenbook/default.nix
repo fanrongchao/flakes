@@ -11,4 +11,5 @@
   ];
 
   # Host-specific Home Manager overrides go here when needed.
+  services.zeroTrustNode.loginServerUrl = "https://hs.zhsjf.cn";
 }

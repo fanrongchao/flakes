@@ -1,94 +1,90 @@
-{ config, pkgs, ... }:
-{
-  sops.age.keyFile = "/var/lib/sops/age/keys.txt";
-  sops.secrets."dns/ak" = {
-    sopsFile = ../secrets/aliyun.yaml;
-    owner = "caddy";
-    group = "caddy";
-  };
-  sops.secrets."dns/as" = {
-    sopsFile = ../secrets/aliyun.yaml;
-    owner = "caddy";
-    group = "caddy";
-  };
-  sops.templates."caddy-alidns.env" = {
-    owner = "caddy";
-    group = "caddy";
-    mode = "0400";
-    content = ''
-      ALICLOUD_ACCESS_KEY=${config.sops.placeholder."dns/ak"}
-      ALICLOUD_SECRET_KEY=${config.sops.placeholder."dns/as"}
-    '';
-  };
-
-  services.caddy = {
-    enable = true;
-
-    # Run Caddy behind HAProxy (SNI passthrough on :443).
-    # Move Caddy's HTTP port away from :80 because HAProxy owns it.
-    globalConfig = ''
-      https_port 8443
-      http_port 18080
-      auto_https disable_redirects
-
-      servers {
-        protocols h1 h2
+{ config, pkgs, lib, ... }:
+let
+  cfg = config.services.networkIngressProxy;
+  mkVirtualHost = host: hostCfg: {
+    extraConfig = ''
+      bind ${hostCfg.bindAddress}
+      tls {
+        dns alidns {
+          access_key_id {env.ALICLOUD_ACCESS_KEY}
+          access_key_secret {env.ALICLOUD_SECRET_KEY}
+        }
+        resolvers 1.1.1.1 8.8.8.8
       }
+      reverse_proxy ${hostCfg.upstream}
     '';
-    package = pkgs.caddy.withPlugins {
-      # 建议先用“Latest 稳定版”tag（目前仓库的 Latest 是 v1.0.26；beta 版本也有）
-      # 你也可以换成更新的 tag（比如 v1.0.28-beta.*），但我建议先用 Latest 稳定版
-      plugins = [ "github.com/caddy-dns/alidns@v1.0.26" ];
-      # 第一次把 hash 留空或随便写，nixos-rebuild 会报出正确的 hash，你再填回来
-      hash = "sha256-U8uzVMPKfAMgCv1M6WIsiaLuzLbJftS87mGLeySK3FI=";
+  };
+in {
+  options.services.networkIngressProxy.virtualHosts = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
+      options = {
+        upstream = lib.mkOption {
+          type = lib.types.str;
+          description = "Upstream address passed to Caddy reverse_proxy.";
+        };
+        bindAddress = lib.mkOption {
+          type = lib.types.str;
+          default = "127.0.0.1";
+          description = "Local address Caddy binds for the virtual host.";
+        };
+      };
+    }));
+    default = {};
+    description = "Site-specific Caddy virtual hosts exposed through the ingress proxy.";
+  };
+
+  config = {
+    sops.age.keyFile = "/var/lib/sops/age/keys.txt";
+    sops.secrets."dns/ak" = {
+      sopsFile = ../secrets/aliyun.yaml;
+      owner = "caddy";
+      group = "caddy";
+    };
+    sops.secrets."dns/as" = {
+      sopsFile = ../secrets/aliyun.yaml;
+      owner = "caddy";
+      group = "caddy";
+    };
+    sops.templates."caddy-alidns.env" = {
+      owner = "caddy";
+      group = "caddy";
+      mode = "0400";
+      content = ''
+        ALICLOUD_ACCESS_KEY=${config.sops.placeholder."dns/ak"}
+        ALICLOUD_SECRET_KEY=${config.sops.placeholder."dns/as"}
+      '';
     };
 
-    virtualHosts."hs.zhsjf.cn".extraConfig = ''
-      bind 127.0.0.1
-      tls {
-        dns alidns {
-          access_key_id {env.ALICLOUD_ACCESS_KEY}
-          access_key_secret {env.ALICLOUD_SECRET_KEY}
+    services.caddy = {
+      enable = true;
+
+      # Run Caddy behind HAProxy (SNI passthrough on :443).
+      # Move Caddy's HTTP port away from :80 because HAProxy owns it.
+      globalConfig = ''
+        https_port 8443
+        http_port 18080
+        auto_https disable_redirects
+
+        servers {
+          protocols h1 h2
         }
-        # Avoid split-DNS (e.g. Tailscale) breaking ACME DNS-01 propagation checks.
-        resolvers 1.1.1.1 8.8.8.8
-      }
-      reverse_proxy 127.0.0.1:8080
-    '';
+      '';
+      package = pkgs.caddy.withPlugins {
+        plugins = [ "github.com/caddy-dns/alidns@v1.0.26" ];
+        hash = "sha256-U8uzVMPKfAMgCv1M6WIsiaLuzLbJftS87mGLeySK3FI=";
+      };
 
-    virtualHosts."git.zhsjf.cn".extraConfig = ''
-      bind 127.0.0.1
-      tls {
-        dns alidns {
-          access_key_id {env.ALICLOUD_ACCESS_KEY}
-          access_key_secret {env.ALICLOUD_SECRET_KEY}
-        }
-        resolvers 1.1.1.1 8.8.8.8
-      }
-      reverse_proxy 192.168.3.100:8080
-    '';
+      virtualHosts = lib.mapAttrs mkVirtualHost cfg.virtualHosts;
+    };
 
-    virtualHosts."m2.zhsjf.cn".extraConfig = ''
-      bind 127.0.0.1
-      tls {
-        dns alidns {
-          access_key_id {env.ALICLOUD_ACCESS_KEY}
-          access_key_secret {env.ALICLOUD_SECRET_KEY}
-        }
-        resolvers 1.1.1.1 8.8.8.8
-      }
-      reverse_proxy 127.0.0.1:8000
-    '';
-  };
+    systemd.services.caddy = {
+      reloadTriggers = [
+        "/etc/caddy/caddy_config"
+        config.sops.templates."caddy-alidns.env".path
+      ];
 
-  systemd.services.caddy = {
-    # Ensure caddy reloads on nixos-rebuild when config or secrets change.
-    reloadTriggers = [
-      "/etc/caddy/caddy_config"
-      config.sops.templates."caddy-alidns.env".path
-    ];
-
-    serviceConfig.EnvironmentFile =
-      config.sops.templates."caddy-alidns.env".path;
+      serviceConfig.EnvironmentFile =
+        config.sops.templates."caddy-alidns.env".path;
+    };
   };
 }

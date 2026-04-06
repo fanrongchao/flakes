@@ -114,3 +114,86 @@
   promotion: adopted
   added_at: "2026-03-31"
   last_validated_at: "2026-03-31"
+
+- id: L-20260406-001
+  kind: candidate
+  scope: zero-trust
+  trigger: replacing or introducing a DERP relay on a host that already runs Headscale behind repo-managed HAProxy and Caddy
+  decision: prefer Headscale embedded DERP with a dedicated hostname and Caddy vhost, and advertise it via the custom derp map path instead of standing up a separate DERP daemon
+  rule: enable services.headscale.settings.derp.server, keep automatically_add_embedded_derp_region disabled, add a dedicated reverse-proxied DERP hostname, and verify UDP 3478 forwarding outside the host separately
+  evidence:
+    - ai-server switched successfully with embedded DERP enabled
+    - derp.zhsjf.cn returned HTTP 426 through local Caddy after the switch
+    - tailscale debug derp 902 successfully connected to the custom region
+  risk: high
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the host does not already terminate TLS through repo-managed ingress
+    - a dedicated standalone DERP service is required for operational separation
+  fallback: deploy a standalone DERP service with its own ingress path and keep the headscale derp map externalized
+  promotion: candidate
+  added_at: "2026-04-06"
+  last_validated_at: "2026-04-06"
+
+- id: L-20260406-002
+  kind: prior
+  scope: host
+  trigger: a Linux host runs Headscale embedded DERP/STUN and Mihomo TUN with auto-route enabled
+  decision: bypass Mihomo at the host policy-routing layer for the headscale service user instead of trying to express the fix only in Mihomo YAML
+  rule: add a persistent ip rule for the headscale uidrange to lookup main before Mihomo's catch-all TUN rules, and verify with tailscale debug derp plus netcheck
+  evidence:
+    - tcpdump showed STUN replies leaving ai-server as 198.18.0.1 before the bypass
+    - a oneshot systemd service installing uidrange 995-995 lookup main restored IPv4 STUN responses for derp.zhsjf.cn
+    - tailscale netcheck switched nearest DERP to cn-ai-server after the route bypass was deployed
+  risk: high
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - the host does not run Mihomo TUN or equivalent policy-routing capture
+    - Headscale is not serving embedded DERP/STUN on the same host
+    - the service user is intentionally isolated and should not bypass the proxy uplink
+  fallback: disable Mihomo TUN on the host or move DERP/STUN to a separate machine that does not route through Mihomo
+  promotion: adopted
+  added_at: "2026-04-06"
+  last_validated_at: "2026-04-06"
+
+- id: L-20260406-003
+  kind: prior
+  scope: profiles
+  trigger: a shared zero-trust, ingress, or proxy profile starts accumulating deployment-specific domains, public IPs, SNI host lists, upstreams, or proxy-group names
+  decision: move those site-owned values into host modules or explicit CLI/script parameters and keep the shared profile generic
+  rule: define module options or script/env parameters for control-plane URLs, tailnet domains, DERP hostname/IP, ingress virtual hosts, HAProxy SNI host lists, manual proxy-group names, and custom rules; keep shared profiles free of site-specific constants
+  evidence:
+    - ai-server continued to evaluate after hs.zhsjf.cn, derp.zhsjf.cn, 218.11.1.14, jp-vultr, and BosLife were moved out of shared profiles and into host-owned config
+    - shared ingress and egress profiles became reusable without embedding one deployment's DNS and proxy naming scheme
+  risk: medium
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - the value is intentionally identical across every deployment site
+    - the value only exists in a single host module and is not shared
+  fallback: keep the value in the single host module and document why it is site-owned
+  promotion: adopted
+  added_at: "2026-04-06"
+  last_validated_at: "2026-04-06"
+
+- id: L-20260406-005
+  kind: prior
+  scope: hosts
+  trigger: a host owns Headscale, embedded DERP, ingress hostnames, and Mihomo egress settings whose DNS names or public IPs may migrate later
+  decision: define the site-owned Headscale/tailnet/DERP values once in the host module and fan them out into zero-trust, ingress, HAProxy SNI, and Mihomo egress options while leaving the DERP/STUN route-bypass service in the shared control-plane profile
+  rule: use one host-owned parameter block for headscale hostname, tailnet base domain, DERP hostname, and DERP IPv4; derive ingress virtualHosts, HAProxy tlsServerNames, and Mihomo tailscale/direct/route-exclude settings from that block; do not move `headscale-derp-route-bypass` out of the shared profile that owns Headscale
+  evidence:
+    - ai-server derives zeroTrustControlPlane, networkIngressProxy, ingressHaproxySni, and mihomoEgress values from one site definition instead of repeating derp/headscale domains across the host file
+    - zero-trust-control-plane.nix still owns the headscale-derp-route-bypass oneshot that keeps STUN replies off Mihomo TUN
+  risk: high
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - the host does not run Headscale/DERP locally
+    - ingress and egress values intentionally come from different operators or different domains
+  fallback: keep the site values in the host module even if a single helper block is not worth introducing yet; never fold the route-bypass fix into unrelated egress logic
+  promotion: adopted
+  added_at: "2026-04-06"
+  last_validated_at: "2026-04-06"

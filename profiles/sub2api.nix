@@ -62,8 +62,8 @@ in
     enable = lib.mkEnableOption "Sub2API service";
 
     domain = lib.mkOption {
-      type = lib.types.str;
-      default = "aiapi.zhsjf.cn";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
       description = "Public HTTPS domain for Sub2API.";
     };
 
@@ -80,8 +80,8 @@ in
     };
 
     adminEmail = lib.mkOption {
-      type = lib.types.str;
-      default = "admin@zhsjf.cn";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
       description = "Bootstrap administrator email for the first-run setup.";
     };
 
@@ -99,6 +99,17 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.domain != null;
+        message = "services.sub2api.domain must be set when services.sub2api.enable = true";
+      }
+      {
+        assertion = cfg.adminEmail != null;
+        message = "services.sub2api.adminEmail must be set when services.sub2api.enable = true";
+      }
+    ];
+
     containerRuntime.enable = true;
     containerRuntime.dockerCompat = true;
 

@@ -56,8 +56,8 @@ in
     enable = lib.mkEnableOption "AIRS (AI Relay Services) container stack";
 
     domain = lib.mkOption {
-      type = lib.types.str;
-      default = "airs.zhsjf.cn";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
       description = "Public HTTPS domain for AIRS.";
     };
 
@@ -87,6 +87,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.domain != null;
+        message = "services.aiRelayServices.domain must be set when services.aiRelayServices.enable = true";
+      }
+    ];
+
     containerRuntime.enable = true;
     containerRuntime.dockerCompat = true;
 

@@ -19,4 +19,6 @@
     enable = true;
     dockerCompat = true;
   };
+
+  services.zeroTrustNode.loginServerUrl = "https://hs.zhsjf.cn";
 }

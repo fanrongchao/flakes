@@ -56,3 +56,40 @@
 - Evidence: the local public key from `~/.ssh/id_ed25519_github.pub` appeared in `nixosConfigurations.ai-server.config.users.users.xfa.openssh.authorizedKeys.keys` immediately after the config edit.
 - Reusable rule: for repo-managed host access, add new machine SSH public keys in the target host's `authorizedKeys` list and verify the evaluated list before asking the remote host to pull and switch.
 - Promotion: candidate (needs another host confirmation).
+
+## 2026-04-06
+
+### L-20260406-001
+- Context: replacing an external DERP relay with one hosted directly on `ai-server`, which already fronts `headscale` through HAProxy and Caddy.
+- Decision: enable Headscale's embedded DERP server, keep `automatically_add_embedded_derp_region = false`, publish a dedicated `derp.zhsjf.cn` Caddy vhost to the same local `127.0.0.1:8080` listener, and advertise the custom region via `/etc/headscale/derp.yaml`.
+- Evidence: `nixos-rebuild switch --flake ~/flakes#ai-server` succeeded on `ai-server`; server-side `curl --resolve derp.zhsjf.cn:8443:127.0.0.1 https://derp.zhsjf.cn:8443/derp` returned `HTTP/2 426`; local `tailscale debug derp 902` reported `Successfully established a DERP connection with node "derp.zhsjf.cn"`.
+- Reusable rule: when a Headscale host already sits behind repo-managed HAProxy and Caddy ingress, prefer embedded DERP plus a dedicated hostname/vhost over a separate standalone DERP service; treat public UDP `3478` forwarding as an external gateway dependency to verify separately.
+- Promotion: candidate (first confirmation in this repo).
+
+### L-20260406-002
+- Context: `ai-server` runs Headscale embedded DERP/STUN and Mihomo TUN on the same Linux host.
+- Decision: add a host-level policy routing bypass for the `headscale` system user instead of trying to solve STUN replies inside Mihomo YAML.
+- Evidence: before the bypass, `tcpdump` showed inbound `124.64.23.154:* > 192.168.3.111.3478` and outbound `198.18.0.1.3478 > 124.64.23.154:*`, and `tailscale debug derp 902` warned `did not return a IPv4 STUN response`; after deploying the `headscale-derp-route-bypass` service, `ip rule show` included `uidrange 995-995 lookup main`, `tailscale debug derp 902` returned `Node "derp.zhsjf.cn" returned IPv4 STUN response`, and `tailscale netcheck` selected `cn-ai-server` as nearest DERP.
+- Reusable rule: when a Linux host runs both Headscale embedded DERP/STUN and Mihomo TUN with auto-route enabled, bypass Mihomo for the `headscale` service user with policy routing so STUN replies leave through the real uplink.
+- Promotion: adopted (high-risk and generalizable).
+
+### L-20260406-003
+- Context: shared zero-trust and proxy profiles started accumulating deployment-specific domains, public IPs, SNI host lists, and proxy-group names while `ai-server` and the local Mihomo setup kept evolving.
+- Decision: keep reusable profiles generic and inject site-owned values from host modules or explicit CLI/script parameters instead of hardcoding them in shared profiles.
+- Evidence: moved `hs.zhsjf.cn`, `derp.zhsjf.cn`, `218.11.1.14`, HAProxy SNI host lists, Caddy virtual hosts, `jp-vultr`, `BosLife`, and custom antigravity rules out of shared profiles and into `hosts/ai-server/default.nix`; `nix eval .#nixosConfigurations.ai-server.config.system.build.toplevel.drvPath` continued to succeed after the refactor.
+- Reusable rule: if a value can change per deployment site or per operator preference, model it as a host-level option or CLI/script parameter; do not treat it as a shared-profile constant.
+- Promotion: adopted (repeated and high-leverage).
+
+### L-20260406-004
+- Context: local Codex connectivity still dropped when macOS system proxy was turned off, even after Tailscale, DERP, rule mode, and Mihomo TUN coexistence had been repaired.
+- Decision: inspect Mihomo controller connection metadata before changing more TUN/rule logic, to confirm whether the application is actually entering via transparent TUN or via a local proxy listener.
+- Evidence: live controller connections for `chat.openai.com`, `chatgpt.com`, and `api.anthropic.com` all showed `sourceIP = 127.0.0.1` and `inboundName = DEFAULT-MIXED`, which explained why the current Codex desktop session still depended on system proxy even though Tailscale and Clash routing were healthy.
+- Reusable rule: when local app connectivity changes with system-proxy toggles, verify the actual Mihomo inbound path first; do not assume the app is already traveling through TUN.
+- Promotion: candidate (useful locally, needs another confirmation).
+
+### L-20260406-005
+- Context: `ai-server` needs site-specific Headscale, tailnet, and DERP values in zero-trust, ingress, and Mihomo egress config, but those values will migrate over time and must not erase the working DERP/STUN route bypass.
+- Decision: keep `headscale-derp-route-bypass` in `zero-trust-control-plane.nix`, and fan site-owned `headscale/tailnet/derp` values out from a single host-owned definition into zero-trust, ingress, HAProxy SNI, and Mihomo egress options.
+- Evidence: `hosts/ai-server/default.nix` now derives `networkIngressProxy.virtualHosts`, `ingressHaproxySni.tlsServerNames`, `zeroTrustControlPlane.derp`, and `mihomoEgress.tailscale*` settings from one site parameter block, while `profiles/zero-trust-control-plane.nix` still owns the `headscale-derp-route-bypass` oneshot service.
+- Reusable rule: when a host owns both self-hosted DERP and site-specific ingress/egress values, define those values once in the host module and feed them into shared profiles; keep packet-routing safety fixes in the shared profile that owns the affected service.
+- Promotion: adopted (generalizable and high-risk if forgotten).

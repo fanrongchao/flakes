@@ -21,6 +21,8 @@
     dockerCompat = true;
   };
 
+  services.zeroTrustNode.loginServerUrl = "https://hs.zhsjf.cn";
+
   voiceInput = {
     enable = true;
     engine = "funasr-nano";
