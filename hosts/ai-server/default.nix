@@ -7,7 +7,7 @@ let
     tailnetBaseDomain = "tail.zhsjf.cn";
     derpHostname = "derp.zhsjf.cn";
     derpIPv4 = "218.11.1.14";
-    publicIPv4 = "218.11.1.14";
+    ingressIPv4 = "192.168.3.111";
     tailnetIPv4 = "100.64.0.3";
     mihomoControllerHost = "mihomo.zhsjf.cn";
   };
@@ -67,8 +67,8 @@ in
     (lib.mapAttrs (_: upstream: { inherit upstream; }) publicIngressUpstreams)
     // tailnetIngressVirtualHosts;
   services.ingressHaproxySni = {
-    publicHttpBindAddresses = [ "${site.publicIPv4}:80" ];
-    publicTlsBindAddresses = [ "${site.publicIPv4}:443" ];
+    publicHttpBindAddresses = [ "${site.ingressIPv4}:80" ];
+    publicTlsBindAddresses = [ "${site.ingressIPv4}:443" ];
     tlsServerNames = builtins.attrNames publicIngressUpstreams;
     tailnetTlsBindAddresses = [ "${site.tailnetIPv4}:443" ];
     tailnetTlsServerNames = [ site.mihomoControllerHost ];
