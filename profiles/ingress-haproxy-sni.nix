@@ -109,6 +109,7 @@ ${publicHttpBinds}
 ${publicTlsBinds}
           mode tcp
           tcp-request inspect-delay 5s
+${blockedPublicSniRules}
           tcp-request content accept if { req.ssl_hello_type 1 }
 
           # Non-TLS traffic (SSH) → GitLab SSH
@@ -116,7 +117,6 @@ ${publicTlsBinds}
 
           # TLS traffic by SNI
 ${publicSniRules}
-${blockedPublicSniRules}
           default_backend be_caddy
 ${tailnetFrontend}
 
