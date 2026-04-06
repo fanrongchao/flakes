@@ -93,3 +93,10 @@
 - Evidence: `hosts/ai-server/default.nix` now derives `networkIngressProxy.virtualHosts`, `ingressHaproxySni.tlsServerNames`, `zeroTrustControlPlane.derp`, and `mihomoEgress.tailscale*` settings from one site parameter block, while `profiles/zero-trust-control-plane.nix` still owns the `headscale-derp-route-bypass` oneshot service.
 - Reusable rule: when a host owns both self-hosted DERP and site-specific ingress/egress values, define those values once in the host module and feed them into shared profiles; keep packet-routing safety fixes in the shared profile that owns the affected service.
 - Promotion: adopted (generalizable and high-risk if forgotten).
+
+### L-20260406-006
+- Context: local Mihomo/Clash Verge operations need to be repeatable from macOS today and from a future Windows Codex environment that will not have Nix or shell-wrapper parity.
+- Decision: keep refresh/runtime control in `mihomocli` itself, and treat platform differences as path/proxy/controller detection concerns rather than shell-script concerns.
+- Evidence: `mihomo-cli refresh-clash-verge`, `doctor`, and `runtime` now cover the daily desktop operations directly; Windows preparation only required adding native config/cache roots, Clash Verge `%APPDATA%` path probing, and WinINET proxy detection instead of creating new scripts.
+- Reusable rule: when a desktop Mihomo workflow must span macOS and Windows, put the operational logic in the CLI binary and limit platform-specific work to directory discovery, system-proxy introspection, and controller transport differences.
+- Promotion: candidate (first cross-platform preparation in this repo).

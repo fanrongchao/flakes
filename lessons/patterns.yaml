@@ -197,3 +197,23 @@
   promotion: adopted
   added_at: "2026-04-06"
   last_validated_at: "2026-04-06"
+
+- id: L-20260406-006
+  kind: heuristic
+  scope: desktop-tooling
+  trigger: a Mihomo/Clash Verge workflow needs to run on both macOS and Windows, including future Codex sessions on Windows without Nix
+  decision: keep refresh/runtime logic inside the CLI binary and treat platform differences as path detection, system proxy introspection, and controller transport concerns
+  rule: prefer native CLI subcommands such as refresh, doctor, and runtime over shell wrappers; on Windows, use native config/cache roots, `%APPDATA%`/`%LOCALAPPDATA%` Clash Verge discovery, and WinINET proxy inspection instead of assuming Unix shell/Nix behavior
+  evidence:
+    - mihomo-cli already absorbed refresh-clash-verge and runtime operations that used to live in wrappers
+    - preparing for Windows only required adding platform-native path and proxy detection, not a second control plane
+  risk: medium
+  auto_apply: true
+  confidence: medium
+  ask_when:
+    - the workflow truly depends on a platform-specific GUI API that the CLI cannot reach
+    - a native package/distribution format is required and the binary itself is not yet shipped
+  fallback: keep the platform-specific wrapper thin and make it call the CLI, rather than re-implementing logic in scripts
+  promotion: candidate
+  added_at: "2026-04-06"
+  last_validated_at: "2026-04-06"
