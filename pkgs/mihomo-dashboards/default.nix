@@ -57,8 +57,72 @@ window.__METACUBEXD_CONFIG__ = {
 }
 EOF
 
+    python3 - <<'PY' "$out/metacubexd/index.html" "$out/metacubexd/200.html" "$out/metacubexd/404.html"
+from pathlib import Path
+import sys
+
+marker = "<script>window.__METACUBEXD_CONFIG__ = window.__METACUBEXD_CONFIG__ || { defaultBackendURL:"
+inject = """
+<script>
+  (function () {
+    const endpoint = {
+      id: "tailnet-dashboard",
+      name: "ai-server",
+      url: window.location.origin + "/api",
+      secret: "",
+    }
+    try {
+      localStorage.setItem("endpointList", JSON.stringify([endpoint]))
+      localStorage.setItem("selectedEndpoint", endpoint.id)
+    } catch (_) {}
+  })()
+</script>
+""".strip()
+
+for arg in sys.argv[1:]:
+    path = Path(arg)
+    text = path.read_text()
+    start = text.find(marker)
+    if start == -1:
+        raise SystemExit(f"metacubexd marker not found in {path}")
+    end = text.find("</script>", start)
+    if end == -1:
+        raise SystemExit(f"metacubexd closing script marker not found in {path}")
+    end += len("</script>")
+    path.write_text(text[:end] + "\\n" + inject + text[end:])
+PY
+
     substituteInPlace "$out/yacd/index.html" \
       --replace-fail 'data-base-url="http://127.0.0.1:9090"' 'data-base-url="/api"'
+
+    python3 - <<'PY' "$out/yacd/index.html"
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = '<script type="module" crossorigin src="./assets/'
+inject = """
+    <script>
+      (function () {
+        const state = {
+          selectedClashAPIConfigIndex: 0,
+          clashAPIConfigs: [{
+            baseURL: window.location.origin + "/api",
+            secret: "",
+            addedAt: 0,
+          }],
+        }
+        try {
+          localStorage.setItem("yacd.metacubex.one", JSON.stringify(state))
+        } catch (_) {}
+      })()
+    </script>
+""".strip()
+if marker not in text:
+    raise SystemExit("yacd index marker not found")
+path.write_text(text.replace(marker, inject + "\n    " + marker, 1))
+PY
 
     python3 - <<'PY' "$out/zashboard/index.html"
 from pathlib import Path
@@ -91,6 +155,35 @@ if marker not in text:
     raise SystemExit("zashboard index marker not found")
 path.write_text(text.replace(marker, inject + "\n    " + marker, 1))
 PY
+
+    for register_sw in "$out/zashboard/registerSW.js" "$out/yacd/registerSW.js"; do
+      if [ -f "$register_sw" ]; then
+        cat > "$register_sw" <<'EOF'
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister())
+  }).catch(() => {})
+}
+EOF
+      fi
+    done
+
+    for sw in "$out/zashboard/sw.js" "$out/yacd/sw.js"; do
+      if [ -f "$sw" ]; then
+        cat > "$sw" <<'EOF'
+self.addEventListener("install", (event) => {
+  self.skipWaiting()
+})
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    self.registration.unregister().then(() => self.clients.matchAll()).then((clients) => {
+      clients.forEach((client) => client.navigate(client.url))
+    })
+  )
+})
+EOF
+      fi
+    done
 
     cat > "$out/index.html" <<'EOF'
 <!doctype html>
