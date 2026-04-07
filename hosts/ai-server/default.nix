@@ -116,6 +116,14 @@ in
     }
     encode zstd gzip
 
+    @apiVersionHead {
+      method HEAD
+      path /api/version
+    }
+    handle @apiVersionHead {
+      respond "" 200
+    }
+
     @api path /api*
     handle @api {
       uri strip_prefix /api
