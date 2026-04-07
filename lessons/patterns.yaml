@@ -263,8 +263,21 @@
   confidence: medium
   ask_when:
     - removing the wildcard itself would affect unrelated hostnames
-    - the controller needs direct access from external automation instead of through the managed reverse proxy
-  fallback: keep the controller private and use a local desktop dashboard or an SSH tunnel to a localhost-bound controller
+
+- id: L-20260407-005
+  kind: candidate
+  scope: ops
+  trigger: a managed NixOS host deploys from a git checkout such as ~/flakes
+  decision: keep the remote checkout clean and update it only by fast-forwarding committed changes from the canonical local repo
+  rule: never depend on remote dirty worktrees or host-only edits for durable infra state; commit locally, push, then use git fetch plus git merge --ff-only before nixos-rebuild
+  evidence:
+    - ai-server rollouts became easier to verify once local HEAD, remote HEAD, and deployed generation all referred to the same committed state
+    - remote cleanup removed ambiguity about whether behavior came from the repo, an uncommitted host patch, or a forgotten stash
+  risk: low
+  auto_apply: true
+  confidence: high
+  ask_when:
+    - an emergency hotfix cannot wait for the normal local commit-and-push flow
   promotion: candidate
   added_at: "2026-04-07"
   last_validated_at: "2026-04-07"

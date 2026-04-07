@@ -130,3 +130,10 @@
 - Evidence: AliDNS showed `* -> 218.11.1.14` while `airs` and `aiapi` had no explicit records of their own; that wildcard was enough to keep both names resolving publicly until explicit per-host records were added.
 - Reusable rule: if a zone keeps a wildcard public `A` record, retire or privatize child hostnames by overriding them explicitly in DNS; otherwise the wildcard will continue to publish the old public endpoint.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260407-005
+- Context: infra changes on `ai-server` are easier to reason about when the host's `~/flakes` checkout exactly matches Git history, instead of accumulating local edits, ad-hoc hotfixes, or forgotten stashes.
+- Decision: treat the remote `~/flakes` checkout as a read-only deployment mirror: make changes locally, commit and push them, then update the host with `git fetch` + `git merge --ff-only` before `nixos-rebuild`.
+- Evidence: once `ai-server` stayed on clean fast-forwarded commits only, rollout verification became predictable: local `HEAD`, remote `HEAD`, deployed generation, and rollback target all lined up without having to remember host-only patches.
+- Reusable rule: keep managed host repos permanently clean; never rely on remote dirty worktrees for durable infra changes, and prefer fast-forward-only updates from the canonical local repo.
+- Promotion: candidate (first confirmation in this repo).
