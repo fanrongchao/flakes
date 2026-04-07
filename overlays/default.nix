@@ -9,6 +9,7 @@ final: prev: {
   antigravity = prev.callPackage ../pkgs/antigravity {};
   antigravity-manager = prev.callPackage ../pkgs/antigravity-manager {};
   pencilOfficial = prev.callPackage ../pkgs/pencil-official {};
+  mihomo-dashboards = prev.callPackage ../pkgs/mihomo-dashboards {};
 
   dgop = prev.callPackage ../pkgs/dgop {};
   whisper-writer-pinned = prev.callPackage ../pkgs/whisper-writer {};

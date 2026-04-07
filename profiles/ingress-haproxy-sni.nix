@@ -23,7 +23,15 @@ let
   ) cfg.tailnetTlsServerNames;
   publicHttpBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.publicHttpBindAddresses;
   publicTlsBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.publicTlsBindAddresses;
+  tailnetHttpBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.tailnetHttpBindAddresses;
   tailnetTlsBinds = lib.concatMapStringsSep "\n" (addr: "      bind ${addr}") cfg.tailnetTlsBindAddresses;
+  tailnetHttpFrontend = lib.optionalString (cfg.tailnetHttpBindAddresses != []) ''
+
+        frontend fe_http_tailnet
+${tailnetHttpBinds}
+          mode http
+          http-request redirect scheme https code 301
+  '';
   tailnetFrontend = lib.optionalString (cfg.tailnetTlsBindAddresses != [] && cfg.tailnetTlsServerNames != []) ''
 
         frontend fe_tls_tailnet
@@ -55,6 +63,12 @@ in {
       type = lib.types.listOf lib.types.str;
       default = [ ":443" ];
       description = "Bind addresses for the public TLS passthrough frontend.";
+    };
+
+    tailnetHttpBindAddresses = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Bind addresses for tailnet-only HTTP redirect frontends.";
     };
 
     tlsServerNames = lib.mkOption {
@@ -104,6 +118,7 @@ in {
 ${publicHttpBinds}
           mode http
           http-request redirect scheme https code 301
+${tailnetHttpFrontend}
 
         frontend fe_tls
 ${publicTlsBinds}

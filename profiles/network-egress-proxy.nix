@@ -35,7 +35,7 @@ let
       "      --output \"$tmp_config\""
       "      --mode ${lib.escapeShellArg cfg.mode}"
       "      --sniffer-preset ${lib.escapeShellArg cfg.snifferPreset}"
-      "      --external-controller-url 0.0.0.0"
+      "      --external-controller-url ${lib.escapeShellArg cfg.externalControllerBindAddress}"
       "      --external-controller-port 9090"
       "      --external-controller-secret \"$secret\""
       "    )"
@@ -156,6 +156,12 @@ in
       type = lib.types.enum [ "tun" "off" ];
       default = "tun";
       description = "Transparent traffic sniffer preset passed to mihomo-cli merge.";
+    };
+
+    externalControllerBindAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "0.0.0.0";
+      description = "Bind address passed to Mihomo's external controller listener.";
     };
 
     tailscaleCompatible = lib.mkOption {

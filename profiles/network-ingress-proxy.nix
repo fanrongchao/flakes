@@ -83,8 +83,9 @@ in {
         config.sops.templates."caddy-alidns.env".path
       ];
 
-      serviceConfig.EnvironmentFile =
-        config.sops.templates."caddy-alidns.env".path;
+      serviceConfig.EnvironmentFile = [
+        config.sops.templates."caddy-alidns.env".path
+      ];
     };
   };
 }

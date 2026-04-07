@@ -217,3 +217,24 @@
   promotion: candidate
   added_at: "2026-04-06"
   last_validated_at: "2026-04-06"
+
+- id: L-20260407-001
+  kind: candidate
+  scope: ingress
+  trigger: a tailnet-only Mihomo controller needs a browser UI without exposing the raw controller port/secret to a third-party dashboard origin
+  decision: self-host static dashboard assets on the managed host, bind the Mihomo controller to localhost only, and expose a same-origin `/api` reverse proxy behind the tailnet TLS vhost
+  rule: package the dashboard assets in Nix, serve them from the host's tailnet-only `443` virtual host, proxy `/api` to `127.0.0.1:<controller-port>` with the secret injected server-side, and keep the public ingress path rejecting that hostname
+  evidence:
+    - ai-server now binds mihomo.zhsjf.cn only on the tailnet address while the controller listener is limited to 127.0.0.1:9090
+    - same-origin checks against /api/version and /zashboard/ returned success over 100.64.0.3:443
+    - forcing mihomo.zhsjf.cn to the public IP 218.11.1.14:443 failed, preserving tailnet-only access
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the UI must also be reachable from the public Internet
+    - the controller needs direct access from external automation instead of through the managed reverse proxy
+  fallback: keep the controller private and use a local desktop dashboard or an SSH tunnel to a localhost-bound controller
+  promotion: candidate
+  added_at: "2026-04-07"
+  last_validated_at: "2026-04-07"

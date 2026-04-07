@@ -100,3 +100,12 @@
 - Evidence: `mihomo-cli refresh-clash-verge`, `doctor`, and `runtime` now cover the daily desktop operations directly; Windows preparation only required adding native config/cache roots, Clash Verge `%APPDATA%` path probing, and WinINET proxy detection instead of creating new scripts.
 - Reusable rule: when a desktop Mihomo workflow must span macOS and Windows, put the operational logic in the CLI binary and limit platform-specific work to directory discovery, system-proxy introspection, and controller transport differences.
 - Promotion: candidate (first cross-platform preparation in this repo).
+
+## 2026-04-07
+
+### L-20260407-001
+- Context: `ai-server` needs a browser-friendly Mihomo status UI that stays tailnet-only, does not expose the raw controller secret in dashboard URLs, and should not rely on third-party hosted dashboards talking cross-origin to a local HTTP controller.
+- Decision: self-host the dashboard static assets on `ai-server`, publish them behind a dedicated tailnet-only `443` vhost, reverse-proxy `/api` to the localhost Mihomo controller, and bind the controller itself to `127.0.0.1`.
+- Evidence: `services.mihomoEgress.externalControllerBindAddress = "127.0.0.1"` now evaluates and deploys on `ai-server`; `curl --resolve mihomo.zhsjf.cn:443:100.64.0.3 https://mihomo.zhsjf.cn/api/version` returned `{"meta":true,"version":"1.19.19"}`; `curl --resolve mihomo.zhsjf.cn:443:100.64.0.3 https://mihomo.zhsjf.cn/zashboard/` returned `200`; the same hostname forced to the public IP `218.11.1.14:443` failed with `SSL_ERROR_SYSCALL`.
+- Reusable rule: for tailnet-only Mihomo dashboards, serve static dashboard assets from the managed host itself and front the controller with a same-origin `/api` proxy over the tailnet TLS vhost; do not expose the raw controller listener beyond localhost.
+- Promotion: candidate (first confirmation in this repo).

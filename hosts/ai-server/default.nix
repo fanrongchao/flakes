@@ -20,13 +20,6 @@ let
     "git.${site.apexDomain}" = "192.168.3.100:8080";
     "m2.${site.apexDomain}" = "127.0.0.1:8000";
   };
-
-  tailnetIngressVirtualHosts = {
-    "${site.mihomoControllerHost}" = {
-      upstream = "127.0.0.1:9090";
-      bindAddress = site.tailnetIPv4;
-    };
-  };
 in
 
 {
@@ -64,12 +57,12 @@ in
     };
   };
   services.networkIngressProxy.virtualHosts =
-    (lib.mapAttrs (_: upstream: { inherit upstream; }) publicIngressUpstreams)
-    // tailnetIngressVirtualHosts;
+    lib.mapAttrs (_: upstream: { inherit upstream; }) publicIngressUpstreams;
   services.ingressHaproxySni = {
     publicHttpBindAddresses = [ "${site.ingressIPv4}:80" ];
     publicTlsBindAddresses = [ "${site.ingressIPv4}:443" ];
     tlsServerNames = builtins.attrNames publicIngressUpstreams;
+    tailnetHttpBindAddresses = [ "${site.tailnetIPv4}:80" ];
     tailnetTlsBindAddresses = [ "${site.tailnetIPv4}:443" ];
     tailnetTlsServerNames = [ site.mihomoControllerHost ];
     tailnetCaddyBackend = "${site.tailnetIPv4}:8443";
@@ -78,6 +71,7 @@ in
   services.mihomoEgress = {
     mode = "rule";
     snifferPreset = "tun";
+    externalControllerBindAddress = "127.0.0.1";
     tailscaleCompatible = true;
     tailscaleTailnetSuffixes = [ tailnetSuffix ];
     tailscaleDirectDomains = [
@@ -94,4 +88,65 @@ in
       "${site.derpIPv4}/32"
     ];
   };
+
+  sops.templates."caddy-mihomo-controller.env" = {
+    owner = "caddy";
+    group = "caddy";
+    mode = "0400";
+    content = ''
+      MIHOMO_CONTROLLER_SECRET=${config.sops.placeholder."mihomo/external_controller_secret"}
+    '';
+  };
+
+  systemd.services.caddy.serviceConfig.EnvironmentFile = lib.mkAfter [
+    config.sops.templates."caddy-mihomo-controller.env".path
+  ];
+  systemd.services.caddy.reloadTriggers = lib.mkAfter [
+    config.sops.templates."caddy-mihomo-controller.env".path
+  ];
+
+  services.caddy.virtualHosts."${site.mihomoControllerHost}".extraConfig = ''
+    bind ${site.tailnetIPv4}
+    tls {
+      dns alidns {
+        access_key_id {env.ALICLOUD_ACCESS_KEY}
+        access_key_secret {env.ALICLOUD_SECRET_KEY}
+      }
+      resolvers 1.1.1.1 8.8.8.8
+    }
+    encode zstd gzip
+
+    @api path /api*
+    handle @api {
+      uri strip_prefix /api
+      uri query token {env.MIHOMO_CONTROLLER_SECRET}
+      reverse_proxy 127.0.0.1:9090 {
+        header_up Authorization "Bearer {env.MIHOMO_CONTROLLER_SECRET}"
+      }
+    }
+
+    handle_path /zashboard/* {
+      root * ${pkgs.mihomo-dashboards}/zashboard
+      try_files {path} {path}/ /index.html
+      file_server
+    }
+
+    handle_path /metacubexd/* {
+      root * ${pkgs.mihomo-dashboards}/metacubexd
+      try_files {path} {path}/ /index.html
+      file_server
+    }
+
+    handle_path /yacd/* {
+      root * ${pkgs.mihomo-dashboards}/yacd
+      try_files {path} {path}/ /index.html
+      file_server
+    }
+
+    handle {
+      root * ${pkgs.mihomo-dashboards}
+      try_files {path} /index.html
+      file_server
+    }
+  '';
 }
