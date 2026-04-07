@@ -109,3 +109,10 @@
 - Evidence: `services.mihomoEgress.externalControllerBindAddress = "127.0.0.1"` now evaluates and deploys on `ai-server`; `curl --resolve mihomo.zhsjf.cn:443:100.64.0.3 https://mihomo.zhsjf.cn/api/version` returned `{"meta":true,"version":"1.19.19"}`; `curl --resolve mihomo.zhsjf.cn:443:100.64.0.3 https://mihomo.zhsjf.cn/zashboard/` returned `200`; the same hostname forced to the public IP `218.11.1.14:443` failed with `SSL_ERROR_SYSCALL`.
 - Reusable rule: for tailnet-only Mihomo dashboards, serve static dashboard assets from the managed host itself and front the controller with a same-origin `/api` proxy over the tailnet TLS vhost; do not expose the raw controller listener beyond localhost.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260407-002
+- Context: self-hosted Mihomo dashboards still showed stale setup forms or old controller URLs even after moving to a same-origin `/api` proxy, because browser state persisted from earlier attempts.
+- Decision: patch the packaged dashboard assets so each frontend seeds its own same-origin controller state on load, and disable stale service workers that could keep serving old dashboard code.
+- Evidence: `metacubexd` was still presenting `http://127.0.0.1/api` from old browser state until the package injected `localStorage` defaults for `endpointList`/`selectedEndpoint`; `yacd` persisted old controller settings in `localStorage["yacd.metacubex.one"]` until the package reset `clashAPIConfigs`; after deploying the patched package, `curl --resolve mihomo.zhsjf.cn:443:100.64.0.3 https://mihomo.zhsjf.cn/metacubexd/` and `/yacd/` both showed injected same-origin `/api` bootstrap code, and `registerSW.js` now unregisters stale service workers.
+- Reusable rule: when self-hosting third-party Mihomo dashboards behind a same-origin reverse proxy, patch the packaged frontend to preseed the local controller state and aggressively unregister old service workers so browser caches cannot override the managed backend URL.
+- Promotion: candidate (first confirmation in this repo).

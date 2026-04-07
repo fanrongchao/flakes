@@ -238,3 +238,24 @@
   promotion: candidate
   added_at: "2026-04-07"
   last_validated_at: "2026-04-07"
+
+- id: L-20260407-002
+  kind: candidate
+  scope: package
+  trigger: a self-hosted Mihomo dashboard still shows stale setup state or old backend URLs after moving to a same-origin `/api` reverse proxy
+  decision: patch the packaged dashboard assets to seed their local controller state for the managed `/api` endpoint and disable stale service workers that could serve older frontend code
+  rule: when packaging dashboard assets for same-origin use, inject startup scripts that overwrite the dashboard's persisted backend settings with `window.location.origin + "/api"` and replace service worker registration scripts with unregister-only shims
+  evidence:
+    - metacubexd needed injected `endpointList` and `selectedEndpoint` localStorage state to stop preferring an old `127.0.0.1` backend
+    - yacd needed injected `localStorage["yacd.metacubex.one"]` state to override previously persisted clash API configs
+    - unregister-only `registerSW.js` and self-unregistering `sw.js` stopped stale dashboard caches from surviving the migration
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the dashboard is intentionally expected to remember user-managed remote backends instead of a single managed same-origin backend
+    - offline/PWA behavior is a product requirement and service workers must stay enabled
+  fallback: document a one-time manual cache clear for operators, but keep the reverse-proxied controller private and same-origin
+  promotion: candidate
+  added_at: "2026-04-07"
+  last_validated_at: "2026-04-07"
