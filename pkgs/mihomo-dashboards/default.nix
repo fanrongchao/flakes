@@ -53,7 +53,7 @@ stdenvNoCC.mkDerivation {
 
     cat > "$out/metacubexd/config.js" <<'EOF'
 window.__METACUBEXD_CONFIG__ = {
-  defaultBackendURL: '/api'
+  defaultBackendURL: typeof window !== "undefined" ? window.location.origin + "/api" : "/api"
 }
 EOF
 
