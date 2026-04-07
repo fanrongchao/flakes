@@ -233,6 +233,36 @@
   confidence: medium
   ask_when:
     - the UI must also be reachable from the public Internet
+
+- id: L-20260407-003
+  kind: candidate
+  scope: ingress
+  trigger: an HTTPS application on ai-server should be reachable only through Tailscale while sharing the existing public and tailnet HAProxy/Caddy stack
+  decision: bind the app's Caddy vhost to the tailnet IP and add the hostname to the tailnet-only SNI allow-list so the public passthrough frontend rejects it
+  rule: for tailnet-only HTTPS apps on ai-server, expose the service only on the tailnet address and register its hostname in services.ingressHaproxySni.tailnetTlsServerNames
+  evidence:
+    - ai-server now binds airs.zhsjf.cn on the tailnet address while the public HAProxy frontend rejects the same SNI on 218.11.1.14:443
+    - the same ingress pattern already backs the tailnet-only Mihomo dashboard hostname
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the hostname must remain reachable from the public Internet
+
+- id: L-20260407-004
+  kind: candidate
+  scope: dns
+  trigger: a wildcard public DNS record exists and a single child hostname needs to become tailnet-only or be retired
+  decision: override the child hostname explicitly instead of relying on the wildcard to change behavior
+  rule: when a wildcard public A record is present, add a specific record for tailnet-only or retired hostnames so the wildcard no longer resolves them to the public ingress IP
+  evidence:
+    - zhsjf.cn keeps a wildcard A record pointing to 218.11.1.14
+    - airs.zhsjf.cn and aiapi.zhsjf.cn kept resolving publicly until explicit child records were added
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - removing the wildcard itself would affect unrelated hostnames
     - the controller needs direct access from external automation instead of through the managed reverse proxy
   fallback: keep the controller private and use a local desktop dashboard or an SSH tunnel to a localhost-bound controller
   promotion: candidate

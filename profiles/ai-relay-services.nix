@@ -73,6 +73,12 @@ in
       description = "Loopback HTTP port exposed by the AIRS container.";
     };
 
+    bindAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = "Local address Caddy binds for the AIRS HTTPS virtual host.";
+    };
+
     adminUsername = lib.mkOption {
       type = lib.types.str;
       default = "admin";
@@ -115,7 +121,7 @@ in
     ];
 
     services.caddy.virtualHosts."${cfg.domain}".extraConfig = ''
-      bind 127.0.0.1
+      bind ${cfg.bindAddress}
       tls {
         dns alidns {
           access_key_id {env.ALICLOUD_ACCESS_KEY}

@@ -116,3 +116,17 @@
 - Evidence: `metacubexd` was still presenting `http://127.0.0.1/api` from old browser state until the package injected `localStorage` defaults for `endpointList`/`selectedEndpoint`; `yacd` persisted old controller settings in `localStorage["yacd.metacubex.one"]` until the package reset `clashAPIConfigs`; after deploying the patched package, `curl --resolve mihomo.zhsjf.cn:443:100.64.0.3 https://mihomo.zhsjf.cn/metacubexd/` and `/yacd/` both showed injected same-origin `/api` bootstrap code, and `registerSW.js` now unregisters stale service workers.
 - Reusable rule: when self-hosting third-party Mihomo dashboards behind a same-origin reverse proxy, patch the packaged frontend to preseed the local controller state and aggressively unregister old service workers so browser caches cannot override the managed backend URL.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260407-003
+- Context: `ai-server` also hosts ordinary HTTPS applications such as AIRS, and some of those should be reachable only through Tailscale without exposing the hostname on the public ingress path.
+- Decision: treat tailnet-only app domains the same way as the Mihomo dashboard ingress: bind the app's Caddy vhost to the tailnet IP, add the hostname to `services.ingressHaproxySni.tailnetTlsServerNames`, and keep the public passthrough frontend rejecting that SNI.
+- Evidence: `services.aiRelayServices.bindAddress = site.tailnetIPv4` and `site.aiRelayHost` were added to the tailnet-only SNI list on `ai-server`; after deployment, forcing `airs.zhsjf.cn` to `100.64.0.3:443` succeeds while forcing it to `218.11.1.14:443` fails.
+- Reusable rule: for tailnet-only HTTPS apps on `ai-server`, bind the Caddy vhost to the tailnet address and register the hostname in the tailnet SNI allow-list so HAProxy rejects the same hostname on the public ingress listener.
+- Promotion: candidate (first confirmation in this repo).
+
+### L-20260407-004
+- Context: `zhsjf.cn` uses a wildcard public `A` record, so removing an app service does not automatically stop its hostname from resolving on the Internet.
+- Decision: when retiring a single subdomain under that wildcard, add or update an explicit record for the hostname instead of assuming the wildcard will disappear; use a tailnet IP for still-supported tailnet-only services and a sink address for retired names that should stop working.
+- Evidence: AliDNS showed `* -> 218.11.1.14` while `airs` and `aiapi` had no explicit records of their own; that wildcard was enough to keep both names resolving publicly until explicit per-host records were added.
+- Reusable rule: if a zone keeps a wildcard public `A` record, retire or privatize child hostnames by overriding them explicitly in DNS; otherwise the wildcard will continue to publish the old public endpoint.
+- Promotion: candidate (first confirmation in this repo).

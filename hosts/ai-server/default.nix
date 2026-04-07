@@ -6,6 +6,7 @@ let
     headscaleHost = "hs.zhsjf.cn";
     tailnetBaseDomain = "tail.zhsjf.cn";
     derpHostname = "derp.zhsjf.cn";
+    aiRelayHost = "airs.zhsjf.cn";
     derpIPv4 = "218.11.1.14";
     ingressIPv4 = "192.168.3.111";
     tailnetIPv4 = "100.64.0.3";
@@ -34,18 +35,15 @@ in
     ../../profiles/network-ingress-proxy.nix
     ../../profiles/ingress-haproxy-sni.nix
     ../../profiles/ai-relay-services.nix
-    ../../profiles/sub2api.nix
     ../../profiles/zero-trust-control-plane.nix
     ../../profiles/zero-trust-node.nix
     ../../profiles/devops-baseline.nix
   ];
 
-  services.aiRelayServices.enable = true;
-  services.aiRelayServices.domain = "airs.zhsjf.cn";
-  services.sub2api.enable = true;
-  services.sub2api = {
-    domain = "aiapi.${site.apexDomain}";
-    adminEmail = "admin@${site.apexDomain}";
+  services.aiRelayServices = {
+    enable = true;
+    domain = site.aiRelayHost;
+    bindAddress = site.tailnetIPv4;
   };
   services.zeroTrustNode.loginServerUrl = "https://${site.headscaleHost}";
   services.zeroTrustControlPlane = {
@@ -64,7 +62,10 @@ in
     tlsServerNames = builtins.attrNames publicIngressUpstreams;
     tailnetHttpBindAddresses = [ "${site.tailnetIPv4}:80" ];
     tailnetTlsBindAddresses = [ "${site.tailnetIPv4}:443" ];
-    tailnetTlsServerNames = [ site.mihomoControllerHost ];
+    tailnetTlsServerNames = [
+      site.mihomoControllerHost
+      site.aiRelayHost
+    ];
     tailnetCaddyBackend = "${site.tailnetIPv4}:8443";
     gitSshBackend = "192.168.3.100:2222";
   };
