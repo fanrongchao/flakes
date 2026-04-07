@@ -89,7 +89,7 @@ for arg in sys.argv[1:]:
     if end == -1:
         raise SystemExit(f"metacubexd closing script marker not found in {path}")
     end += len("</script>")
-    path.write_text(text[:end] + "\\n" + inject + text[end:])
+    path.write_text(text[:end] + "\n" + inject + text[end:])
 PY
 
     substituteInPlace "$out/yacd/index.html" \
