@@ -144,3 +144,10 @@
 - Evidence: before the fix, Redis logged `Failed opening the temp RDB file ... Permission denied` and AIRS logged `Failed to reload admin credentials`; after chowning `/var/lib/ai-relay-services/redis` to `999:1000` via the NixOS prepare service, Redis snapshotting recovered and AIRS returned `{"success":true}` for `POST /web/auth/login`.
 - Reusable rule: for bind-mounted container state directories, match the host-side ownership to the service user inside the container when the image drops privileges internally; a root-owned mount can still break persistence even if the container entrypoint itself starts as root.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260408-002
+- Context: the AIRS compose stack was still using `docker.io/weishaw/claude-relay-service:latest`, which made upgrades implicit and reduced rollback confidence because the running image could drift independently of Git history.
+- Decision: pin AIRS to the explicit upstream release image `v1.1.298` with its digest, and pull that exact image during service start instead of relying on whatever `latest` happens to resolve to.
+- Evidence: the upstream release for `v1.1.298` published matching Docker Hub and GHCR images, and switching the profile to `docker.io/weishaw/claude-relay-service:v1.1.298@sha256:a030479017c12c5a951a0e112b110b0fda1c3ef2a7ba9ffbcded1d364c88e904` kept the existing bind-mounted state while making the deployed image auditable and reproducible.
+- Reusable rule: for third-party application containers managed by flakes, prefer release tag + digest pins over `latest`, and make the systemd-managed start path pull the exact pinned image so deploys fail fast when the requested artifact is unavailable.
+- Promotion: candidate (first confirmation in this repo).

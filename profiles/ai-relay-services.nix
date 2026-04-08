@@ -8,6 +8,7 @@ let
   networkSubnet = "10.234.0.0/24";
   redisAddress = "10.234.0.11";
   relayAddress = "10.234.0.12";
+  defaultRelayImage = "docker.io/weishaw/claude-relay-service:v1.1.298@sha256:a030479017c12c5a951a0e112b110b0fda1c3ef2a7ba9ffbcded1d364c88e904";
   composeFile = pkgs.writeText "ai-relay-services-compose.yml" ''
     services:
       redis:
@@ -21,7 +22,7 @@ let
             ipv4_address: ${redisAddress}
 
       claude-relay:
-        image: docker.io/weishaw/claude-relay-service:latest
+        image: ${cfg.image}
         restart: unless-stopped
         depends_on:
           - redis
@@ -77,6 +78,12 @@ in
       type = lib.types.str;
       default = "127.0.0.1";
       description = "Local address Caddy binds for the AIRS HTTPS virtual host.";
+    };
+
+    image = lib.mkOption {
+      type = lib.types.str;
+      default = defaultRelayImage;
+      description = "Container image reference for AIRS, ideally pinned by tag and digest.";
     };
 
     adminUsername = lib.mkOption {
@@ -292,6 +299,7 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         WorkingDirectory = "/etc/${serviceName}";
+        ExecStartPre = "${pkgs.podman}/bin/podman pull ${cfg.image}";
         ExecStart = "${pkgs.podman-compose}/bin/podman-compose -f /etc/${serviceName}/docker-compose.yml up -d";
         ExecStop = "${pkgs.podman-compose}/bin/podman-compose -f /etc/${serviceName}/docker-compose.yml down";
         TimeoutStartSec = 300;

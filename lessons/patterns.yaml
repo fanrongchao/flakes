@@ -300,6 +300,25 @@
   added_at: "2026-04-08"
   last_validated_at: "2026-04-08"
 
+- id: L-20260408-002
+  kind: candidate
+  scope: containers
+  trigger: a flake-managed third-party application container is still deployed from a floating latest tag
+  decision: pin the service to an explicit upstream release tag plus digest and pull that exact image in the managed start path
+  rule: do not leave third-party app containers on latest when the service is expected to be reproducible and rollback-safe; record the intended release in Git and use a fully qualified image reference that can be audited later
+  evidence:
+    - AIRS was still using docker.io/weishaw/claude-relay-service:latest even though upstream published v1.1.298 release images
+    - switching to docker.io/weishaw/claude-relay-service:v1.1.298@sha256:a030479017c12c5a951a0e112b110b0fda1c3ef2a7ba9ffbcded1d364c88e904 kept the existing persistent state and made the deployed version deterministic
+  risk: medium
+  auto_apply: false
+  confidence: high
+  ask_when:
+    - the service intentionally follows the vendor's moving latest tag for rapid canary testing
+  fallback: if digest pinning is unavailable, at least pin the release tag and document the expected upstream image source
+  promotion: candidate
+  added_at: "2026-04-08"
+  last_validated_at: "2026-04-08"
+
 - id: L-20260407-002
   kind: candidate
   scope: package
