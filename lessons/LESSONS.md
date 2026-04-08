@@ -137,3 +137,10 @@
 - Evidence: once `ai-server` stayed on clean fast-forwarded commits only, rollout verification became predictable: local `HEAD`, remote `HEAD`, deployed generation, and rollback target all lined up without having to remember host-only patches.
 - Reusable rule: keep managed host repos permanently clean; never rely on remote dirty worktrees for durable infra changes, and prefer fast-forward-only updates from the canonical local repo.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260408-001
+- Context: the AIRS stack on `ai-server` was up, but admin login kept failing because Redis could not persist snapshots on its bind-mounted `/data` volume, which in turn prevented AIRS from refreshing the live admin credentials from `runtime.env`.
+- Decision: in the AIRS prepare phase, create the Redis data directory with the container's runtime ownership (`uid 999`, `gid 1000`) before starting the stack, instead of leaving the bind mount as `root:root`.
+- Evidence: before the fix, Redis logged `Failed opening the temp RDB file ... Permission denied` and AIRS logged `Failed to reload admin credentials`; after chowning `/var/lib/ai-relay-services/redis` to `999:1000` via the NixOS prepare service, Redis snapshotting recovered and AIRS returned `{"success":true}` for `POST /web/auth/login`.
+- Reusable rule: for bind-mounted container state directories, match the host-side ownership to the service user inside the container when the image drops privileges internally; a root-owned mount can still break persistence even if the container entrypoint itself starts as root.
+- Promotion: candidate (first confirmation in this repo).

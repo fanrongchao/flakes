@@ -282,6 +282,24 @@
   added_at: "2026-04-07"
   last_validated_at: "2026-04-07"
 
+- id: L-20260408-001
+  kind: candidate
+  scope: containers
+  trigger: a containerized service on NixOS uses bind-mounted state and the image drops from root to an internal service user
+  decision: ensure the prepare phase assigns host-side ownership that matches the in-container runtime uid/gid before starting the container
+  rule: do not assume a root-owned bind mount is safe just because the container launches as root; if the actual service process runs as an internal user, chown the host directory to that uid/gid in the managed prepare step
+  evidence:
+    - AIRS Redis failed to save RDB files while /var/lib/ai-relay-services/redis was root:root
+    - changing the directory to uid 999 gid 1000 restored Redis persistence and allowed AIRS to refresh admin credentials successfully
+  risk: medium
+  auto_apply: false
+  confidence: high
+  ask_when:
+    - the image is known to keep the service process running as root
+  promotion: candidate
+  added_at: "2026-04-08"
+  last_validated_at: "2026-04-08"
+
 - id: L-20260407-002
   kind: candidate
   scope: package
