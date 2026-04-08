@@ -202,7 +202,10 @@ in
       script = ''
         set -euo pipefail
 
+        install -d -m 0750 ${cfg.dataDir}/redis
         install -d -m 0700 ${cfg.dataDir}/secrets
+        chown -R 999:1000 ${cfg.dataDir}/redis
+        chmod 0750 ${cfg.dataDir}/redis
 
         if [ ! -s ${cfg.dataDir}/secrets/jwt-secret ]; then
           od -An -N32 -tx1 /dev/urandom | tr -d ' \n' > ${cfg.dataDir}/secrets/jwt-secret
