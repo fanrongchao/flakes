@@ -38,6 +38,23 @@ let
       fi
     done
   '';
+  waitForRelayReady = pkgs.writeShellScript "ai-relay-services-wait-ready" ''
+    set -euo pipefail
+
+    curl_cmd="${lib.getExe pkgs.curl}"
+    sleep_cmd="${lib.getExe' pkgs.coreutils "sleep"}"
+    health_url="http://127.0.0.1:${toString cfg.listenPort}/health"
+
+    attempt=0
+    until "$curl_cmd" -fsS "$health_url" >/dev/null; do
+      attempt=$((attempt + 1))
+      if [ "$attempt" -ge 60 ]; then
+        echo "AIRS did not become healthy within 60 seconds: $health_url" >&2
+        exit 1
+      fi
+      "$sleep_cmd" 1
+    done
+  '';
   composeFile = pkgs.writeText "ai-relay-services-compose.yml" ''
     services:
       redis:
@@ -65,12 +82,6 @@ let
         networks:
           airs:
             ipv4_address: ${relayAddress}
-        healthcheck:
-          test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-          interval: 30s
-          timeout: 10s
-          retries: 3
-          start_period: 45s
 
     networks:
       airs:
@@ -334,7 +345,10 @@ in
           "${pkgs.podman}/bin/podman pull ${cfg.image}"
         ];
         ExecStart = "${pkgs.podman-compose}/bin/podman-compose -f /etc/${serviceName}/docker-compose.yml up -d";
-        ExecStartPost = [ "${cleanupStaleHealthcheckUnits}" ];
+        ExecStartPost = [
+          "${waitForRelayReady}"
+          "${cleanupStaleHealthcheckUnits}"
+        ];
         ExecStop = "${pkgs.podman-compose}/bin/podman-compose -f /etc/${serviceName}/docker-compose.yml down";
         ExecStopPost = [ "${cleanupStaleHealthcheckUnits}" ];
         TimeoutStartSec = 300;
