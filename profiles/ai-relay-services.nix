@@ -9,6 +9,35 @@ let
   redisAddress = "10.234.0.11";
   relayAddress = "10.234.0.12";
   defaultRelayImage = "docker.io/weishaw/claude-relay-service:v1.1.298@sha256:a030479017c12c5a951a0e112b110b0fda1c3ef2a7ba9ffbcded1d364c88e904";
+  cleanupStaleHealthcheckUnits = pkgs.writeShellScript "ai-relay-services-healthcheck-cleanup" ''
+    set -euo pipefail
+
+    systemctl_cmd="${lib.getExe' pkgs.systemd "systemctl"}"
+    podman_cmd="${lib.getExe pkgs.podman}"
+    awk_cmd="${lib.getExe pkgs.gawk}"
+
+    mapfile -t units < <(
+      "$systemctl_cmd" list-units --all --type=service --plain --no-legend \
+        | "$awk_cmd" '$1 ~ /^[0-9a-f]{64}-[0-9a-f]+\.service$/ { print $1 }'
+    )
+
+    for unit in "''${units[@]}"; do
+      [ -n "$unit" ] || continue
+
+      description="$("$systemctl_cmd" show -p Description --value "$unit" 2>/dev/null || true)"
+      case "$description" in
+        *"podman-wrapped healthcheck run "*) ;;
+        *) continue ;;
+      esac
+
+      container_id="''${unit%%-*}"
+      if ! "$podman_cmd" container exists "$container_id" >/dev/null 2>&1; then
+        timer="''${unit%.service}.timer"
+        "$systemctl_cmd" stop "$timer" "$unit" 2>/dev/null || true
+        "$systemctl_cmd" reset-failed "$timer" "$unit" 2>/dev/null || true
+      fi
+    done
+  '';
   composeFile = pkgs.writeText "ai-relay-services-compose.yml" ''
     services:
       redis:
@@ -299,9 +328,14 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         WorkingDirectory = "/etc/${serviceName}";
-        ExecStartPre = "${pkgs.podman}/bin/podman pull ${cfg.image}";
+        ExecStartPre = [
+          "${cleanupStaleHealthcheckUnits}"
+          "${pkgs.podman}/bin/podman pull ${cfg.image}"
+        ];
         ExecStart = "${pkgs.podman-compose}/bin/podman-compose -f /etc/${serviceName}/docker-compose.yml up -d";
+        ExecStartPost = [ "${cleanupStaleHealthcheckUnits}" ];
         ExecStop = "${pkgs.podman-compose}/bin/podman-compose -f /etc/${serviceName}/docker-compose.yml down";
+        ExecStopPost = [ "${cleanupStaleHealthcheckUnits}" ];
         TimeoutStartSec = 300;
         TimeoutStopSec = 60;
       };
