@@ -93,6 +93,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM9OCVuX2JqNJ7JDQNGIcrgOwPe4zMd1qQZHmUzw35g1 f@xfa.cn"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHIOzn2pFMA7MdcC2q6PNQmaWsh1uVDlmVhl1ikuppUn pve-dev-01"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPPm+noS7cLWKwHsHOIl+dlgU4H1lyWFONAE+tFvXK43 frc-macbook-github-2026-03-30"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK+p4q1QDjbb22HXrb1Mvz3xh7pHNgqrmu2uti5fW9GU codex-f@desktop-2026-04-09"
     ];
   };
   programs.zsh.enable = true;
