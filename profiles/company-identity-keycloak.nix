@@ -37,7 +37,7 @@ in {
       headscaleClientSecretPath = config.sops.secrets."headscale/oidc_client_secret".path;
       headscaleClientSecretPlaceholder = lib.hashString "sha256" headscaleClientSecretPath;
       realmImportName = "${cfg.realm}-realm.json";
-      realmImportRuntimeSource = "/run/keycloak-realms/${realmImportName}";
+      realmImportRuntimeSource = "/run/keycloak/realms/${realmImportName}";
       realmImportTemplate = pkgs.writeText realmImportName (builtins.toJSON {
         realm = cfg.realm;
         enabled = true;
@@ -214,7 +214,7 @@ in {
 
       systemd.services.keycloak = {
         preStart = lib.mkBefore ''
-          install -d -m 0700 /run/keycloak-realms
+          install -d -m 0700 /run/keycloak/realms
 
           rm -f ${lib.escapeShellArg realmImportRuntimeSource}
           install -D -m 0600 ${realmImportTemplate} ${lib.escapeShellArg realmImportRuntimeSource}
