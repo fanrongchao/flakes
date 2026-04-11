@@ -3,6 +3,7 @@
 let
   site = {
     apexDomain = "zhsjf.cn";
+    authHost = "auth.zhsjf.cn";
     headscaleHost = "hs.zhsjf.cn";
     tailnetBaseDomain = "tail.zhsjf.cn";
     derpHostname = "derp.zhsjf.cn";
@@ -16,6 +17,7 @@ let
   tailnetSuffix = lib.removePrefix "tail." site.tailnetBaseDomain;
 
   publicIngressUpstreams = {
+    "${site.authHost}" = "127.0.0.1:8081";
     "${site.headscaleHost}" = "127.0.0.1:8080";
     "${site.derpHostname}" = "127.0.0.1:8080";
     "git.${site.apexDomain}" = "192.168.3.100:8080";
@@ -35,6 +37,7 @@ in
     ../../profiles/network-ingress-proxy.nix
     ../../profiles/ingress-haproxy-sni.nix
     ../../profiles/ai-relay-services.nix
+    ../../profiles/company-identity-keycloak.nix
     ../../profiles/zero-trust-control-plane.nix
     ../../profiles/zero-trust-node.nix
     ../../profiles/devops-baseline.nix
@@ -46,12 +49,31 @@ in
     bindAddress = site.tailnetIPv4;
   };
   services.zeroTrustNode.loginServerUrl = "https://${site.headscaleHost}";
+  services.companyIdentityKeycloak = {
+    enable = true;
+    host = site.authHost;
+    realm = "zhsjf";
+    headscaleHost = site.headscaleHost;
+  };
   services.zeroTrustControlPlane = {
     serverUrl = "https://${site.headscaleHost}";
     tailnetBaseDomain = site.tailnetBaseDomain;
     derp = {
       hostname = site.derpHostname;
       ipv4 = site.derpIPv4;
+    };
+    oidc = {
+      # Keep the cutover gated until Keycloak and pilot accounts are verified.
+      enable = false;
+      issuer = "https://${site.authHost}/realms/zhsjf";
+      clientId = "headscale";
+      clientSecretFile = config.sops.secrets."headscale/oidc_client_secret".path;
+      allowedGroups = [ "headscale_users" ];
+      scope = [ "openid" "profile" "email" "groups" ];
+      expiry = "30d";
+      emailVerifiedRequired = false;
+      onlyStartIfOidcIsAvailable = false;
+      pkce.enable = true;
     };
   };
   services.networkIngressProxy.virtualHosts =

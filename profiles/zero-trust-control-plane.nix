@@ -79,9 +79,79 @@ in
         description = "Public TCP DERP port advertised for the DERP node.";
       };
     };
+
+    oidc = {
+      enable = lib.mkEnableOption "OIDC-backed Headscale login";
+
+      issuer = lib.mkOption {
+        type = lib.types.str;
+        example = "https://auth.example.com/realms/company";
+        description = "OIDC issuer used by Headscale.";
+      };
+
+      onlyStartIfOidcIsAvailable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          Whether Headscale should block startup when the OIDC provider is unavailable.
+          Defaults to false so an IdP outage does not automatically interrupt the
+          existing control plane during the rollout phase.
+        '';
+      };
+
+      clientId = lib.mkOption {
+        type = lib.types.str;
+        default = "headscale";
+        description = "OIDC client ID used by Headscale.";
+      };
+
+      clientSecretFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "/run/secrets/headscale/oidc_client_secret";
+        description = "Runtime path to the Headscale OIDC client secret.";
+      };
+
+      allowedGroups = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "OIDC groups allowed to join the tailnet.";
+      };
+
+      scope = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ "openid" "profile" "email" "groups" ];
+        description = "OIDC scopes requested by Headscale.";
+      };
+
+      expiry = lib.mkOption {
+        type = lib.types.str;
+        default = "30d";
+        description = "Headscale node re-authentication interval when using OIDC.";
+      };
+
+      emailVerifiedRequired = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether Headscale requires the provider to mark email as verified.";
+      };
+
+      pkce.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to enable PKCE for the Headscale OIDC client.";
+      };
+    };
   };
 
   config = {
+    assertions = [
+      {
+        assertion = (!cfg.oidc.enable) || (cfg.oidc.clientSecretFile != null);
+        message = "services.zeroTrustControlPlane.oidc.clientSecretFile must be set when OIDC is enabled.";
+      }
+    ];
+
     environment.etc."headscale/derp.yaml".text = ''
       regions:
         ${toString cfg.derp.regionId}:
@@ -131,6 +201,18 @@ in
           # 可选：给客户端注入搜索域
           # search_domains = [ cfg.tailnetBaseDomain ];
         };
+      } // lib.optionalAttrs cfg.oidc.enable {
+        oidc = {
+          only_start_if_oidc_is_available = cfg.oidc.onlyStartIfOidcIsAvailable;
+          issuer = cfg.oidc.issuer;
+          client_id = cfg.oidc.clientId;
+          client_secret_path = "\${CREDENTIALS_DIRECTORY}/headscale_oidc_client_secret";
+          scope = cfg.oidc.scope;
+          allowed_groups = cfg.oidc.allowedGroups;
+          expiry = cfg.oidc.expiry;
+          email_verified_required = cfg.oidc.emailVerifiedRequired;
+          pkce.enabled = cfg.oidc.pkce.enable;
+        };
       };
     };
 
@@ -145,6 +227,12 @@ in
         RemainAfterExit = true;
         ExecStart = derpBypassScript;
       };
+    };
+
+    systemd.services.headscale = lib.mkIf cfg.oidc.enable {
+      serviceConfig.LoadCredential = lib.mkAfter [
+        "headscale_oidc_client_secret:${cfg.oidc.clientSecretFile}"
+      ];
     };
   };
 }

@@ -151,3 +151,19 @@
 - Evidence: the upstream release for `v1.1.298` published matching Docker Hub and GHCR images, and switching the profile to `docker.io/weishaw/claude-relay-service:v1.1.298@sha256:a030479017c12c5a951a0e112b110b0fda1c3ef2a7ba9ffbcded1d364c88e904` kept the existing bind-mounted state while making the deployed image auditable and reproducible.
 - Reusable rule: for third-party application containers managed by flakes, prefer release tag + digest pins over `latest`, and make the systemd-managed start path pull the exact pinned image so deploys fail fast when the requested artifact is unavailable.
 - Promotion: candidate (first confirmation in this repo).
+
+## 2026-04-11
+
+### L-20260411-001
+- Context: `ai-server` needed a first-party Keycloak deployment with realm import, but the imported realm also had to carry an OIDC client secret that should stay out of the Nix store.
+- Decision: keep `services.keycloak.realmFiles` pointed at a runtime path under `/run`, generate the realm JSON from a store template in `systemd.services.keycloak.preStart`, and inject the real client secret there with `replace-secret`.
+- Evidence: the earlier Keycloak module evaluation failed while generating tmpfiles for a store-backed realm file; after switching `realmFiles` to `/run/keycloak-realms/zhsjf-realm.json`, `nix eval` showed the runtime realm path and the rendered `preStart` hook copying the template plus replacing the Headscale OIDC client secret.
+- Reusable rule: when a Keycloak realm import needs runtime-only secrets, do not import the final secret-bearing JSON from the store; import a `/run` copy that is materialized and secret-patched in `preStart`.
+- Promotion: candidate (first confirmation in this repo).
+
+### L-20260411-002
+- Context: Headscale OIDC integration on `ai-server` needed a confidential client secret without leaking it into the generated YAML in the Nix store.
+- Decision: prefer Headscale's native `oidc.client_secret_path` plus `systemd LoadCredential` support instead of rewriting the rendered config file at service start.
+- Evidence: the packaged Headscale source and config example for `0.27.1` document `oidc.client_secret_path`, and the evaluated `ai-server` config now points Headscale at `${CREDENTIALS_DIRECTORY}/headscale_oidc_client_secret` while the unit loads the secret from `/run/secrets/headscale/oidc_client_secret`.
+- Reusable rule: when wiring Headscale OIDC in NixOS, use `client_secret_path` with systemd credentials before falling back to custom runtime config rewriting.
+- Promotion: candidate (first confirmation in this repo).
