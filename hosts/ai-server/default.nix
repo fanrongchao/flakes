@@ -28,6 +28,11 @@ in
 {
   aiInference.vllmMinimaxM2Awq.enable = true;
 
+  networking.hosts."${site.ingressIPv4}" = [
+    site.authHost
+    site.headscaleHost
+  ];
+
   imports = [
     ./configuration.nix
     #profiles
@@ -63,8 +68,7 @@ in
       ipv4 = site.derpIPv4;
     };
     oidc = {
-      # Keep the cutover gated until Keycloak and pilot accounts are verified.
-      enable = false;
+      enable = true;
       issuer = "https://${site.authHost}/realms/zhsjf";
       clientId = "headscale";
       clientSecretFile = config.sops.secrets."headscale/oidc_client_secret".path;

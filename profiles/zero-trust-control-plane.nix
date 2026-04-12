@@ -2,6 +2,10 @@
 
 let
   cfg = config.services.zeroTrustControlPlane;
+  headscaleBin = lib.getExe pkgs.headscale;
+  jqBin = lib.getExe pkgs.jq;
+  sedBin = lib.getExe' pkgs.gnused "sed";
+  trBin = lib.getExe' pkgs.coreutils "tr";
   derpBypassScript = pkgs.writeShellScript "headscale-derp-route-bypass" ''
     set -euo pipefail
 
@@ -20,6 +24,43 @@ let
     "$ip_cmd" rule del pref 5205 fwmark 0x3478 lookup main 2>/dev/null || true
     "$ip_cmd" -6 rule del pref 5205 fwmark 0x3478 lookup main 2>/dev/null || true
     "$nft_cmd" delete table inet headscale_derp_bypass 2>/dev/null || true
+  '';
+  invalidHostnameReconcileScript = pkgs.writeShellScript "headscale-invalid-hostname-reconcile" ''
+    set -euo pipefail
+
+    ${headscaleBin} nodes list -o json \
+      | ${jqBin} -r '.[] | select((.name // "") | startswith("invalid-")) | [.id, (.user.name // ""), (.name // "")] | @tsv' \
+      | while IFS=$'\t' read -r node_id user_name current_name; do
+        [ -n "$node_id" ] || continue
+
+        raw_base="$user_name"
+        if [ -z "$raw_base" ]; then
+          raw_base="node"
+        fi
+
+        safe_base="$(printf '%s' "$raw_base" \
+          | ${trBin} '[:upper:]' '[:lower:]' \
+          | ${sedBin} -E 's/[^a-z0-9.-]+/-/g; s/^-+//; s/-+$//; s/-+/-/g; s/\.+/./g; s/^[.]+//; s/[.]+$//')"
+        if [ -z "$safe_base" ]; then
+          safe_base="node"
+        fi
+
+        suffix="$current_name"
+        suffix="''${suffix#invalid-}"
+        if [ -z "$suffix" ] || [ "$suffix" = "$current_name" ]; then
+          suffix="n$node_id"
+        fi
+
+        max_base_len=$((63 - 1 - ''${#suffix}))
+        if [ ''${#safe_base} -gt "$max_base_len" ]; then
+          safe_base="''${safe_base:0:$max_base_len}"
+        fi
+
+        new_name="''${safe_base}-''${suffix}"
+        if [ "$new_name" != "$current_name" ]; then
+          ${headscaleBin} nodes rename --identifier "$node_id" "$new_name"
+        fi
+      done
   '';
 in
 {
@@ -226,6 +267,27 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = derpBypassScript;
+      };
+    };
+
+    systemd.services.headscale-invalid-hostname-reconcile = {
+      description = "Rename Headscale invalid-* hostnames to safe ASCII names";
+      wants = [ "headscale.service" ];
+      after = [ "headscale.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = invalidHostnameReconcileScript;
+      };
+    };
+
+    systemd.timers.headscale-invalid-hostname-reconcile = {
+      description = "Periodically reconcile invalid Headscale hostnames";
+      wantedBy = [ "timers.target" ];
+      partOf = [ "headscale.service" ];
+      timerConfig = {
+        OnBootSec = "2m";
+        OnUnitActiveSec = "1m";
+        RandomizedDelaySec = "15s";
       };
     };
 
