@@ -165,6 +165,15 @@ in
         description = "OIDC scopes requested by Headscale.";
       };
 
+      extraParams = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = { };
+        description = ''
+          Extra query parameters forwarded to the OIDC authorization endpoint.
+          Useful for forcing a fresh login prompt when switching accounts.
+        '';
+      };
+
       expiry = lib.mkOption {
         type = lib.types.str;
         default = "30d";
@@ -249,6 +258,7 @@ in
           client_id = cfg.oidc.clientId;
           client_secret_path = "\${CREDENTIALS_DIRECTORY}/headscale_oidc_client_secret";
           scope = cfg.oidc.scope;
+          extra_params = cfg.oidc.extraParams;
           allowed_groups = cfg.oidc.allowedGroups;
           expiry = cfg.oidc.expiry;
           email_verified_required = cfg.oidc.emailVerifiedRequired;

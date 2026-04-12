@@ -74,6 +74,11 @@ in
       clientSecretFile = config.sops.secrets."headscale/oidc_client_secret".path;
       allowedGroups = [ "headscale_users" ];
       scope = [ "openid" "profile" "email" "groups" ];
+      extraParams = {
+        # Force an explicit login screen during device registration so
+        # switching from a rejected account to the correct account is deterministic.
+        prompt = "login";
+      };
       expiry = "30d";
       emailVerifiedRequired = false;
       onlyStartIfOidcIsAvailable = false;
