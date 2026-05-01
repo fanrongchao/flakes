@@ -8,7 +8,9 @@ let
   networkSubnet = "10.234.0.0/24";
   redisAddress = "10.234.0.11";
   relayAddress = "10.234.0.12";
-  defaultRelayImage = "docker.io/weishaw/claude-relay-service:v1.1.298@sha256:a030479017c12c5a951a0e112b110b0fda1c3ef2a7ba9ffbcded1d364c88e904";
+  # Podman bridge containers cannot reliably reach Tailscale DNS 100.100.100.100 directly.
+  bridgeResolver = "10.234.0.1";
+  defaultRelayImage = "docker.io/weishaw/claude-relay-service:v1.1.303@sha256:612177483cd2a831c21735ad4f60443e56c8f60e9363d669c6e799ac29163d70";
   cleanupStaleHealthcheckUnits = pkgs.writeShellScript "ai-relay-services-healthcheck-cleanup" ''
     set -euo pipefail
 
@@ -74,6 +76,8 @@ let
           - redis
         ports:
           - "127.0.0.1:${toString cfg.listenPort}:3000"
+        dns:
+          - ${bridgeResolver}
         env_file:
           - ${cfg.dataDir}/runtime.env
         volumes:
