@@ -136,6 +136,21 @@
         ];
       };
 
+      nixosConfigurations.infra-zero = lib.nixosSystem {
+        system = linuxSystem;
+        specialArgs = { inherit inputs; };
+        modules = [
+          commonNixpkgsModule
+          sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+          }
+          ./hosts/infra-zero
+        ];
+      };
+
       nixosConfigurations.rog-laptop = lib.nixosSystem {
         system = linuxSystem;
         specialArgs = { inherit inputs; };
