@@ -146,6 +146,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.users.xfa = import ./hosts/infra-zero/home.nix;
           }
           ./hosts/infra-zero
         ];
