@@ -27,8 +27,6 @@ let
 in
 
 {
-  aiInference.vllmMinimaxM2Awq.enable = true;
-
   networking.hosts."${site.ingressIPv4}" = [
     site.authHost
     site.headscaleHost
@@ -60,6 +58,7 @@ in
     domain = site.sub2apiHost;
     bindAddress = site.tailnetIPv4;
     adminEmail = "admin@${site.sub2apiHost}";
+    postgresImage = "docker.io/postgres:16-alpine";
   };
   services.zeroTrustNode.loginServerUrl = "https://${site.headscaleHost}";
   services.companyIdentityKeycloak = {
