@@ -8,6 +8,7 @@ let
     tailnetBaseDomain = "tail.zhsjf.cn";
     derpHostname = "derp.zhsjf.cn";
     aiRelayHost = "airs.zhsjf.cn";
+    sub2apiHost = "sai.zhsjf.cn";
     derpIPv4 = "218.11.1.14";
     ingressIPv4 = "192.168.3.111";
     tailnetIPv4 = "100.64.0.3";
@@ -42,6 +43,7 @@ in
     ../../profiles/network-ingress-proxy.nix
     ../../profiles/ingress-haproxy-sni.nix
     ../../profiles/ai-relay-services.nix
+    ../../profiles/sub2api.nix
     ../../profiles/company-identity-keycloak.nix
     ../../profiles/zero-trust-control-plane.nix
     ../../profiles/zero-trust-node.nix
@@ -52,6 +54,12 @@ in
     enable = true;
     domain = site.aiRelayHost;
     bindAddress = site.tailnetIPv4;
+  };
+  services.sub2api = {
+    enable = true;
+    domain = site.sub2apiHost;
+    bindAddress = site.tailnetIPv4;
+    adminEmail = "admin@${site.sub2apiHost}";
   };
   services.zeroTrustNode.loginServerUrl = "https://${site.headscaleHost}";
   services.companyIdentityKeycloak = {
@@ -96,6 +104,7 @@ in
     tailnetTlsServerNames = [
       site.mihomoControllerHost
       site.aiRelayHost
+      site.sub2apiHost
     ];
     tailnetCaddyBackend = "${site.tailnetIPv4}:8443";
     gitSshBackend = "192.168.3.100:2222";
