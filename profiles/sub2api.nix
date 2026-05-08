@@ -351,12 +351,27 @@ in
       wantedBy = [ "multi-user.target" ];
       before = [ "sub2api.service" ];
       serviceConfig.Type = "oneshot";
-      path = with pkgs; [ podman ];
+      path = with pkgs; [ jq podman ];
       script = ''
         set -euo pipefail
 
-        if ! podman network inspect ${networkName} >/dev/null 2>&1; then
-          podman network create --subnet ${networkSubnet} --disable-dns ${networkName}
+        if podman network exists ${networkName}; then
+          subnet="$(
+            podman network inspect ${networkName} \
+              | jq -r '.[0].subnets[0].subnet // empty'
+          )"
+
+          if [ "$subnet" != "${networkSubnet}" ]; then
+            if [ -n "$(podman ps -a --filter network=${networkName} --format '{{.ID}}')" ]; then
+              echo "${networkName} exists with subnet '$subnet', expected '${networkSubnet}', and still has containers attached." >&2
+              exit 1
+            fi
+            podman network rm ${networkName}
+          fi
+        fi
+
+        if ! podman network exists ${networkName}; then
+          podman network create --subnet ${networkSubnet} --gateway ${bridgeResolver} --disable-dns ${networkName}
         fi
       '';
     };
