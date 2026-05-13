@@ -106,6 +106,9 @@ in
     ];
     tailnetCaddyBackend = "${site.tailnetIPv4}:8443";
     gitSshBackend = "192.168.3.100:2222";
+    timeoutClient = "10m";
+    timeoutServer = "10m";
+    timeoutTunnel = "10m";
   };
   services.mihomoEgress = {
     mode = "rule";

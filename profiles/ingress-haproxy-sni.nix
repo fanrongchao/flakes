@@ -100,6 +100,30 @@ in {
       example = "192.168.3.100:2222";
       description = "Backend TCP endpoint for non-TLS Git SSH traffic.";
     };
+
+    timeoutConnect = lib.mkOption {
+      type = lib.types.str;
+      default = "10s";
+      description = "HAProxy connection timeout.";
+    };
+
+    timeoutClient = lib.mkOption {
+      type = lib.types.str;
+      default = "1m";
+      description = "HAProxy client inactivity timeout.";
+    };
+
+    timeoutServer = lib.mkOption {
+      type = lib.types.str;
+      default = "1m";
+      description = "HAProxy server inactivity timeout.";
+    };
+
+    timeoutTunnel = lib.mkOption {
+      type = lib.types.str;
+      default = "1m";
+      description = "HAProxy tunnel inactivity timeout for long-lived TCP streams.";
+    };
   };
 
   config = {
@@ -110,9 +134,10 @@ in {
           maxconn 4096
 
         defaults
-          timeout connect 10s
-          timeout client  1m
-          timeout server  1m
+          timeout connect ${cfg.timeoutConnect}
+          timeout client  ${cfg.timeoutClient}
+          timeout server  ${cfg.timeoutServer}
+          timeout tunnel  ${cfg.timeoutTunnel}
 
         frontend fe_http
 ${publicHttpBinds}
