@@ -167,3 +167,19 @@
 - Evidence: the packaged Headscale source and config example for `0.27.1` document `oidc.client_secret_path`, and the evaluated `ai-server` config now points Headscale at `${CREDENTIALS_DIRECTORY}/headscale_oidc_client_secret` while the unit loads the secret from `/run/secrets/headscale/oidc_client_secret`.
 - Reusable rule: when wiring Headscale OIDC in NixOS, use `client_secret_path` with systemd credentials before falling back to custom runtime config rewriting.
 - Promotion: candidate (first confirmation in this repo).
+
+## 2026-05-25
+
+### L-20260525-001
+- Context: `infra-zero` needed to decrypt SOPS secrets for Gitea, but it did not have the repo's usual `/var/lib/sops/age/keys.txt` age identity.
+- Decision: add the host's SSH ed25519 host key as a SOPS age recipient and configure sops-nix on that host with `sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ]`.
+- Evidence: `ssh-to-age` converted `infra-zero`'s SSH host public key into an age recipient, `.sops.yaml` was updated with that recipient, and `nixosConfigurations.infra-zero.config.sops.age.sshKeyPaths` evaluates to the SSH host key path.
+- Reusable rule: for NixOS hosts that lack a dedicated SOPS age key, prefer using the stable SSH host ed25519 key via `sops.age.sshKeyPaths` before introducing a second out-of-band key lifecycle.
+- Promotion: candidate (first confirmation in this repo).
+
+### L-20260525-002
+- Context: Gitea needs a Keycloak OIDC auth source and a break-glass admin, but both the OIDC client secret and admin password must stay out of the Nix store.
+- Decision: keep the secret values in SOPS, pass them to a Gitea bootstrap oneshot with systemd `LoadCredential`, and make the oneshot idempotently create or update the local admin plus OAuth2 auth source after `gitea.service`.
+- Evidence: `profiles/company-gitea.nix` loads `gitea/admin_password` and `gitea/oidc_client_secret` from `/run/secrets`, while eval shows the bootstrap unit credentials and Gitea OAuth2 client settings without exposing plaintext secret values.
+- Reusable rule: when declarative service modules do not model an application's OAuth provider state, use a post-start reconcile unit with runtime credentials instead of baking provider secrets or first-run assumptions into store-backed config.
+- Promotion: candidate (first confirmation in this repo).

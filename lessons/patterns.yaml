@@ -339,3 +339,41 @@
   promotion: candidate
   added_at: "2026-04-07"
   last_validated_at: "2026-04-07"
+
+- id: L-20260525-001
+  kind: candidate
+  scope: secrets
+  trigger: a NixOS host needs to decrypt SOPS secrets but does not have the repo's standard age identity file
+  decision: use the host's stable SSH ed25519 host key as the sops-nix age identity
+  rule: configure `sops.age.sshKeyPaths` with `/etc/ssh/ssh_host_ed25519_key` and add the converted SSH public key recipient to `.sops.yaml` before introducing a separate age key lifecycle
+  evidence:
+    - infra-zero lacked `/var/lib/sops/age/keys.txt`
+    - ssh-to-age converted infra-zero's SSH host public key into an age recipient used by the updated SOPS creation rules
+    - nix eval shows infra-zero using `/etc/ssh/ssh_host_ed25519_key` for sops-nix
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the host SSH key is expected to be rotated independently of the host's secret lifecycle
+  promotion: candidate
+  added_at: "2026-05-25"
+  last_validated_at: "2026-05-25"
+
+- id: L-20260525-002
+  kind: candidate
+  scope: identity
+  trigger: an application needs OAuth provider state reconciled from a NixOS deployment but its module does not model that state declaratively
+  decision: reconcile the provider state in a post-start oneshot using systemd credentials sourced from SOPS
+  rule: keep OAuth client secrets and bootstrap passwords in SOPS, pass them with `LoadCredential`, and make the reconcile unit create or update application auth sources idempotently after the service is available
+  evidence:
+    - Gitea's Keycloak auth source is created or updated by `gitea-bootstrap`
+    - the Gitea break-glass admin password and OIDC client secret are read from `/run/secrets` through systemd credentials
+    - evaluated configs show credential paths and OAuth settings without plaintext secret values in the Nix store
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the application has a first-class declarative module option that already stores the state without secret leakage
+  promotion: candidate
+  added_at: "2026-05-25"
+  last_validated_at: "2026-05-25"

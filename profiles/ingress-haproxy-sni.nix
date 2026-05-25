@@ -51,6 +51,21 @@ ${tailnetSniRules}
           mode tcp
           server caddy-tailnet ${cfg.tailnetCaddyBackend}
   '';
+  mkTcpForward = name: forward:
+    let
+      safeName = lib.replaceStrings [ "." "-" ] [ "_" "_" ] name;
+    in ''
+
+        frontend fe_tcp_${safeName}
+          bind ${forward.bindAddress}
+          mode tcp
+          default_backend be_tcp_${safeName}
+
+        backend be_tcp_${safeName}
+          mode tcp
+          server ${safeName} ${forward.backend}
+    '';
+  tcpForwardSections = lib.concatStringsSep "\n" (lib.mapAttrsToList mkTcpForward cfg.tailnetTcpForwards);
 in {
   options.services.ingressHaproxySni = {
     publicHttpBindAddresses = lib.mkOption {
@@ -99,6 +114,25 @@ in {
       type = lib.types.str;
       example = "192.168.3.100:2222";
       description = "Backend TCP endpoint for non-TLS Git SSH traffic.";
+    };
+
+    tailnetTcpForwards = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule ({ ... }: {
+        options = {
+          bindAddress = lib.mkOption {
+            type = lib.types.str;
+            example = "100.64.0.3:2222";
+            description = "Tailnet-local bind address for the TCP frontend.";
+          };
+          backend = lib.mkOption {
+            type = lib.types.str;
+            example = "192.168.3.88:2222";
+            description = "Backend TCP endpoint reached from this ingress host.";
+          };
+        };
+      }));
+      default = {};
+      description = "Additional tailnet-only TCP forwards, for protocols that do not use TLS SNI.";
     };
 
     timeoutConnect = lib.mkOption {
@@ -168,6 +202,7 @@ ${tailnetBackend}
         backend be_gitlab_ssh
           mode tcp
           server gitlab-ssh ${cfg.gitSshBackend}
+${tcpForwardSections}
       '';
     };
   };

@@ -25,6 +25,12 @@ in {
       description = "Headscale hostname used for the initial OIDC client.";
     };
 
+    giteaHost = lib.mkOption {
+      type = lib.types.str;
+      default = "code.xfa.cn";
+      description = "Gitea hostname used for the OIDC client.";
+    };
+
     httpPort = lib.mkOption {
       type = lib.types.port;
       default = 8081;
@@ -36,6 +42,8 @@ in {
     let
       headscaleClientSecretPath = config.sops.secrets."headscale/oidc_client_secret".path;
       headscaleClientSecretPlaceholder = lib.hashString "sha256" headscaleClientSecretPath;
+      giteaClientSecretPath = config.sops.secrets."gitea/oidc_client_secret".path;
+      giteaClientSecretPlaceholder = lib.hashString "sha256" giteaClientSecretPath;
       boolString = value: if value then "true" else "false";
       oidcProtocol = "openid-connect";
       oidcBaseDefaultClientScopes = [
@@ -201,6 +209,8 @@ in {
           "headscale_users"
           "tailnet_admins"
           "airs_admins"
+          "gitea_users"
+          "gitea_admins"
         ];
         requiredActions = [
           {
@@ -604,6 +614,44 @@ in {
               "microprofile-jwt"
             ];
           }
+          {
+            clientId = "gitea";
+            name = "Gitea";
+            description = "OIDC login for Gitea";
+            enabled = true;
+            protocol = "openid-connect";
+            publicClient = false;
+            standardFlowEnabled = true;
+            implicitFlowEnabled = false;
+            directAccessGrantsEnabled = false;
+            serviceAccountsEnabled = false;
+            frontchannelLogout = true;
+            redirectUris = [
+              "https://${cfg.giteaHost}/user/oauth2/Keycloak/callback"
+              "https://${cfg.giteaHost}/user/oauth2/keycloak/callback"
+            ];
+            webOrigins = [
+              "https://${cfg.giteaHost}"
+            ];
+            secret = giteaClientSecretPlaceholder;
+            attributes = {
+              "pkce.code.challenge.method" = "S256";
+              "post.logout.redirect.uris" = "+";
+            };
+            defaultClientScopes = [
+              "profile"
+              "email"
+              "roles"
+              "web-origins"
+              "groups"
+            ];
+            optionalClientScopes = [
+              "address"
+              "phone"
+              "offline_access"
+              "microprofile-jwt"
+            ];
+          }
         ];
       });
     in {
@@ -625,6 +673,14 @@ in {
         restartUnits = [
           "keycloak.service"
           "headscale.service"
+        ];
+      };
+
+      sops.secrets."gitea/oidc_client_secret" = {
+        sopsFile = ../secrets/identity.yaml;
+        restartUnits = [
+          "keycloak.service"
+          "keycloak-account-console-reconcile.service"
         ];
       };
 
@@ -667,6 +723,10 @@ in {
             ${headscaleClientSecretPlaceholder} \
             "$CREDENTIALS_DIRECTORY/headscale_oidc_client_secret" \
             ${lib.escapeShellArg realmImportRuntimeSource}
+          ${pkgs.replace-secret}/bin/replace-secret \
+            ${giteaClientSecretPlaceholder} \
+            "$CREDENTIALS_DIRECTORY/gitea_oidc_client_secret" \
+            ${lib.escapeShellArg realmImportRuntimeSource}
         '';
 
         serviceConfig = {
@@ -675,6 +735,7 @@ in {
           ];
           LoadCredential = lib.mkAfter [
             "headscale_oidc_client_secret:${headscaleClientSecretPath}"
+            "gitea_oidc_client_secret:${giteaClientSecretPath}"
           ];
         };
       };
@@ -690,6 +751,9 @@ in {
           Type = "oneshot";
           EnvironmentFile = [
             config.sops.templates."keycloak-bootstrap-admin.env".path
+          ];
+          LoadCredential = [
+            "gitea_oidc_client_secret:${giteaClientSecretPath}"
           ];
         };
 
@@ -730,6 +794,97 @@ in {
 
           auth_header="Authorization: Bearer $admin_token"
           realm_path="$base_url/admin/realms/${cfg.realm}"
+
+          ensure_group() {
+            local group_name="$1"
+            local group_id
+
+            group_id="$(
+              ${pkgs.curl}/bin/curl -fsS -H "$auth_header" \
+                "$realm_path/groups?search=$group_name" \
+              | ${pkgs.jq}/bin/jq -r --arg name "$group_name" '.[] | select(.name == $name) | .id' \
+              | ${pkgs.coreutils}/bin/head -n1
+            )"
+
+            if [ -z "$group_id" ]; then
+              ${pkgs.jq}/bin/jq -n --arg name "$group_name" '{name: $name}' \
+                | ${pkgs.curl}/bin/curl -fsS -o /dev/null -X POST \
+                  -H "$auth_header" \
+                  -H 'Content-Type: application/json' \
+                  -d @- \
+                  "$realm_path/groups"
+            fi
+          }
+
+          ensure_group gitea_users
+          ensure_group gitea_admins
+
+          gitea_client_secret="$(${pkgs.coreutils}/bin/tr -d '\n' < "$CREDENTIALS_DIRECTORY/gitea_oidc_client_secret")"
+          gitea_client_json="$(
+            ${pkgs.jq}/bin/jq -n \
+              --arg host "${cfg.giteaHost}" \
+              --arg secret "$gitea_client_secret" \
+              '{
+                clientId: "gitea",
+                name: "Gitea",
+                description: "OIDC login for Gitea",
+                enabled: true,
+                protocol: "openid-connect",
+                publicClient: false,
+                standardFlowEnabled: true,
+                implicitFlowEnabled: false,
+                directAccessGrantsEnabled: false,
+                serviceAccountsEnabled: false,
+                frontchannelLogout: true,
+                redirectUris: [
+                  "https://\($host)/user/oauth2/Keycloak/callback",
+                  "https://\($host)/user/oauth2/keycloak/callback"
+                ],
+                webOrigins: [
+                  "https://\($host)"
+                ],
+                secret: $secret,
+                attributes: {
+                  "pkce.code.challenge.method": "S256",
+                  "post.logout.redirect.uris": "+"
+                },
+                defaultClientScopes: [
+                  "profile",
+                  "email",
+                  "roles",
+                  "web-origins",
+                  "groups"
+                ],
+                optionalClientScopes: [
+                  "address",
+                  "phone",
+                  "offline_access",
+                  "microprofile-jwt"
+                ]
+              }'
+          )"
+          gitea_client_id="$(
+            ${pkgs.curl}/bin/curl -fsS -H "$auth_header" \
+              "$realm_path/clients?clientId=gitea" \
+            | ${pkgs.jq}/bin/jq -r '.[0].id // empty'
+          )"
+
+          if [ -z "$gitea_client_id" ]; then
+            printf '%s' "$gitea_client_json" \
+              | ${pkgs.curl}/bin/curl -fsS -o /dev/null -X POST \
+                -H "$auth_header" \
+                -H 'Content-Type: application/json' \
+                -d @- \
+                "$realm_path/clients"
+          else
+            printf '%s' "$gitea_client_json" \
+              | ${pkgs.jq}/bin/jq --arg id "$gitea_client_id" '.id = $id' \
+              | ${pkgs.curl}/bin/curl -fsS -o /dev/null -X PUT \
+                -H "$auth_header" \
+                -H 'Content-Type: application/json' \
+                -d @- \
+                "$realm_path/clients/$gitea_client_id"
+          fi
 
           account_id="$(
             ${pkgs.curl}/bin/curl -fsS -H "$auth_header" \
