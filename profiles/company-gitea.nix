@@ -107,7 +107,9 @@ in
           HTTP_PORT = cfg.httpPort;
           DISABLE_SSH = false;
           START_SSH_SERVER = true;
+          BUILTIN_SSH_SERVER_USER = "git";
           SSH_DOMAIN = cfg.domain;
+          SSH_USER = "git";
           SSH_PORT = cfg.sshPort;
           SSH_LISTEN_HOST = cfg.sshListenHost;
           SSH_LISTEN_PORT = cfg.sshPort;

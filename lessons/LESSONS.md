@@ -183,3 +183,10 @@
 - Evidence: `profiles/company-gitea.nix` loads `gitea/admin_password` and `gitea/oidc_client_secret` from `/run/secrets`, while eval shows the bootstrap unit credentials and Gitea OAuth2 client settings without exposing plaintext secret values.
 - Reusable rule: when declarative service modules do not model an application's OAuth provider state, use a post-start reconcile unit with runtime credentials instead of baking provider secrets or first-run assumptions into store-backed config.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260525-003
+- Context: Gitea's built-in SSH server ran under the `gitea` system user, but the intended clone URL was `git@code.xfa.cn:2222`.
+- Decision: explicitly set both `BUILTIN_SSH_SERVER_USER = "git"` and `SSH_USER = "git"` in the Gitea server settings.
+- Evidence: an SSH smoke test with a temporary key failed with `Invalid SSH username git - must use gitea`; the Gitea config cheat sheet shows `BUILTIN_SSH_SERVER_USER` controls the accepted built-in SSH username, while `SSH_USER` controls the displayed clone URL user.
+- Reusable rule: when using Gitea's built-in SSH server from a NixOS service user other than `git`, set `BUILTIN_SSH_SERVER_USER` and `SSH_USER` together if external clone URLs should use `git@`.
+- Promotion: candidate (first confirmation in this repo).

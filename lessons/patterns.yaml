@@ -377,3 +377,22 @@
   promotion: candidate
   added_at: "2026-05-25"
   last_validated_at: "2026-05-25"
+
+- id: L-20260525-003
+  kind: candidate
+  scope: git
+  trigger: Gitea's built-in SSH server runs under a service user other than the desired external clone username
+  decision: set both the accepted built-in SSH username and the displayed clone URL username
+  rule: 'configure `BUILTIN_SSH_SERVER_USER = "git"` together with `SSH_USER = "git"` when clone URLs should use `git@...` but the NixOS service runs as `gitea`'
+  evidence:
+    - a temporary-key SSH smoke test failed because Gitea required the `gitea` SSH username
+    - 'Gitea documents `BUILTIN_SSH_SERVER_USER` as the username accepted by the built-in SSH server'
+    - '`SSH_USER` separately controls the username displayed in clone URLs'
+  risk: low
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - an existing deployment intentionally uses the service username in clone URLs
+  promotion: candidate
+  added_at: "2026-05-25"
+  last_validated_at: "2026-05-25"
