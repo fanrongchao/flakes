@@ -201,6 +201,6 @@
 ### L-20260525-005
 - Context: `code.xfa.cn` needed GitHub-like SSH clone URLs without a port, while the service remained tailnet-only.
 - Decision: move the Gitea entrypoint from `ai-server` HAProxy to `infra-zero`'s own Tailnet IP, with Caddy on Tailnet `:443` and Gitea built-in SSH on Tailnet `:22`.
-- Evidence: `infra-zero` joined Headscale as `100.64.0.33`; its system SSH remains on LAN `192.168.3.88:22`, while Gitea binds `100.64.0.33:22` with `CAP_NET_BIND_SERVICE` and Caddy binds `100.64.0.33:443`.
-- Reusable rule: when an internal service needs default SSH port UX, give the service host its own Tailnet IP and bind service ports to that IP instead of stealing the gateway host's management port; grant only `CAP_NET_BIND_SERVICE` when an unprivileged service must bind Tailnet `:22`.
+- Evidence: `infra-zero` joined Headscale as `100.64.0.33`; its system SSH remains on LAN `192.168.3.88:22`, while Gitea binds `100.64.0.33:22` with `CAP_NET_BIND_SERVICE`, `PrivateUsers=false`, and Caddy binds `100.64.0.33:443`.
+- Reusable rule: when an internal service needs default SSH port UX, give the service host its own Tailnet IP and bind service ports to that IP instead of stealing the gateway host's management port; grant only `CAP_NET_BIND_SERVICE` and disable `PrivateUsers` when an unprivileged service must bind Tailnet `:22`.
 - Promotion: candidate (first confirmation in this repo).
