@@ -193,7 +193,7 @@
 
 ### L-20260525-004
 - Context: The Keycloak `gitea` client was initially configured with a forced S256 PKCE challenge method, matching the Headscale client pattern.
-- Decision: remove the PKCE requirement from the Gitea client while keeping it confidential with a client secret.
-- Evidence: following the Gitea OAuth login redirect caused Keycloak to return `Missing parameter: code_challenge_method`, which shows this Gitea OIDC flow did not send PKCE parameters.
-- Reusable rule: do not copy PKCE enforcement between OIDC clients unless the client is known to send `code_challenge` and `code_challenge_method`; confidential clients can still rely on their client secret when PKCE is unsupported.
+- Decision: clear the PKCE requirement from the Gitea client while keeping it confidential with a client secret.
+- Evidence: following the Gitea OAuth login redirect caused Keycloak to return `Missing parameter: code_challenge_method`, which shows this Gitea OIDC flow did not send PKCE parameters; Keycloak kept the old attribute unless the reconciler explicitly wrote it as an empty value.
+- Reusable rule: do not copy PKCE enforcement between OIDC clients unless the client is known to send `code_challenge` and `code_challenge_method`; for existing Keycloak clients, explicitly clear inherited PKCE attributes instead of only omitting them from update payloads.
 - Promotion: candidate (first confirmation in this repo).
