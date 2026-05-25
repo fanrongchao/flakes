@@ -396,3 +396,21 @@
   promotion: candidate
   added_at: "2026-05-25"
   last_validated_at: "2026-05-25"
+
+- id: L-20260525-004
+  kind: candidate
+  scope: identity
+  trigger: a Keycloak OIDC client is copied from another client profile with PKCE enforcement enabled
+  decision: only require PKCE when the application is known to send PKCE parameters
+  rule: do not set `pkce.code.challenge.method` on a Keycloak client unless the OIDC application sends `code_challenge` and `code_challenge_method`; for unsupported confidential clients, use a client secret without PKCE enforcement
+  evidence:
+    - Gitea's OAuth login redirect failed with `Missing parameter: code_challenge_method`
+    - removing the Gitea client's forced PKCE attribute lets Keycloak proceed to its login page instead of rejecting the authorization request
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the application has explicit PKCE support enabled in its own OAuth client configuration
+  promotion: candidate
+  added_at: "2026-05-25"
+  last_validated_at: "2026-05-25"

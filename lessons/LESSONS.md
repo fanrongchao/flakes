@@ -190,3 +190,10 @@
 - Evidence: an SSH smoke test with a temporary key failed with `Invalid SSH username git - must use gitea`; the Gitea config cheat sheet shows `BUILTIN_SSH_SERVER_USER` controls the accepted built-in SSH username, while `SSH_USER` controls the displayed clone URL user.
 - Reusable rule: when using Gitea's built-in SSH server from a NixOS service user other than `git`, set `BUILTIN_SSH_SERVER_USER` and `SSH_USER` together if external clone URLs should use `git@`.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260525-004
+- Context: The Keycloak `gitea` client was initially configured with a forced S256 PKCE challenge method, matching the Headscale client pattern.
+- Decision: remove the PKCE requirement from the Gitea client while keeping it confidential with a client secret.
+- Evidence: following the Gitea OAuth login redirect caused Keycloak to return `Missing parameter: code_challenge_method`, which shows this Gitea OIDC flow did not send PKCE parameters.
+- Reusable rule: do not copy PKCE enforcement between OIDC clients unless the client is known to send `code_challenge` and `code_challenge_method`; confidential clients can still rely on their client secret when PKCE is unsupported.
+- Promotion: candidate (first confirmation in this repo).

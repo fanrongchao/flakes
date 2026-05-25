@@ -635,7 +635,6 @@ in {
             ];
             secret = giteaClientSecretPlaceholder;
             attributes = {
-              "pkce.code.challenge.method" = "S256";
               "post.logout.redirect.uris" = "+";
             };
             defaultClientScopes = [
@@ -845,7 +844,6 @@ in {
                 ],
                 secret: $secret,
                 attributes: {
-                  "pkce.code.challenge.method": "S256",
                   "post.logout.redirect.uris": "+"
                 },
                 defaultClientScopes: [
