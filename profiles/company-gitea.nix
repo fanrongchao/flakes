@@ -5,6 +5,7 @@ let
   giteaCfg = config.services.gitea;
   giteaExe = lib.getExe giteaCfg.package;
   authSourceName = "Keycloak";
+  caddyAlidnsEnv = config.sops.templates."gitea-caddy-alidns.env".path;
 in
 {
   options.services.companyGitea = {
@@ -40,6 +41,12 @@ in
       description = "Internal and externally advertised Gitea SSH port.";
     };
 
+    tailnetAddress = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Tailnet address where Gitea Web and SSH should be exposed directly.";
+    };
+
     keycloakIssuer = lib.mkOption {
       type = lib.types.str;
       default = "https://auth.zhsjf.cn/realms/zhsjf";
@@ -65,7 +72,8 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+  {
     sops.age.sshKeyPaths = lib.mkDefault [ "/etc/ssh/ssh_host_ed25519_key" ];
 
     sops.secrets."gitea/admin_password" = {
@@ -78,11 +86,34 @@ in
       restartUnits = [ "gitea-bootstrap.service" ];
     };
 
+    sops.secrets."dns/ak" = lib.mkIf (cfg.tailnetAddress != null) {
+      sopsFile = ../secrets/aliyun.yaml;
+      owner = "caddy";
+      group = "caddy";
+      restartUnits = [ "caddy.service" ];
+    };
+
+    sops.secrets."dns/as" = lib.mkIf (cfg.tailnetAddress != null) {
+      sopsFile = ../secrets/aliyun.yaml;
+      owner = "caddy";
+      group = "caddy";
+      restartUnits = [ "caddy.service" ];
+    };
+
+    sops.templates."gitea-caddy-alidns.env" = lib.mkIf (cfg.tailnetAddress != null) {
+      owner = "caddy";
+      group = "caddy";
+      mode = "0400";
+      content = ''
+        ALICLOUD_ACCESS_KEY=${config.sops.placeholder."dns/ak"}
+        ALICLOUD_SECRET_KEY=${config.sops.placeholder."dns/as"}
+      '';
+    };
+
     networking.hosts."${cfg.keycloakHostAddress}" = [ "auth.zhsjf.cn" ];
     networking.firewall.allowedTCPPorts = [
-      cfg.httpPort
       cfg.sshPort
-    ];
+    ] ++ lib.optionals (cfg.tailnetAddress != null) [ 443 ];
 
     services.gitea = {
       enable = true;
@@ -215,5 +246,39 @@ in
         fi
       '';
     };
-  };
+  }
+  (lib.mkIf (cfg.tailnetAddress != null) {
+    services.caddy = {
+      enable = true;
+      package = pkgs.caddy.withPlugins {
+        plugins = [ "github.com/caddy-dns/alidns@v1.0.26" ];
+        hash = "sha256-U8uzVMPKfAMgCv1M6WIsiaLuzLbJftS87mGLeySK3FI=";
+      };
+      virtualHosts."${cfg.domain}".extraConfig = ''
+        bind ${cfg.tailnetAddress}
+        tls {
+          dns alidns {
+            access_key_id {env.ALICLOUD_ACCESS_KEY}
+            access_key_secret {env.ALICLOUD_SECRET_KEY}
+          }
+          resolvers 1.1.1.1 8.8.8.8
+        }
+        encode zstd gzip
+        reverse_proxy ${cfg.httpListenHost}:${toString cfg.httpPort}
+      '';
+    };
+
+    systemd.services.caddy = {
+      after = [ "tailscaled.service" ];
+      wants = [ "tailscaled.service" ];
+      serviceConfig.EnvironmentFile = [ caddyAlidnsEnv ];
+      reloadTriggers = [ caddyAlidnsEnv ];
+    };
+
+    systemd.services.gitea = {
+      after = [ "tailscaled.service" ];
+      wants = [ "tailscaled.service" ];
+    };
+  })
+  ]);
 }

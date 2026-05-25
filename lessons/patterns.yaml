@@ -414,3 +414,22 @@
   promotion: candidate
   added_at: "2026-05-25"
   last_validated_at: "2026-05-25"
+
+- id: L-20260525-005
+  kind: candidate
+  scope: ingress
+  trigger: a tailnet-only Git service needs default SSH clone URLs without occupying a shared gateway host's management port
+  decision: give the service host its own Tailnet IP and bind Web and SSH directly on that IP
+  rule: expose Git Web on the service node's Tailnet `:443` and Git SSH on the service node's Tailnet `:22`; keep the host's management sshd bound to its LAN address if both need port 22
+  evidence:
+    - infra-zero joined Headscale as 100.64.0.33
+    - Gitea can bind 100.64.0.33:22 while OpenSSH remains on 192.168.3.88:22
+    - this preserves `git@code.xfa.cn:owner/repo.git` UX without using ai-server's Tailnet port 22
+  risk: medium
+  auto_apply: false
+  confidence: medium
+  ask_when:
+    - the organization requires all service ingress to remain centralized on one gateway host
+  promotion: candidate
+  added_at: "2026-05-25"
+  last_validated_at: "2026-05-25"

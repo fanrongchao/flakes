@@ -105,14 +105,9 @@ in
       site.mihomoControllerHost
       site.aiRelayHost
       site.sub2apiHost
-      site.giteaHost
     ];
     tailnetCaddyBackend = "${site.tailnetIPv4}:8443";
     gitSshBackend = "192.168.3.100:2222";
-    tailnetTcpForwards.gitea_ssh = {
-      bindAddress = "${site.tailnetIPv4}:2222";
-      backend = "192.168.3.88:2222";
-    };
     timeoutClient = "10m";
     timeoutServer = "10m";
     timeoutTunnel = "10m";
@@ -205,18 +200,5 @@ in
       try_files {path} /index.html
       file_server
     }
-  '';
-
-  services.caddy.virtualHosts."${site.giteaHost}".extraConfig = ''
-    bind ${site.tailnetIPv4}
-    tls {
-      dns alidns {
-        access_key_id {env.ALICLOUD_ACCESS_KEY}
-        access_key_secret {env.ALICLOUD_SECRET_KEY}
-      }
-      resolvers 1.1.1.1 8.8.8.8
-    }
-    encode zstd gzip
-    reverse_proxy 192.168.3.88:3000
   '';
 }

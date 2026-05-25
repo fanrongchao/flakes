@@ -197,3 +197,10 @@
 - Evidence: following the Gitea OAuth login redirect caused Keycloak to return `Missing parameter: code_challenge_method`, which shows this Gitea OIDC flow did not send PKCE parameters; Keycloak kept the old attribute unless the reconciler explicitly wrote it as an empty value.
 - Reusable rule: do not copy PKCE enforcement between OIDC clients unless the client is known to send `code_challenge` and `code_challenge_method`; for existing Keycloak clients, explicitly clear inherited PKCE attributes instead of only omitting them from update payloads.
 - Promotion: candidate (first confirmation in this repo).
+
+### L-20260525-005
+- Context: `code.xfa.cn` needed GitHub-like SSH clone URLs without a port, while the service remained tailnet-only.
+- Decision: move the Gitea entrypoint from `ai-server` HAProxy to `infra-zero`'s own Tailnet IP, with Caddy on Tailnet `:443` and Gitea built-in SSH on Tailnet `:22`.
+- Evidence: `infra-zero` joined Headscale as `100.64.0.33`; its system SSH remains on LAN `192.168.3.88:22`, while Gitea binds `100.64.0.33:22` and Caddy binds `100.64.0.33:443`.
+- Reusable rule: when an internal service needs default SSH port UX, give the service host its own Tailnet IP and bind service ports to that IP instead of stealing the gateway host's management port.
+- Promotion: candidate (first confirmation in this repo).
