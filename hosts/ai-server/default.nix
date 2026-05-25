@@ -121,6 +121,13 @@ in
     tailscaleDirectDomains = [
       site.headscaleHost
       site.derpHostname
+      site.giteaHost
+    ];
+    fakeIpBypassDomains = [
+      "+.tailscale.com"
+      "+.tailscale.io"
+      "+.ts.net"
+      site.giteaHost
     ];
     manualServerName = "jp-vultr";
     manualServerAttachGroups = [ "BosLife" ];
