@@ -149,6 +149,7 @@ in
         service = {
           DISABLE_REGISTRATION = false;
           ALLOW_ONLY_EXTERNAL_REGISTRATION = true;
+          ENABLE_BASIC_AUTHENTICATION = false;
           ENABLE_OPENID_SIGNIN = false;
           ENABLE_OPENID_SIGNUP = false;
           REQUIRE_SIGNIN_VIEW = true;
@@ -164,6 +165,7 @@ in
 
         repository = {
           DEFAULT_PRIVATE = "private";
+          DISABLE_HTTP_GIT = true;
         };
 
         session = {
