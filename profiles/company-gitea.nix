@@ -5,6 +5,11 @@ let
   giteaCfg = config.services.gitea;
   giteaExe = lib.getExe giteaCfg.package;
   authSourceName = "Keycloak";
+  keycloakGroupTeamMap = builtins.toJSON {
+    gitea_altivis_members = {
+      altivis = [ "Members" ];
+    };
+  };
   caddyAlidnsEnv = config.sops.templates."gitea-caddy-alidns.env".path;
 in
 {
@@ -238,6 +243,8 @@ in
           --required-claim-name groups
           --required-claim-value gitea_users
           --group-claim-name groups
+          --group-team-map ${lib.escapeShellArg keycloakGroupTeamMap}
+          --group-team-map-removal
           --skip-local-2fa
         )
 

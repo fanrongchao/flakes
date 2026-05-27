@@ -211,6 +211,7 @@ in {
           "airs_admins"
           "gitea_users"
           "gitea_admins"
+          "gitea_altivis_members"
         ];
         requiredActions = [
           {
@@ -818,6 +819,7 @@ in {
 
           ensure_group gitea_users
           ensure_group gitea_admins
+          ensure_group gitea_altivis_members
 
           gitea_client_secret="$(${pkgs.coreutils}/bin/tr -d '\n' < "$CREDENTIALS_DIRECTORY/gitea_oidc_client_secret")"
           gitea_client_json="$(
