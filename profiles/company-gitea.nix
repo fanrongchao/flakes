@@ -12,6 +12,9 @@ let
     gitea_low_altitude_members = {
       low_altitude_projects = [ "Members" ];
     };
+    gitea_xfa_members = {
+      xfa = [ "Members" ];
+    };
   };
   caddyAlidnsEnv = config.sops.templates."gitea-caddy-alidns.env".path;
 in

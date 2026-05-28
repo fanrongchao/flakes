@@ -213,6 +213,7 @@ in {
           "gitea_admins"
           "gitea_altivis_members"
           "gitea_low_altitude_members"
+          "gitea_xfa_members"
         ];
         requiredActions = [
           {
@@ -822,6 +823,7 @@ in {
           ensure_group gitea_admins
           ensure_group gitea_altivis_members
           ensure_group gitea_low_altitude_members
+          ensure_group gitea_xfa_members
 
           gitea_client_secret="$(${pkgs.coreutils}/bin/tr -d '\n' < "$CREDENTIALS_DIRECTORY/gitea_oidc_client_secret")"
           gitea_client_json="$(
