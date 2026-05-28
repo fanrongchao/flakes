@@ -9,6 +9,9 @@ let
     gitea_altivis_members = {
       altivis = [ "Members" ];
     };
+    gitea_low_altitude_members = {
+      low_altitude_projects = [ "Members" ];
+    };
   };
   caddyAlidnsEnv = config.sops.templates."gitea-caddy-alidns.env".path;
 in

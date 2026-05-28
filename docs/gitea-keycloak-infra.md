@@ -110,6 +110,8 @@ Current Gitea-related groups:
   - Reserved; not currently mapped to Gitea site admin
 - `gitea_altivis_members`
   - Maps to `altivis/Members` in Gitea
+- `gitea_low_altitude_members`
+  - Maps to `low_altitude_projects/Members` in Gitea
 
 Current membership snapshot:
 
@@ -120,6 +122,8 @@ Current membership snapshot:
 - `gitea_altivis_members`
   - `pantianrui`
   - `shanmengjiao`
+- `gitea_low_altitude_members`
+  - `gengweiwei`
 
 If a user is added to `gitea_altivis_members` but has not logged in to Gitea yet, they will not appear in Gitea org membership until their first successful Keycloak login creates the local Gitea account.
 
@@ -128,10 +132,21 @@ If a user is added to `gitea_altivis_members` but has not logged in to Gitea yet
 Current organization:
 
 - `altivis`
+- `low_altitude_projects`
 
 Current team:
 
 - `altivis/Members`
+  - Includes all repositories
+  - Can create organization repositories
+  - Has write access to:
+    - `repo.code`
+    - `repo.issues`
+    - `repo.pulls`
+    - `repo.releases`
+    - `repo.wiki`
+    - `repo.projects`
+- `low_altitude_projects/Members`
   - Includes all repositories
   - Can create organization repositories
   - Has write access to:
@@ -148,6 +163,9 @@ OIDC group-to-team mapping:
 {
   "gitea_altivis_members": {
     "altivis": ["Members"]
+  },
+  "gitea_low_altitude_members": {
+    "low_altitude_projects": ["Members"]
   }
 }
 ```
