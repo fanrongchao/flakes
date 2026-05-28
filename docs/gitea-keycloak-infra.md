@@ -76,10 +76,13 @@ Important Gitea settings managed by `profiles/company-gitea.nix`:
 - `SSH_LISTEN_PORT = 22`
 - `DISABLE_HTTP_GIT = true`
 - `ENABLE_BASIC_AUTHENTICATION = false`
+- `DEFAULT_ALLOW_CREATE_ORGANIZATION = false`
 - `ALLOW_ONLY_EXTERNAL_REGISTRATION = true`
 - `ENABLE_AUTO_REGISTRATION = true`
 
 Code access is SSH-key-only. HTTPS Git clone/push/pull is intentionally disabled.
+
+New users are not allowed to create organizations by default. `gitea-bootstrap.service` also reconciles existing individual users so only `fanrongchao` has `allow_create_organization = true`. The `breakglass-admin` account remains a local site administrator for emergency use, and Gitea treats site administrators as able to create organizations.
 
 ## Identity And Access
 

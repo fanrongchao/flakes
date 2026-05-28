@@ -157,6 +157,7 @@ in
         service = {
           DISABLE_REGISTRATION = false;
           ALLOW_ONLY_EXTERNAL_REGISTRATION = true;
+          DEFAULT_ALLOW_CREATE_ORGANIZATION = false;
           ENABLE_BASIC_AUTHENTICATION = false;
           ENABLE_OPENID_SIGNIN = false;
           ENABLE_OPENID_SIGNUP = false;
@@ -188,7 +189,7 @@ in
       wants = [ "network-online.target" ];
       requires = [ "gitea.service" ];
       wantedBy = [ "multi-user.target" ];
-      path = with pkgs; [ gawk giteaCfg.package gnugrep ];
+      path = with pkgs; [ gawk giteaCfg.package gnugrep postgresql ];
 
       environment = {
         USER = giteaCfg.user;
@@ -228,6 +229,12 @@ in
             --password "$admin_password" \
             --must-change-password=false
         fi
+
+        psql -d gitea -v ON_ERROR_STOP=1 <<'SQL'
+        UPDATE "user"
+        SET allow_create_organization = (name = 'fanrongchao')
+        WHERE type = 0;
+        SQL
 
         auth_source_id="$(
           ${giteaExe} admin auth list \
