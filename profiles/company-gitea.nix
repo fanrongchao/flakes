@@ -15,6 +15,9 @@ let
     gitea_xfa_members = {
       xfa = [ "Members" ];
     };
+    gitea_tech_share_members = {
+      tech_share = [ "Members" ];
+    };
   };
   caddyAlidnsEnv = config.sops.templates."gitea-caddy-alidns.env".path;
 in

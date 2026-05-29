@@ -117,20 +117,34 @@ Current Gitea-related groups:
   - Maps to `low_altitude_projects/Members` in Gitea
 - `gitea_xfa_members`
   - Maps to `xfa/Members` in Gitea
+- `gitea_tech_share_members`
+  - Maps to `tech_share/Members` in Gitea
 
 Current membership snapshot:
 
 - `gitea_users`
   - `fanrongchao`
+  - `gengweiwei`
   - `pantianrui`
   - `shanmengjiao`
+  - `yangzihao`
 - `gitea_altivis_members`
+  - `gengweiwei`
   - `pantianrui`
   - `shanmengjiao`
 - `gitea_low_altitude_members`
+  - `fanrongchao`
   - `gengweiwei`
+  - `pantianrui`
+  - `shanmengjiao`
 - `gitea_xfa_members`
+  - `fanrongchao`
   - `yangzihao`
+- `gitea_tech_share_members`
+  - `fanrongchao`
+  - `gengweiwei`
+  - `pantianrui`
+  - `shanmengjiao`
 
 If a user is added to `gitea_altivis_members` but has not logged in to Gitea yet, they will not appear in Gitea org membership until their first successful Keycloak login creates the local Gitea account.
 
@@ -140,6 +154,7 @@ Current organization:
 
 - `altivis`
 - `low_altitude_projects`
+- `tech_share`
 - `xfa`
 
 Current team:
@@ -174,6 +189,16 @@ Current team:
     - `repo.releases`
     - `repo.wiki`
     - `repo.projects`
+- `tech_share/Members`
+  - Includes all repositories
+  - Can create organization repositories
+  - Has write access to:
+    - `repo.code`
+    - `repo.issues`
+    - `repo.pulls`
+    - `repo.releases`
+    - `repo.wiki`
+    - `repo.projects`
 
 OIDC group-to-team mapping:
 
@@ -187,6 +212,9 @@ OIDC group-to-team mapping:
   },
   "gitea_xfa_members": {
     "xfa": ["Members"]
+  },
+  "gitea_tech_share_members": {
+    "tech_share": ["Members"]
   }
 }
 ```
